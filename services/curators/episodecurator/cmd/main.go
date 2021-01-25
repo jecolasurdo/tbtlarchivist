@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"time"
+	"strconv"
 
 	"github.com/chromedp/chromedp"
 )
@@ -25,59 +25,74 @@ func (l littleLogger) Do(ctx context.Context) error {
 	return nil
 }
 
+// scraping steps:
+// get tbtl.net/episodes
+// wait for the page to be fully loaded
+// identify the total number of pages via the pagination section of the DOM
+// for each page 1..n
+//	note the "teaser link" for each episode
+// for each teaser link
+//	visit the link
+//	record the following to some sort of data store:
+//		episode number
+//		episode part (if multi-part)
+//		episode date
+//		episode title
+//		media link
+//		media type
 func main() {
-	log.Println("Starting Chrome")
+	log.Println("Starting Chrome...")
 	ctx, cancel := chromedp.NewContext(
 		context.Background(),
 		chromedp.WithLogf(log.Printf),
 	)
 	defer cancel()
 
-	log.Println("Setting timeout")
-	ctx, cancel = context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
+	// log.Println("Setting timeout...")
+	// ctx, cancel = context.WithTimeout(ctx, 15*time.Second)
+	// defer cancel()
 
-	// scraping steps:
-	// get tbtl.net/episodes
-	// wait for the page to be fully loaded
-	// identify the total number of pages via the pagination section of the DOM
-	// for each page 1..n
-	//	note the "teaser link" for each episode
-	// for each teaser link
-	//	visit the link
-	//	record the following to some sort of data store:
-	//		episode number
-	//		episode part (if multi-part)
-	//		episode date
-	//		episode title
-	//		media link
-	//		media type
-
-	const hrefRegex = `/episode/\d{4}/\d\d/\d\d/(?:[[:alnum:]]|-)+`
-	re := regexp.MustCompile(hrefRegex)
-
-	var collectionResults string
-	var pageCount string
+	var rawPageCount string
 	err := chromedp.Run(ctx,
-		logSomething("Navigating to page..."),
+		logSomething("Navigating to main episodes page..."),
 		chromedp.Navigate(`https://www.tbtl.net/episodes`),
 
-		logSomething("Getting collection_results..."),
-		chromedp.InnerHTML(".collection_results", &collectionResults, chromedp.NodeVisible, chromedp.BySearch),
-
 		logSomething("Getting page count..."),
-		chromedp.Text(".pagination_link-last", &pageCount, chromedp.BySearch),
+		chromedp.Text(".pagination_link-last", &rawPageCount, chromedp.BySearch),
 	)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	episodeLinks := re.FindAllString(collectionResults, -1)
-	log.Printf("Episode links:")
-	for _, episodeLink := range episodeLinks {
+	pageCount, err := strconv.Atoi(rawPageCount)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	const hrefRegex = `/episode/\d{4}/\d\d/\d\d/(?:[[:alnum:]]|-)+`
+	re := regexp.MustCompile(hrefRegex)
+	episodeLinkList := []string{}
+	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
+		var collectionResults string
+		err := chromedp.Run(ctx,
+			logSomething(fmt.Sprintf("Navigating to page %v...", pageNumber)),
+			chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/episodes/page/%v", pageNumber)),
+
+			logSomething("Getting raw collection info from page..."),
+			chromedp.InnerHTML(".collection_results", &collectionResults, chromedp.NodeVisible, chromedp.BySearch),
+		)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		episodeLinkList = append(episodeLinkList, re.FindAllString(collectionResults, -1)...)
+	}
+
+	log.Printf("Episode links:\n")
+	for _, episodeLink := range episodeLinkList {
 		fmt.Printf("\t%s\n", episodeLink)
 	}
 
-	log.Printf("Page count:\n%s", pageCount)
+	fmt.Println("Done.")
 }
