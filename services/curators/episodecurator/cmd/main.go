@@ -87,11 +87,27 @@ func main() {
 		}
 
 		episodeLinkList = append(episodeLinkList, re.FindAllString(collectionResults, -1)...)
+		break
 	}
 
-	log.Printf("Episode links:\n")
 	for _, episodeLink := range episodeLinkList {
-		fmt.Printf("\t%s\n", episodeLink)
+		var res string
+		err := chromedp.Run(ctx,
+			logSomething(fmt.Sprintf("Navigating to episode page %v...", episodeLink)),
+			chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/%v", episodeLink)),
+
+			logSomething("Getting raw data from page..."),
+			chromedp.InnerHTML(".userContent", &res, chromedp.NodeVisible, chromedp.BySearch),
+		)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		log.Println(episodeLink)
+		log.Println(res)
+
+		break
 	}
 
 	fmt.Println("Done.")
