@@ -70,15 +70,13 @@ func main() {
 	}
 
 	const hrefRegex = `/episode/\d{4}/\d\d/\d\d/(?:[[:alnum:]]|-)+`
-	re := regexp.MustCompile(hrefRegex)
+	hrefRe := regexp.MustCompile(hrefRegex)
 	episodeLinkList := []string{}
 	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
 		var collectionResults string
 		err := chromedp.Run(ctx,
-			logSomething(fmt.Sprintf("Navigating to page %v...", pageNumber)),
+			logSomething(fmt.Sprintf("Scraping page %v...", pageNumber)),
 			chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/episodes/page/%v", pageNumber)),
-
-			logSomething("Getting raw collection info from page..."),
 			chromedp.InnerHTML(".collection_results", &collectionResults, chromedp.NodeVisible, chromedp.BySearch),
 		)
 
@@ -86,28 +84,25 @@ func main() {
 			log.Fatal(err)
 		}
 
-		episodeLinkList = append(episodeLinkList, re.FindAllString(collectionResults, -1)...)
-		break
+		episodeLinkList = append(episodeLinkList, hrefRe.FindAllString(collectionResults, -1)...)
 	}
 
+	const mp3Regex = `/\d{4}/\d\d/\w+\.mp3`
+	mp3Re := regexp.MustCompile(mp3Regex)
 	for _, episodeLink := range episodeLinkList {
-		var res string
+		var nextDataInnerHTML string
 		err := chromedp.Run(ctx,
-			logSomething(fmt.Sprintf("Navigating to episode page %v...", episodeLink)),
 			chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/%v", episodeLink)),
-
-			logSomething("Getting raw data from page..."),
-			chromedp.InnerHTML(".userContent", &res, chromedp.NodeVisible, chromedp.BySearch),
+			chromedp.InnerHTML("#__NEXT_DATA__", &nextDataInnerHTML, chromedp.ByID),
 		)
 
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		log.Println(episodeLink)
-		log.Println(res)
+		mp3Link := mp3Re.FindString(nextDataInnerHTML)
+		log.Println("\tmp3 name:", mp3Link)
 
-		break
 	}
 
 	fmt.Println("Done.")
