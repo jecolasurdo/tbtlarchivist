@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -51,6 +53,9 @@ func main() {
 	//		media link
 	//		media type
 
+	const hrefRegex = `/episode/\d{4}/\d\d/\d\d/(?:[[:alnum:]]|-)+`
+	re := regexp.MustCompile(hrefRegex)
+
 	var collectionResults string
 	var pageCount string
 	err := chromedp.Run(ctx,
@@ -68,6 +73,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("Collection results:\n%s", collectionResults)
+	episodeLinks := re.FindAllString(collectionResults, -1)
+	log.Printf("Episode links:")
+	for _, episodeLink := range episodeLinks {
+		fmt.Printf("\t%s\n", episodeLink)
+	}
+
 	log.Printf("Page count:\n%s", pageCount)
 }
