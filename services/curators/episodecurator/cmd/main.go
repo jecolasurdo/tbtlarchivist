@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"log"
 	"time"
 
@@ -36,24 +35,39 @@ func main() {
 	ctx, cancel = context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
-	var content string
-	var buf []byte
+	// scraping steps:
+	// get tbtl.net/episodes
+	// wait for the page to be fully loaded
+	// identify the total number of pages via the pagination section of the DOM
+	// for each page 1..n
+	//	note the "teaser link" for each episode
+	// for each teaser link
+	//	visit the link
+	//	record the following to some sort of data store:
+	//		episode number
+	//		episode part (if multi-part)
+	//		episode date
+	//		episode title
+	//		media link
+	//		media type
+
+	var collectionResults string
+	var pageCount string
 	err := chromedp.Run(ctx,
 		logSomething("Navigating to page..."),
 		chromedp.Navigate(`https://www.tbtl.net/episodes`),
 
-		// logSomething("Waiting for page to load..."),
-		// chromedp.WaitVisible(`body > footer`),
+		logSomething("Getting collection_results..."),
+		chromedp.InnerHTML(".collection_results", &collectionResults, chromedp.NodeVisible, chromedp.BySearch),
 
-		logSomething("Trying to take a screenshot..."),
-		chromedp.CaptureScreenshot(&buf),
-
-		logSomething("Getting content..."),
-		chromedp.OuterHTML("#content", &content),
+		logSomething("Getting page count..."),
+		chromedp.Text(".pagination_link-last", &pageCount, chromedp.BySearch),
 	)
+
 	if err != nil {
-		ioutil.WriteFile("screenshot.png", buf, 0o644)
 		log.Fatal(err)
 	}
-	log.Printf("Content:\n%s", content)
+
+	log.Printf("Collection results:\n%s", collectionResults)
+	log.Printf("Page count:\n%s", pageCount)
 }
