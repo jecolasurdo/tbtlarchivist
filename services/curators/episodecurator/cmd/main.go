@@ -7,6 +7,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -90,7 +91,7 @@ func main() {
 
 		episodeLinkList := hrefRe.FindAllString(collectionResults, -1)
 
-		const mp3Regex = `/\d{4}/\d\d/\w+\.mp3`
+		const mp3Regex = `https://(?:(?:\w+|-|\.)+/)+\d{4}/\d{1,2}/(?:\d{1,2}/)?(?:\w+|-)+\.mp3`
 		mp3Re := regexp.MustCompile(mp3Regex)
 		for _, episodeLink := range episodeLinkList {
 			var nextDataInnerHTML string
@@ -103,6 +104,18 @@ func main() {
 				log.Fatal(err)
 			}
 
+			mediaLink := mp3Re.FindString(nextDataInnerHTML)
+
+			if mediaLink == "" {
+				panic("Media Link Not Identified")
+			}
+
+			const unreplacedUAToken = "unreplaced_ua"
+			const userAgent = "web"
+			mediaLink = strings.Replace(mediaLink, unreplacedUAToken, userAgent, -1)
+
+			mediaType := mediaLink[len(mediaLink)-3:]
+
 			episodeInfo := EpisodeInfo{
 				DateFound:   time.Now().UTC(),
 				DateAired:   time.Now().UTC(),
@@ -111,8 +124,8 @@ func main() {
 				Length:      time.Millisecond,
 				Title:       "",
 				Description: "",
-				MediaLink:   mp3Re.FindString(nextDataInnerHTML),
-				MediaType:   "",
+				MediaLink:   mediaLink,
+				MediaType:   mediaType,
 			}
 
 			fmt.Println(episodeInfo)
