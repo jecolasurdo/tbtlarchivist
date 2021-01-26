@@ -137,23 +137,18 @@ func main() {
 			}
 
 			mediaURI := mp3Re.FindString(nextDataInnerHTML)
-
 			if mediaURI == "" {
 				log.Fatal("Media URI Not Identified")
 			}
-
 			const unreplacedUAToken = "unreplaced_ua"
 			const userAgent = "web"
 			mediaURI = strings.Replace(mediaURI, unreplacedUAToken, userAgent, -1)
-
 			mediaType := mediaURI[len(mediaURI)-3:]
 
 			rawDuration := durationRe.FindStringSubmatch(nextDataInnerHTML)
-
 			if len(rawDuration) < 2 {
 				log.Fatal("Unable to extract duration for episode.")
 			}
-
 			durationMS, err := strconv.Atoi(rawDuration[1])
 			if err != nil {
 				log.Fatal(err)
