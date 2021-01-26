@@ -123,11 +123,13 @@ func main() {
 			var nextDataInnerHTML string
 			var title string
 			var description string
+			var rawDate string
 			err := chromedp.Run(ctx,
 				chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/%v", episodeLink)),
 				chromedp.InnerHTML("#__NEXT_DATA__", &nextDataInnerHTML, chromedp.ByID),
 				chromedp.TextContent(".hdg", &title, chromedp.BySearch),
 				chromedp.TextContent("body > div > main > div > section > div > article > div > div > div > p", &description, chromedp.ByQuery),
+				chromedp.TextContent(".content_date", &rawDate, chromedp.BySearch),
 			)
 
 			if err != nil {
@@ -157,10 +159,15 @@ func main() {
 				log.Fatal(err)
 			}
 
+			dateAired, err := time.Parse("January 2, 2006", rawDate)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			episodeInfo := EpisodeInfo{
 				CuratorInformation: "tbtl.net scraper",
 				DateCurated:        time.Now().UTC(),
-				DateAired:          time.Now().UTC(),
+				DateAired:          dateAired,
 				Duration:           time.Duration(durationMS) * time.Millisecond,
 				Title:              title,
 				Description:        description,
@@ -168,7 +175,7 @@ func main() {
 				MediaType:          mediaType,
 			}
 
-			fmt.Println(episodeInfo)
+			fmt.Println(episodeInfo.String() + ",")
 		}
 	}
 
