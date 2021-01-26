@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/chromedp/chromedp"
 )
@@ -25,23 +27,27 @@ func (l littleLogger) Do(ctx context.Context) error {
 	return nil
 }
 
-// scraping steps:
-// get tbtl.net/episodes
-// wait for the page to be fully loaded
-// identify the total number of pages via the pagination section of the DOM
-// for each page 1..n
-//	note the "teaser link" for each episode
-// for each teaser link
-//	visit the link
-//	record the following to some sort of data store:
-//		episode date
-//		episode number
-//		episode part (if multi-part)
-//		episode length
-//		episode title
-//		episode description
-//		media link
-//		media type
+// EpisodeInfo contains information about an episode.
+type EpisodeInfo struct {
+	DateFound   time.Time
+	DateAired   time.Time
+	Number      int
+	Part        int
+	Length      time.Duration
+	Title       string
+	Description string
+	MediaLink   string
+	MediaType   string
+}
+
+func (e EpisodeInfo) String() string {
+	jsonBytes, err := json.MarshalIndent(e, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(jsonBytes)
+}
+
 func main() {
 	log.Println("Starting Chrome...")
 	ctx, cancel := chromedp.NewContext(
@@ -97,8 +103,19 @@ func main() {
 				log.Fatal(err)
 			}
 
-			mp3Link := mp3Re.FindString(nextDataInnerHTML)
-			fmt.Printf("\tMedia Link:%v\n", mp3Link)
+			episodeInfo := EpisodeInfo{
+				DateFound:   time.Now().UTC(),
+				DateAired:   time.Now().UTC(),
+				Number:      -1,
+				Part:        -1,
+				Length:      time.Millisecond,
+				Title:       "",
+				Description: "",
+				MediaLink:   mp3Re.FindString(nextDataInnerHTML),
+				MediaType:   "",
+			}
+
+			fmt.Println(episodeInfo)
 		}
 	}
 
