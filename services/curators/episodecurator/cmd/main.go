@@ -105,9 +105,11 @@ func main() {
 		mp3Re := regexp.MustCompile(mp3Regex)
 		for _, episodeLink := range episodeLinkList {
 			var nextDataInnerHTML string
+			var title string
 			err := chromedp.Run(ctx,
 				chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/%v", episodeLink)),
 				chromedp.InnerHTML("#__NEXT_DATA__", &nextDataInnerHTML, chromedp.ByID),
+				chromedp.TextContent(".hdg", &title, chromedp.BySearch),
 			)
 
 			if err != nil {
@@ -143,7 +145,7 @@ func main() {
 				Number:      -1,
 				Part:        -1,
 				Duration:    time.Duration(durationMS) * time.Millisecond,
-				Title:       "",
+				Title:       title,
 				Description: "",
 				MediaLink:   mediaLink,
 				MediaType:   mediaType,
