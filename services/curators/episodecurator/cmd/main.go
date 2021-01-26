@@ -120,6 +120,11 @@ func main() {
 			mediaType := mediaLink[len(mediaLink)-3:]
 
 			rawDuration := durationRe.FindStringSubmatch(nextDataInnerHTML)
+
+			if len(rawDuration) < 2 {
+				log.Fatal("Unable to extract duration for episode.")
+			}
+
 			durationMS, err := strconv.Atoi(rawDuration[1])
 			if err != nil {
 				log.Fatal(err)
