@@ -41,24 +41,6 @@ type EpisodeInfo struct {
 	// DateAired is the date that the episode was originally aired.
 	DateAired time.Time
 
-	// EpisodeNumberDerivation describes how the episode number was derived.
-	// Episode numbers can be inferred from various means such as being
-	// extracted from the episode title, extracted from the mp3 file name, etc.
-	EpisodeNumberDerivation string
-
-	// EpisodeNumber is the episode number. This value will be -1 if an episode
-	// number could not be inferred.
-	EpisodeNumber int
-
-	// Part represents the episde segment. If an episode was uploaded in
-	// multiple segments, each segment is numbered in order here.
-	Part int
-
-	// Parts represents how many segments exist for an episode. If an episode
-	// was uploaded in multiple segments, this value represents the total
-	// uploaded.
-	Parts int
-
 	// Duration is the length of the episode.
 	Duration time.Duration
 
@@ -140,10 +122,12 @@ func main() {
 		for _, episodeLink := range episodeLinkList {
 			var nextDataInnerHTML string
 			var title string
+			var description string
 			err := chromedp.Run(ctx,
 				chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/%v", episodeLink)),
 				chromedp.InnerHTML("#__NEXT_DATA__", &nextDataInnerHTML, chromedp.ByID),
 				chromedp.TextContent(".hdg", &title, chromedp.BySearch),
+				chromedp.TextContent("body > div > main > div > section > div > article > div > div > div > p", &description, chromedp.ByQuery),
 			)
 
 			if err != nil {
@@ -173,19 +157,15 @@ func main() {
 				log.Fatal(err)
 			}
 
-			episodeNumber, derivation := extractEpisodeNumber(title, mediaURI)
-
 			episodeInfo := EpisodeInfo{
-				DateCurated:             time.Now().UTC(),
-				DateAired:               time.Now().UTC(),
-				EpisodeNumberDerivation: derivation,
-				EpisodeNumber:           episodeNumber,
-				Part:                    -1,
-				Duration:                time.Duration(durationMS) * time.Millisecond,
-				Title:                   title,
-				Description:             "",
-				MediaURI:                mediaURI,
-				MediaType:               mediaType,
+				CuratorInformation: "tbtl.net scraper",
+				DateCurated:        time.Now().UTC(),
+				DateAired:          time.Now().UTC(),
+				Duration:           time.Duration(durationMS) * time.Millisecond,
+				Title:              title,
+				Description:        description,
+				MediaURI:           mediaURI,
+				MediaType:          mediaType,
 			}
 
 			fmt.Println(episodeInfo)
@@ -193,24 +173,4 @@ func main() {
 	}
 
 	fmt.Println("Done.")
-}
-
-const (
-	titleEpisodeRegex = `#(\d+)`
-)
-
-var titleEpisodeRe = regexp.MustCompile(titleEpisodeRegex)
-
-func extractEpisodeNumber(title, mediaURI string) (int, string) {
-	matches := titleEpisodeRe.FindStringSubmatch(title)
-	if len(matches) < 2 {
-		return -1, ""
-	}
-
-	episode, err := strconv.Atoi(matches[1])
-	if err != nil {
-		return -1, ""
-	}
-
-	return episode, "title"
 }
