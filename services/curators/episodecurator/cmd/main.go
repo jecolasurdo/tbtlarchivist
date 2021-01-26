@@ -30,15 +30,61 @@ func (l littleLogger) Do(ctx context.Context) error {
 
 // EpisodeInfo contains information about an episode.
 type EpisodeInfo struct {
-	DateFound   time.Time
-	DateAired   time.Time
-	Number      int
-	Part        int
-	Duration    time.Duration
-	Title       string
+	// DateCurated represents the date that the curator service found and
+	// analyzed the episode.
+	DateCurated time.Time
+
+	// CuratorInformation provides information about the utility that extracted
+	// this information.
+	CuratorInformation string
+
+	// DateAired is the date that the episode was originally aired.
+	DateAired time.Time
+
+	// NumberIsApplicable describes whether or not an episode number applies to
+	// this particular episode. For instance, some episodes, such as the "no
+	// point conversions" are non-canonical, in that they are not included in
+	// the episode tally. This field is true unless an episode is explicitly
+	// known to be non-canonical.
+	CanonicalNumberIsApplicable bool
+
+	// CanonicalNumberDerivation describes how the episode number was derived.
+	// Episode numbers can be inferred from various means such as being
+	// extracted from the episode title, extracted from the mp3 file name, etc.
+	CanonicalNumberDerivation string
+
+	// CanonicalNumber is the episode number for any "canonical" episodes.
+	// "canonical episodes" are any that are not otherwise excluded by some
+	// rule such as "no point conversion" episodes, which are non-canonical.
+	// This value will be greater than 0 for all canonical episodes that have
+	// had their number infered.  This value will be -1 for any canonical
+	// episodes for whom a number could not be inferred.  This value will be -2
+	// for any non-canonical episodes.
+	CanonicalNumber int
+
+	// Part represents the episde segment. If an episode was uploaded in
+	// multiple segments, each segment is numbered in order here.
+	Part int
+
+	// Parts represents how many segments exist for an episode. If an episode
+	// was uploaded in multiple segments, this value represents the total
+	// uploaded.
+	Parts int
+
+	// Duration is the length of the episode.
+	Duration time.Duration
+
+	// Title is the name of the episode.
+	Title string
+
+	// Description is the episode description.
 	Description string
-	MediaLink   string
-	MediaType   string
+
+	// MediaURI is a URI for where the episode media can be accessed.
+	MediaURI string
+
+	// MediaType is the media type for the episode (such as mp3, etc).
+	MediaType string
 }
 
 func (e EpisodeInfo) String() string {
@@ -116,17 +162,17 @@ func main() {
 				log.Fatal(err)
 			}
 
-			mediaLink := mp3Re.FindString(nextDataInnerHTML)
+			mediaURI := mp3Re.FindString(nextDataInnerHTML)
 
-			if mediaLink == "" {
-				log.Fatal("Media Link Not Identified")
+			if mediaURI == "" {
+				log.Fatal("Media URI Not Identified")
 			}
 
 			const unreplacedUAToken = "unreplaced_ua"
 			const userAgent = "web"
-			mediaLink = strings.Replace(mediaLink, unreplacedUAToken, userAgent, -1)
+			mediaURI = strings.Replace(mediaURI, unreplacedUAToken, userAgent, -1)
 
-			mediaType := mediaLink[len(mediaLink)-3:]
+			mediaType := mediaURI[len(mediaURI)-3:]
 
 			rawDuration := durationRe.FindStringSubmatch(nextDataInnerHTML)
 
@@ -140,15 +186,15 @@ func main() {
 			}
 
 			episodeInfo := EpisodeInfo{
-				DateFound:   time.Now().UTC(),
-				DateAired:   time.Now().UTC(),
-				Number:      -1,
-				Part:        -1,
-				Duration:    time.Duration(durationMS) * time.Millisecond,
-				Title:       title,
-				Description: "",
-				MediaLink:   mediaLink,
-				MediaType:   mediaType,
+				DateCurated:     time.Now().UTC(),
+				DateAired:       time.Now().UTC(),
+				CanonicalNumber: -1,
+				Part:            -1,
+				Duration:        time.Duration(durationMS) * time.Millisecond,
+				Title:           title,
+				Description:     "",
+				MediaURI:        mediaURI,
+				MediaType:       mediaType,
 			}
 
 			fmt.Println(episodeInfo)
