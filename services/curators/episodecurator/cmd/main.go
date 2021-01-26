@@ -34,7 +34,7 @@ type EpisodeInfo struct {
 	DateAired   time.Time
 	Number      int
 	Part        int
-	Length      time.Duration
+	Duration    time.Duration
 	Title       string
 	Description string
 	MediaLink   string
@@ -91,6 +91,9 @@ func main() {
 
 		episodeLinkList := hrefRe.FindAllString(collectionResults, -1)
 
+		const durationRegex = `mp3\\",\\"duration_ms\\":(\d+)`
+		durationRe := regexp.MustCompile(durationRegex)
+
 		const mp3Regex = `https://(?:(?:\w+|-|\.)+/)+\d{4}/\d{1,2}/(?:\d{1,2}/)?(?:\w+|-)+\.mp3`
 		mp3Re := regexp.MustCompile(mp3Regex)
 		for _, episodeLink := range episodeLinkList {
@@ -107,7 +110,7 @@ func main() {
 			mediaLink := mp3Re.FindString(nextDataInnerHTML)
 
 			if mediaLink == "" {
-				panic("Media Link Not Identified")
+				log.Fatal("Media Link Not Identified")
 			}
 
 			const unreplacedUAToken = "unreplaced_ua"
@@ -116,12 +119,18 @@ func main() {
 
 			mediaType := mediaLink[len(mediaLink)-3:]
 
+			rawDuration := durationRe.FindStringSubmatch(nextDataInnerHTML)
+			durationMS, err := strconv.Atoi(rawDuration[1])
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			episodeInfo := EpisodeInfo{
 				DateFound:   time.Now().UTC(),
 				DateAired:   time.Now().UTC(),
 				Number:      -1,
 				Part:        -1,
-				Length:      time.Millisecond,
+				Duration:    time.Duration(durationMS) * time.Millisecond,
 				Title:       "",
 				Description: "",
 				MediaLink:   mediaLink,
