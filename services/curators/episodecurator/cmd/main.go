@@ -34,10 +34,12 @@ func (l littleLogger) Do(ctx context.Context) error {
 // for each teaser link
 //	visit the link
 //	record the following to some sort of data store:
+//		episode date
 //		episode number
 //		episode part (if multi-part)
-//		episode date
+//		episode length
 //		episode title
+//		episode description
 //		media link
 //		media type
 func main() {
@@ -47,10 +49,6 @@ func main() {
 		chromedp.WithLogf(log.Printf),
 	)
 	defer cancel()
-
-	// log.Println("Setting timeout...")
-	// ctx, cancel = context.WithTimeout(ctx, 15*time.Second)
-	// defer cancel()
 
 	var rawPageCount string
 	err := chromedp.Run(ctx,
@@ -71,11 +69,11 @@ func main() {
 
 	const hrefRegex = `/episode/\d{4}/\d\d/\d\d/(?:[[:alnum:]]|-)+`
 	hrefRe := regexp.MustCompile(hrefRegex)
-	episodeLinkList := []string{}
 	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
+		fmt.Printf("Page: %v\n", pageNumber)
+
 		var collectionResults string
 		err := chromedp.Run(ctx,
-			logSomething(fmt.Sprintf("Scraping page %v...", pageNumber)),
 			chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/episodes/page/%v", pageNumber)),
 			chromedp.InnerHTML(".collection_results", &collectionResults, chromedp.NodeVisible, chromedp.BySearch),
 		)
@@ -84,25 +82,24 @@ func main() {
 			log.Fatal(err)
 		}
 
-		episodeLinkList = append(episodeLinkList, hrefRe.FindAllString(collectionResults, -1)...)
-	}
+		episodeLinkList := hrefRe.FindAllString(collectionResults, -1)
 
-	const mp3Regex = `/\d{4}/\d\d/\w+\.mp3`
-	mp3Re := regexp.MustCompile(mp3Regex)
-	for _, episodeLink := range episodeLinkList {
-		var nextDataInnerHTML string
-		err := chromedp.Run(ctx,
-			chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/%v", episodeLink)),
-			chromedp.InnerHTML("#__NEXT_DATA__", &nextDataInnerHTML, chromedp.ByID),
-		)
+		const mp3Regex = `/\d{4}/\d\d/\w+\.mp3`
+		mp3Re := regexp.MustCompile(mp3Regex)
+		for _, episodeLink := range episodeLinkList {
+			var nextDataInnerHTML string
+			err := chromedp.Run(ctx,
+				chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/%v", episodeLink)),
+				chromedp.InnerHTML("#__NEXT_DATA__", &nextDataInnerHTML, chromedp.ByID),
+			)
 
-		if err != nil {
-			log.Fatal(err)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			mp3Link := mp3Re.FindString(nextDataInnerHTML)
+			fmt.Printf("\tMedia Link:%v\n", mp3Link)
 		}
-
-		mp3Link := mp3Re.FindString(nextDataInnerHTML)
-		log.Println("\tmp3 name:", mp3Link)
-
 	}
 
 	fmt.Println("Done.")
