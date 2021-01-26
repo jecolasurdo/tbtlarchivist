@@ -91,6 +91,13 @@ func main() {
 
 		episodeLinkList := hrefRe.FindAllString(collectionResults, -1)
 
+		// The __NEXT_DATA__ structure may contain data for m4a files in
+		// addition to mp3s, and the m4a durations may not match that of the
+		// mp3s.  To address this, durationRegex qualifies the duration_ms
+		// field as being directly preceeded by the value `mp3\",\"`. This
+		// ensures that the duration data is associated with the correct file,
+		// but is admittedly a little fragile in that it presumes field order
+		// is fixed.
 		const durationRegex = `mp3\\",\\"duration_ms\\":(\d+)`
 		durationRe := regexp.MustCompile(durationRegex)
 
