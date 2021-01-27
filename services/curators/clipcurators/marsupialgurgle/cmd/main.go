@@ -16,7 +16,7 @@ const (
 	marsupialgurgleBaseURI = `https://marsupialgurgle.com`
 
 	rawMP3LinkRegex         = `href="((?:/[\w+|-]+)+\.mp3)"`
-	mp3WithDescriptionRegex = `(?sU)<p><strong>(.*)</strong></p>.*href="((?:/[\w+|-]+)+\.mp3)"`
+	mp3WithDescriptionRegex = `(?sU)<p><\w+>(.*)</\w+></p>.*href="((?:/[\w+|-]+)+\.mp3)"`
 )
 
 var (
@@ -87,6 +87,13 @@ func main() {
 
 		if len(distinctDecoratedMP3URIs) != len(distinctMP3URIs) {
 			log.Printf("Mismatch on page %v", pageNumber)
+
+			for m := range distinctMP3URIs {
+				if _, found := distinctDecoratedMP3URIs[m]; !found {
+					fmt.Println(m)
+				}
+			}
+
 			break
 		}
 	}
