@@ -12,6 +12,7 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/jecolasurdo/tbtlarchivist/services/curators/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/cdp"
+	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/utils"
 )
 
 const (
@@ -52,14 +53,10 @@ func main() {
 		cdp.Logf("Getting page count..."),
 		chromedp.Text(".pagination_link-last", &rawPageCount, chromedp.BySearch),
 	)
-	if err != nil {
-		log.Fatal(err)
-	}
+	utils.LogFatalIfErr(err)
 
 	pageCount, err := strconv.Atoi(rawPageCount)
-	if err != nil {
-		log.Fatal(err)
-	}
+	utils.LogFatalIfErr(err)
 
 	log.Println("Scraping...")
 	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
@@ -68,13 +65,9 @@ func main() {
 			chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/episodes/page/%v", pageNumber)),
 			chromedp.InnerHTML(".collection_results", &collectionResults, chromedp.NodeVisible, chromedp.BySearch),
 		)
-
-		if err != nil {
-			log.Fatal(err)
-		}
+		utils.LogFatalIfErr(err)
 
 		episodeLinkList := hrefRe.FindAllString(collectionResults, -1)
-
 		for _, episodeLink := range episodeLinkList {
 			var nextDataInnerHTML string
 			var title string
@@ -87,10 +80,7 @@ func main() {
 				chromedp.TextContent("body > div > main > div > section > div > article > div > div > div > p", &description, chromedp.ByQuery),
 				chromedp.TextContent(".content_date", &rawDate, chromedp.BySearch),
 			)
-
-			if err != nil {
-				log.Fatal(err)
-			}
+			utils.LogFatalIfErr(err)
 
 			mediaURI := mp3Re.FindString(nextDataInnerHTML)
 			if mediaURI == "" {
@@ -104,14 +94,10 @@ func main() {
 				log.Fatal("Unable to extract duration for episode.")
 			}
 			durationMS, err := strconv.Atoi(rawDuration[1])
-			if err != nil {
-				log.Fatal(err)
-			}
+			utils.LogFatalIfErr(err)
 
 			dateAired, err := time.Parse("January 2, 2006", rawDate)
-			if err != nil {
-				log.Fatal(err)
-			}
+			utils.LogFatalIfErr(err)
 
 			episodeInfo := contracts.EpisodeInfo{
 				CuratorInformation: scraperName,
