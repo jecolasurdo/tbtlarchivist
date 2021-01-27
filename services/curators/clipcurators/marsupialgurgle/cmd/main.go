@@ -14,11 +14,14 @@ import (
 
 const (
 	marsupialgurgleBaseURI = `https://marsupialgurgle.com`
-	rawMP3LinkRegex        = `href="((?:/[\w+|-]+)+\.mp3)"`
+
+	rawMP3LinkRegex         = `href="((?:/[\w+|-]+)+\.mp3)"`
+	mp3WithDescriptionRegex = `(?sU)<p><strong>(.*)</strong></p>.*href="((?:/[\w+|-]+)+\.mp3)"`
 )
 
 var (
-	rawMP3LinkRe = regexp.MustCompile(rawMP3LinkRegex)
+	rawMP3LinkRe         = regexp.MustCompile(rawMP3LinkRegex)
+	mp3WithDescriptionRe = regexp.MustCompile(mp3WithDescriptionRegex)
 )
 
 // clip curation process for marsupial gurgle
@@ -61,13 +64,30 @@ func main() {
 		distinctMP3URIs := map[string]struct{}{}
 		rawMP3Matches := rawMP3LinkRe.FindAllStringSubmatch(searchDOM, -1)
 		for i := 0; i < len(rawMP3Matches); i++ {
-			// We skip the first "full match" as we're only interested in the
-			// submatches.  There should only be one submatch per full match,
-			// but we will iterate to be safe.
-			for j := 1; j < len(rawMP3Matches[i]); j++ {
-				distinctMP3URIs[rawMP3Matches[i][j]] = struct{}{}
+			if len(rawMP3Matches[i]) != 2 {
+				log.Println(rawMP3Matches[i])
+				continue
 			}
+			distinctMP3URIs[rawMP3Matches[i][1]] = struct{}{}
 		}
+		log.Printf("\tDistinct raw mp3 links: %v", len(distinctMP3URIs))
 
+		decoratedMP3Matches := mp3WithDescriptionRe.FindAllStringSubmatch(searchDOM, -1)
+		distinctDecoratedMP3URIs := map[string]struct{}{}
+		for i := 0; i < len(decoratedMP3Matches); i++ {
+			if len(decoratedMP3Matches[i]) != 3 {
+				log.Println(decoratedMP3Matches[i])
+				continue
+			}
+			_ = decoratedMP3Matches[i][1] // description to be used later
+			mp3URI := decoratedMP3Matches[i][2]
+			distinctDecoratedMP3URIs[mp3URI] = struct{}{}
+		}
+		log.Printf("\tDistinct decorated mp3s links: %v", len(distinctDecoratedMP3URIs))
+
+		if len(distinctDecoratedMP3URIs) != len(distinctMP3URIs) {
+			log.Printf("Mismatch on page %v", pageNumber)
+			break
+		}
 	}
 }
