@@ -49,14 +49,14 @@ func main() {
 	utils.LogFatalIfErr(err)
 
 	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
-		var pageBody string
+		var searchDOM string
 		err := chromedp.Run(ctx,
-			chromedp.Navigate("https://www.marsupialgurgle.com/page/%v/?s", pageNumber),
-			chromedp.InnerHTML("body", &pageBody, chromedp.BySearch, chromedp.NodeReady),
+			chromedp.Navigate(fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber)),
+			chromedp.InnerHTML(".search", &searchDOM, chromedp.ByQuery, chromedp.NodeReady),
 		)
 		utils.LogFatalIfErr(err)
 
-		rawMP3Matches := rawMP3LinkRe.FindAllStringSubmatch(pageBody, -1)
+		rawMP3Matches := rawMP3LinkRe.FindAllStringSubmatch(searchDOM, -1)
 		for i := 0; i < len(rawMP3Matches); i++ {
 			// We skip the first "full match" as we're only interested in the
 			// submatches.  There should only be one submatch per full match,
