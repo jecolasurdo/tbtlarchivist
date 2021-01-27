@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	rawMP3LinkRegex = `href="((?:/[\w+|-]+)+\.mp3)"`
+	marsupialgurgleBaseURI = `https://marsupialgurgle.com`
+	rawMP3LinkRegex        = `href="((?:/[\w+|-]+)+\.mp3)"`
 )
 
 var (
@@ -57,13 +58,14 @@ func main() {
 		)
 		utils.LogFatalIfErr(err)
 
+		distinctMP3URIs := map[string]struct{}{}
 		rawMP3Matches := rawMP3LinkRe.FindAllStringSubmatch(searchDOM, -1)
 		for i := 0; i < len(rawMP3Matches); i++ {
 			// We skip the first "full match" as we're only interested in the
 			// submatches.  There should only be one submatch per full match,
 			// but we will iterate to be safe.
 			for j := 1; j < len(rawMP3Matches[i]); j++ {
-				fmt.Println("\t" + rawMP3Matches[i][j])
+				distinctMP3URIs[rawMP3Matches[i][j]] = struct{}{}
 			}
 		}
 
