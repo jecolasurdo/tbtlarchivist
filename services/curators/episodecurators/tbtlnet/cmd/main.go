@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"regexp"
@@ -11,48 +10,34 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
+	"github.com/jecolasurdo/tbtlarchivist/services/curators/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/cdp"
 )
 
-// EpisodeInfo contains information about an episode.
-type EpisodeInfo struct {
-	// DateCurated represents the date that the curator service found and
-	// analyzed the episode.
-	DateCurated time.Time
+const (
+	scraperName = `tbtl.net scraper`
 
-	// CuratorInformation provides information about the utility that extracted
-	// this information.
-	CuratorInformation string
+	// Duration is extracted from the __NEXT_DATA__ structure within the DOM.
+	// __NEXT_DATA__ may contain data for m4a files in addition to mp3s, and
+	// the m4a durations may not match that of the mp3s.  To address this,
+	// durationRegex qualifies the duration_ms field as being directly
+	// preceeded by the value `mp3\",\"`. This ensures that the duration data
+	// is associated with the correct file, but is admittedly a little fragile
+	// in that it presumes field order is fixed.
+	durationRegex = `mp3\\",\\"duration_ms\\":(\d+)`
+	hrefRegex     = `/episode/\d{4}/\d\d/\d\d/(?:[[:alnum:]]|-)+`
+	mp3Regex      = `https://(?:(?:\w+|-|\.)+/)+\d{4}/\d{1,2}/(?:\d{1,2}/)?(?:\w+|-)+\.mp3`
 
-	// DateAired is the date that the episode was originally aired.
-	DateAired time.Time
+	unreplacedUAToken = "unreplaced_ua"
+	userAgent         = "web"
+)
 
-	// Duration is the length of the episode.
-	Duration time.Duration
-
-	// Title is the name of the episode.
-	Title string
-
-	// Description is the episode description.
-	Description string
-
-	// MediaURI is a URI for where the episode media can be accessed.
-	MediaURI string
-
-	// MediaType is the media type for the episode (such as mp3, etc).
-	MediaType string
-}
-
-func (e EpisodeInfo) String() string {
-	jsonBytes, err := json.MarshalIndent(e, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	return string(jsonBytes)
-}
+var durationRe = regexp.MustCompile(durationRegex)
+var hrefRe = regexp.MustCompile(hrefRegex)
+var mp3Re = regexp.MustCompile(mp3Regex)
 
 func main() {
-	log.Println("Starting Chrome...")
+	log.Println("Starting Chrome (headless)...")
 	ctx, cancel := chromedp.NewContext(
 		context.Background(),
 		chromedp.WithLogf(log.Printf),
@@ -76,11 +61,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	const hrefRegex = `/episode/\d{4}/\d\d/\d\d/(?:[[:alnum:]]|-)+`
-	hrefRe := regexp.MustCompile(hrefRegex)
+	log.Println("Scraping...")
 	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
-		fmt.Printf("Page: %v\n", pageNumber)
-
 		var collectionResults string
 		err := chromedp.Run(ctx,
 			chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/episodes/page/%v", pageNumber)),
@@ -93,18 +75,6 @@ func main() {
 
 		episodeLinkList := hrefRe.FindAllString(collectionResults, -1)
 
-		// The __NEXT_DATA__ structure may contain data for m4a files in
-		// addition to mp3s, and the m4a durations may not match that of the
-		// mp3s.  To address this, durationRegex qualifies the duration_ms
-		// field as being directly preceeded by the value `mp3\",\"`. This
-		// ensures that the duration data is associated with the correct file,
-		// but is admittedly a little fragile in that it presumes field order
-		// is fixed.
-		const durationRegex = `mp3\\",\\"duration_ms\\":(\d+)`
-		durationRe := regexp.MustCompile(durationRegex)
-
-		const mp3Regex = `https://(?:(?:\w+|-|\.)+/)+\d{4}/\d{1,2}/(?:\d{1,2}/)?(?:\w+|-)+\.mp3`
-		mp3Re := regexp.MustCompile(mp3Regex)
 		for _, episodeLink := range episodeLinkList {
 			var nextDataInnerHTML string
 			var title string
@@ -126,8 +96,6 @@ func main() {
 			if mediaURI == "" {
 				log.Fatal("Media URI Not Identified")
 			}
-			const unreplacedUAToken = "unreplaced_ua"
-			const userAgent = "web"
 			mediaURI = strings.Replace(mediaURI, unreplacedUAToken, userAgent, -1)
 			mediaType := mediaURI[len(mediaURI)-3:]
 
@@ -145,8 +113,8 @@ func main() {
 				log.Fatal(err)
 			}
 
-			episodeInfo := EpisodeInfo{
-				CuratorInformation: "tbtl.net scraper",
+			episodeInfo := contracts.EpisodeInfo{
+				CuratorInformation: scraperName,
 				DateCurated:        time.Now().UTC(),
 				DateAired:          dateAired,
 				Duration:           time.Duration(durationMS) * time.Millisecond,
