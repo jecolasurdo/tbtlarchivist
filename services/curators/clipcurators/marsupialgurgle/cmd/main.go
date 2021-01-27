@@ -52,7 +52,8 @@ func main() {
 	pageCount, err := strconv.Atoi(rawPageCount)
 	utils.LogFatalIfErr(err)
 
-	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
+	fmt.Println("Temporarily starting after page 1 for testing")
+	for pageNumber := 113; pageNumber <= pageCount; pageNumber++ {
 		log.Printf("Scraping page %v of %v...", pageNumber, pageCount)
 		var searchDOM string
 		err := chromedp.Run(ctx,
@@ -86,6 +87,12 @@ func main() {
 		log.Printf("\tDistinct decorated mp3s links: %v", len(distinctDecoratedMP3URIs))
 
 		if len(distinctDecoratedMP3URIs) != len(distinctMP3URIs) {
+
+			// pages 83 and 112 contain a variant in the html formatting which is
+			// <p><strong><br><a href...
+			// whereas the following is more typical for the site
+			// <p><strong> ... </p></strong><p><a href...
+			// Page 112 example /audio/lukeandrewdoyouneedsomealcohol-2748.mp3
 			log.Printf("Mismatch on page %v", pageNumber)
 
 			for m := range distinctMP3URIs {
