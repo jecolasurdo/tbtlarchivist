@@ -11,22 +11,8 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
+	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/cdp"
 )
-
-func logSomething(s string) littleLogger {
-	return littleLogger{
-		s: s,
-	}
-}
-
-type littleLogger struct {
-	s string
-}
-
-func (l littleLogger) Do(ctx context.Context) error {
-	log.Println(l.s)
-	return nil
-}
 
 // EpisodeInfo contains information about an episode.
 type EpisodeInfo struct {
@@ -75,10 +61,10 @@ func main() {
 
 	var rawPageCount string
 	err := chromedp.Run(ctx,
-		logSomething("Navigating to main episodes page..."),
+		cdp.Logf("Navigating to main episodes page..."),
 		chromedp.Navigate(`https://www.tbtl.net/episodes`),
 
-		logSomething("Getting page count..."),
+		cdp.Logf("Getting page count..."),
 		chromedp.Text(".pagination_link-last", &rawPageCount, chromedp.BySearch),
 	)
 	if err != nil {
