@@ -41,7 +41,7 @@ func main() {
 		cdp.Logf("Navigating to global search results page..."),
 		chromedp.Navigate(`https://www.marsupialgurgle.com/page/1/?s`),
 		cdp.Logf("Getting page count..."),
-		chromedp.Text(".page-numbers", &rawPageCount, chromedp.ByQuery),
+		chromedp.Text(`#bottom-nav-pagination > a:nth-child(5)`, &rawPageCount, chromedp.ByQuery),
 	)
 	utils.LogFatalIfErr(err)
 
@@ -49,6 +49,7 @@ func main() {
 	utils.LogFatalIfErr(err)
 
 	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
+		log.Printf("Scraping page %v of %v...", pageNumber, pageCount)
 		var searchDOM string
 		err := chromedp.Run(ctx,
 			chromedp.Navigate(fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber)),
@@ -62,7 +63,7 @@ func main() {
 			// submatches.  There should only be one submatch per full match,
 			// but we will iterate to be safe.
 			for j := 1; j < len(rawMP3Matches[i]); j++ {
-				fmt.Println(rawMP3Matches[i][j])
+				fmt.Println("\t" + rawMP3Matches[i][j])
 			}
 		}
 
