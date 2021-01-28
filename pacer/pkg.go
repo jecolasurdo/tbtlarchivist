@@ -1,53 +1,43 @@
-// Package pacer provides capabilities for throttling the rate at which a
-// channel is flushed.
 package pacer
 
 import (
-	"context"
-	"runtime"
+	"log"
+	"time"
+
+	"github.com/gonum/stat/distuv"
 )
 
-// Queue .
-type Queue struct {
-	backlog chan func() error
+// Pace provides a means of pausing program execution for a period of time.
+type Pace struct {
+	basis     time.Duration
+	startTime time.Time
+	jitter    distuv.Normal
 }
 
-// Enqueue places as action in the queue where it will be wait to be called.
-func (q Queue) Enqueue(action func() error) {
-	if q.backlog == nil {
-		q.backlog = make(chan func() error)
+// SetPace returns a Pace where mu is the average wait time, sigma is the
+// standard deviation of the wait time, and basis is the wait-time unit
+// duration.
+func SetPace(mu, sigma float64, basis time.Duration) Pace {
+	return Pace{
+		basis:     basis,
+		startTime: time.Now(),
+		jitter: distuv.Normal{
+			Mu:    mu,
+			Sigma: sigma,
+		},
 	}
-	q.backlog <- action
 }
 
-// Poll initializes the internall poller, which pumps the queue, executing
-// queued actions in a FIFO order. If the supplied context is cancelled:
-// - the poller is immediately stopped
-// - its error channel is closed
-// - the underlaying queue is immediately closed and deallocated
-// - any remaining work in the queue will be lost as soon as ctx is
-//   cancelled.
-// It is only safe to call Poll a second time if the context for the previous
-// call has been cancelled and is done.
-func (q Queue) Poll(ctx context.Context) <-chan error {
-	if q.backlog == nil {
-		q.backlog = make(chan func() error)
+// Wait blocks until the time since the last call has exceeded a minimum pacing
+// duration. The pace duration is centered around a mean wait time plus or
+// minus a normally distributed jitter period.
+func (p Pace) Wait() {
+	paceDuration := time.Duration(p.jitter.Rand()) * p.basis
+	paceTime := p.startTime.Add(paceDuration)
+	if time.Now().Before(paceTime) {
+		waitDuration := paceTime.Sub(time.Now())
+		log.Printf("Pacing (%v)...", waitDuration)
+		time.Sleep(waitDuration)
 	}
-	errSource := make(chan error)
-	go func() {
-		defer close(errSource)
-		for {
-			select {
-			case <-ctx.Done():
-				errSource <- ctx.Err()
-				q.backlog = nil
-				return
-			case action := <-q.backlog:
-				errSource <- action()
-			default:
-				runtime.Gosched()
-			}
-		}
-	}()
-	return errSource
+	p.startTime = time.Now()
 }
