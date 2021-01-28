@@ -52,6 +52,8 @@ func main() {
 
 	fmt.Println("Temporarily starting after page 1 for testing")
 	for pageNumber := 113; pageNumber <= pageCount; pageNumber++ {
+		paceTime := time.Now().Add(5 * time.Second)
+
 		log.Printf("Scraping page %v of %v...", pageNumber, pageCount)
 		resp, err := http.Get(fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber))
 		utils.LogFatalIfErr(err)
@@ -103,6 +105,11 @@ func main() {
 			}
 		}
 
-		time.Sleep(1 * time.Second)
+		now := time.Now()
+		if now.Before(paceTime) {
+			waitDuration := paceTime.Sub(now)
+			log.Printf("Pacing (%v)...", waitDuration)
+			time.Sleep(waitDuration)
+		}
 	}
 }
