@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
+	"github.com/jecolasurdo/tbtlarchivist/pacer"
 	"github.com/jecolasurdo/tbtlarchivist/services/curators/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/cdp"
 	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/utils"
@@ -59,6 +60,7 @@ func main() {
 	utils.LogFatalIfErr(err)
 
 	log.Println("Scraping...")
+	pace := pacer.SetPace(1000, 300, time.Millisecond)
 	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
 		var collectionResults string
 		err := chromedp.Run(ctx,
@@ -111,7 +113,9 @@ func main() {
 			}
 
 			fmt.Println(episodeInfo.String() + ",")
+			pace.Wait()
 		}
+		pace.Wait()
 	}
 
 	fmt.Println("Done.")
