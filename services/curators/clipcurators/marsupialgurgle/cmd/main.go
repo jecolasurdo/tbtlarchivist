@@ -11,6 +11,7 @@ import (
 
 	"github.com/antchfx/htmlquery"
 	"github.com/antchfx/xpath"
+	"github.com/gonum/stat/distuv"
 	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/utils"
 )
 
@@ -51,8 +52,12 @@ func main() {
 	log.Println(pageCount)
 
 	fmt.Println("Temporarily starting after page 1 for testing")
+	jitter := distuv.Normal{
+		Mu:    5000,
+		Sigma: 2000,
+	}
 	for pageNumber := 113; pageNumber <= pageCount; pageNumber++ {
-		paceTime := time.Now().Add(5 * time.Second)
+		paceTime := time.Now().Add(time.Duration(jitter.Rand()) * time.Millisecond)
 
 		log.Printf("Scraping page %v of %v...", pageNumber, pageCount)
 		resp, err := http.Get(fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber))
