@@ -16,6 +16,9 @@ import (
 )
 
 const (
+	pacingAverage = 4000
+	pacingSigma   = 2000
+
 	marsupialgurgleBaseURI = `https://marsupialgurgle.com`
 
 	pageCountXPath = `//*[@id="bottom-nav-pagination"]/a[3]`
@@ -31,14 +34,6 @@ var (
 	mp3WithDescriptionRe = regexp.MustCompile(mp3WithDescriptionRegex)
 )
 
-// clip curation process for marsupial gurgle
-// visit page one for a global search
-// find the max page count
-// for each page
-//   extract media uri, originating uri, description
-//    - Get a distinct list of all mp3s on page
-//    - Build contextualized lists of mp3s
-//    - Remove any duplicates (same file name more than once)
 func main() {
 
 	log.Printf("Navigating to global search results page...")
@@ -51,7 +46,7 @@ func main() {
 	utils.LogFatalIfErr(err)
 	log.Println(pageCount)
 
-	pace := pacer.SetPace(4000, 2000, time.Millisecond)
+	pace := pacer.SetPace(pacingAverage, pacingSigma, time.Millisecond)
 	for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
 		log.Printf("Scraping page %v of %v...", pageNumber, pageCount)
 		resp, err := http.Get(fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber))
@@ -68,41 +63,35 @@ func main() {
 		rawMP3Matches := rawMP3LinkRe.FindAllStringSubmatch(searchHTML, -1)
 		for i := 0; i < len(rawMP3Matches); i++ {
 			if len(rawMP3Matches[i]) != 2 {
-				log.Println(rawMP3Matches[i])
 				continue
 			}
 			distinctMP3URIs[rawMP3Matches[i][1]] = struct{}{}
 		}
-		log.Printf("\tDistinct raw mp3 links: %v", len(distinctMP3URIs))
 
 		decoratedMP3Matches := mp3WithDescriptionRe.FindAllStringSubmatch(searchHTML, -1)
 		distinctDecoratedMP3URIs := map[string]struct{}{}
 		for i := 0; i < len(decoratedMP3Matches); i++ {
 			if len(decoratedMP3Matches[i]) != 3 {
-				log.Println(decoratedMP3Matches[i])
 				continue
 			}
 			_ = decoratedMP3Matches[i][1] // description to be used later
 			mp3URI := decoratedMP3Matches[i][2]
 			distinctDecoratedMP3URIs[mp3URI] = struct{}{}
 		}
-		log.Printf("\tDistinct decorated mp3s links: %v", len(distinctDecoratedMP3URIs))
 
-		if len(distinctDecoratedMP3URIs) != len(distinctMP3URIs) {
-
-			// pages 83 and 112 contain a variant in the html formatting which is
-			// <p><strong><br><a href...
-			// whereas the following is more typical for the site
-			// <p><strong> ... </p></strong><p><a href...
-			// Page 112 example /audio/lukeandrewdoyouneedsomealcohol-2748.mp3
-			log.Printf("Mismatch on page %v", pageNumber)
-
+		mp3URIs := []string{}
+		// The regex's we're using guarantee that len(distinctMP3URIs) >=
+		// len(distinctDecoratedMP3URIs)
+		if len(distinctMP3URIs) > len(distinctDecoratedMP3URIs) {
 			for m := range distinctMP3URIs {
 				if _, found := distinctDecoratedMP3URIs[m]; !found {
-					fmt.Println(m)
+					mp3URIs = append(mp3URIs, m)
 				}
 			}
 		}
+
+		fmt.Println("\tundecorated mp3 URIs:", len(mp3URIs))
+		fmt.Println("\tdecorated mp3 URIs:", len(distinctDecoratedMP3URIs))
 
 		pace.Wait()
 	}
