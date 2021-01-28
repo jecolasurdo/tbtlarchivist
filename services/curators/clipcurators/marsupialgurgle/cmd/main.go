@@ -6,8 +6,10 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"sync"
 
 	"github.com/chromedp/chromedp"
+	"github.com/jecolasurdo/tbtlarchivist/pacer"
 	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/cdp"
 	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/utils"
 )
@@ -33,6 +35,11 @@ var (
 //    - Build contextualized lists of mp3s
 //    - Remove any duplicates (same file name more than once)
 func main() {
+	workQueue := new(pacer.Queue)
+
+	_ = workQueue.Poll(context.Background())
+	wg := new(sync.WaitGroup)
+
 	log.Println("Starting Chrome...")
 	ctx, cancel := chromedp.NewContext(
 		context.Background(),
@@ -54,54 +61,64 @@ func main() {
 
 	fmt.Println("Temporarily starting after page 1 for testing")
 	for pageNumber := 113; pageNumber <= pageCount; pageNumber++ {
-		log.Printf("Scraping page %v of %v...", pageNumber, pageCount)
-		var searchDOM string
-		err := chromedp.Run(ctx,
-			chromedp.Navigate(fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber)),
-			chromedp.InnerHTML(".search", &searchDOM, chromedp.ByQuery, chromedp.NodeReady),
-		)
-		utils.LogFatalIfErr(err)
+		wg.Add(1)
+		workQueue.Enqueue(func() error {
+			defer wg.Done()
 
-		distinctMP3URIs := map[string]struct{}{}
-		rawMP3Matches := rawMP3LinkRe.FindAllStringSubmatch(searchDOM, -1)
-		for i := 0; i < len(rawMP3Matches); i++ {
-			if len(rawMP3Matches[i]) != 2 {
-				log.Println(rawMP3Matches[i])
-				continue
+			log.Printf("Scraping page %v of %v...", pageNumber, pageCount)
+			var searchDOM string
+			err := chromedp.Run(ctx,
+				chromedp.Navigate(fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber)),
+				chromedp.InnerHTML(".search", &searchDOM, chromedp.ByQuery, chromedp.NodeReady),
+			)
+			if err != nil {
+				return err
 			}
-			distinctMP3URIs[rawMP3Matches[i][1]] = struct{}{}
-		}
-		log.Printf("\tDistinct raw mp3 links: %v", len(distinctMP3URIs))
 
-		decoratedMP3Matches := mp3WithDescriptionRe.FindAllStringSubmatch(searchDOM, -1)
-		distinctDecoratedMP3URIs := map[string]struct{}{}
-		for i := 0; i < len(decoratedMP3Matches); i++ {
-			if len(decoratedMP3Matches[i]) != 3 {
-				log.Println(decoratedMP3Matches[i])
-				continue
+			distinctMP3URIs := map[string]struct{}{}
+			rawMP3Matches := rawMP3LinkRe.FindAllStringSubmatch(searchDOM, -1)
+			for i := 0; i < len(rawMP3Matches); i++ {
+				if len(rawMP3Matches[i]) != 2 {
+					log.Println(rawMP3Matches[i])
+					continue
+				}
+				distinctMP3URIs[rawMP3Matches[i][1]] = struct{}{}
 			}
-			_ = decoratedMP3Matches[i][1] // description to be used later
-			mp3URI := decoratedMP3Matches[i][2]
-			distinctDecoratedMP3URIs[mp3URI] = struct{}{}
-		}
-		log.Printf("\tDistinct decorated mp3s links: %v", len(distinctDecoratedMP3URIs))
+			log.Printf("\tDistinct raw mp3 links: %v", len(distinctMP3URIs))
 
-		if len(distinctDecoratedMP3URIs) != len(distinctMP3URIs) {
+			decoratedMP3Matches := mp3WithDescriptionRe.FindAllStringSubmatch(searchDOM, -1)
+			distinctDecoratedMP3URIs := map[string]struct{}{}
+			for i := 0; i < len(decoratedMP3Matches); i++ {
+				if len(decoratedMP3Matches[i]) != 3 {
+					log.Println(decoratedMP3Matches[i])
+					continue
+				}
+				_ = decoratedMP3Matches[i][1] // description to be used later
+				mp3URI := decoratedMP3Matches[i][2]
+				distinctDecoratedMP3URIs[mp3URI] = struct{}{}
+			}
+			log.Printf("\tDistinct decorated mp3s links: %v", len(distinctDecoratedMP3URIs))
 
-			// pages 83 and 112 contain a variant in the html formatting which is
-			// <p><strong><br><a href...
-			// whereas the following is more typical for the site
-			// <p><strong> ... </p></strong><p><a href...
-			// Page 112 example /audio/lukeandrewdoyouneedsomealcohol-2748.mp3
-			log.Printf("Mismatch on page %v", pageNumber)
+			if len(distinctDecoratedMP3URIs) != len(distinctMP3URIs) {
 
-			for m := range distinctMP3URIs {
-				if _, found := distinctDecoratedMP3URIs[m]; !found {
-					fmt.Println(m)
+				// pages 83 and 112 contain a variant in the html formatting which is
+				// <p><strong><br><a href...
+				// whereas the following is more typical for the site
+				// <p><strong> ... </p></strong><p><a href...
+				// Page 112 example /audio/lukeandrewdoyouneedsomealcohol-2748.mp3
+				log.Printf("Mismatch on page %v", pageNumber)
+
+				for m := range distinctMP3URIs {
+					if _, found := distinctDecoratedMP3URIs[m]; !found {
+						fmt.Println(m)
+					}
 				}
 			}
 
-			break
-		}
+			return nil
+		})
+
 	}
+
+	wg.Wait()
 }
