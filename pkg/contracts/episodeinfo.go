@@ -34,6 +34,7 @@ type EpisodeInfo struct {
 	MediaType string
 }
 
+// String returns a string representation of the EpisodeInfo instance.
 func (e EpisodeInfo) String() string {
 	jsonBytes, err := json.MarshalIndent(e, "", "  ")
 	if err != nil {
