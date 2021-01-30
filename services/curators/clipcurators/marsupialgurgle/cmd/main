@@ -11,8 +11,7 @@ import (
 
 	"github.com/antchfx/htmlquery"
 	"github.com/antchfx/xpath"
-	"github.com/jecolasurdo/tbtlarchivist/pacer"
-	"github.com/jecolasurdo/tbtlarchivist/services/curators/internal/utils"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/pacer"
 )
 
 const (
