@@ -17,25 +17,12 @@ type API struct{}
 
 func Start() error {
 	api := new(API)
-	curatedEpisodeSource, err := api.getCuratedEpisodeSource()
-	if err != nil {
-		return err
-	}
+	errorTrap := make(chan error)
 
-	curatedClipSource, err := api.getCuratedClipSource()
-	if err != nil {
-		return err
-	}
-
-	pendingResearchSource, err := api.getPendingResearchSource()
-	if err != nil {
-		return err
-	}
-
-	completedResearchSource, err := api.getCompletedResearchSource()
-	if err != nil {
-		return err
-	}
+	curatedEpisodeSource, errorSource := api.getCuratedEpisodeSource()
+	curatedClipSource, errorSource := api.getCuratedClipSource()
+	pendingResearchSource, errorSource := api.getPendingResearchSource()
+	completedResearchSource, errorSource := api.getCompletedResearchSource()
 
 	for {
 		select {
@@ -44,19 +31,31 @@ func Start() error {
 		// each consumer instance.
 
 		case curatedEpisode := <-curatedEpisodeSource:
-			// process curated episode
+			err := api.processCuratedEpisode(curatedEpisode)
+			if err != nil {
+				return err
+			}
 		case curatedClip := <-curatedClipSource:
-			// process curated clip
+			err := api.processCuratedClip(curatedClip)
+			if err != nil {
+				return err
+			}
 		case pendingResearch := <-pendingResearchSource:
-			// process pending research
+			err := processPendingResearch(pendingResearch)
+			if err != nil {
+				return err
+			}
 		case completedResearch := <-completedResearchSource:
-			// process completed research
+			err := processCompletedResearch(completedResearch)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 }
 
-func (a *API) getCuratedEpisodeSource() (<-chan contracts.EpisodeInfo, error) {
+func (a *API) getCuratedEpisodeSource() (<-chan contracts.EpisodeInfo, <-chan error) {
 	// episodes are unique by name + date aired
 	// check to see if the episode exists
 	//	if it does not: add it
@@ -67,12 +66,20 @@ func (a *API) getCuratedEpisodeSource() (<-chan contracts.EpisodeInfo, error) {
 	panic("not implemented")
 }
 
-func (a *API) getCuratedClipSource() (<-chan contracts.ClipInfo, error) {
+func (a *API) processCuratedEpisode(episode contracts.EpisodeInfo) error {
+	panic("not implemented")
+}
+
+func (a *API) getCuratedClipSource() (<-chan contracts.ClipInfo, <-chan error) {
 	// similar process to episode handling, except clips are unique by name only
 	panic("not implemented")
 }
 
-func (a *API) getPendingResearchSource() (<-chan contracts.ResearchPending, error) {
+func (a *API) processCuratedClip(clip contracts.ClipInfo) error {
+	panic("not implemented")
+}
+
+func (a *API) getPendingResearchSource() (<-chan contracts.ResearchPending, <-chan error) {
 	// check to see how many consumers there are for a queue
 	// compare the consumer count to the message count
 	// Then determine how much work to create, ie consumerCount - messageCount
@@ -80,7 +87,15 @@ func (a *API) getPendingResearchSource() (<-chan contracts.ResearchPending, erro
 	panic("not implemented")
 }
 
-func (a *API) getCompletedResearchSource() (<-chan contracts.ResearchComplete, error) {
+func processPendingResearch(pendingResearch contracts.ResearchPending) error {
+	panic("not implemented")
+}
+
+func (a *API) getCompletedResearchSource() (<-chan contracts.ResearchComplete, <-chan error) {
 	// upsert research and update leases if applicable
+	panic("not implemented")
+}
+
+func processCompletedResearch(completedResearch contracts.ResearchComplete) error {
 	panic("not implemented")
 }
