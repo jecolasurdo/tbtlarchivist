@@ -12,6 +12,7 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/internal/cdp"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/internal/util"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/pacer"
 )
 
@@ -79,7 +80,12 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 
 		log.Println("Scraping...")
 		pace := pacer.SetPace(1000, 300, time.Millisecond)
-		for pageNumber := 1; pageNumber <= pageCount; pageNumber++ {
+
+		// We visit the pages in random order to increase the breadth of each
+		// search, in case the search gets terminated before all pages have
+		// been visited.
+		shuffledPages := util.GetShuffledIntList(pageCount)
+		for _, pageNumber := range shuffledPages {
 			var collectionResults string
 			err := chromedp.Run(ctx,
 				chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/episodes/page/%v", pageNumber)),
