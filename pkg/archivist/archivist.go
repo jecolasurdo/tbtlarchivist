@@ -1,8 +1,6 @@
 package archivist
 
 import (
-	"sync"
-
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
@@ -12,7 +10,7 @@ import (
 //  - Creating work for researchers.
 //  - Checking in work returned from the researchers.
 type API struct {
-	ErrorSource <-chan error
+	errorSource <-chan error
 }
 
 type worker struct {
@@ -20,44 +18,84 @@ type worker struct {
 	delegate func(interface{}) error
 }
 
-// event loop
-// 	check for curated episode
-//  check for curated clip
-//	check if there's work to be done for the researchers
-//	check for work returned from researchers
-
+// Initialize activates a set of workers. If there is an error activating any
+// of the workers, this method will immediately return an error. Each worker
+// produces a stream of pending-work-items. The places all pending-work-items
+// from all workers into a common queue, and polls this queue.  As each item is
+// dequeued, the item is executed by the worker's delegate function. If the
+// delegate function returns an error, that error is passed into the APIs error
+// channel.
 func Initialize() (*API, error) {
-	workerSource := []<-chan worker{}
-	getCuratedEpisodeSource()
+	
+	panic("TODO: Finish documenting the theory of operation for this method and
+	figure out how to wind down the workers safely in the event of an error
+	during initialization, during a channel closure, or other context
+	cancelation")
 
+	a := new(API)
+
+	ces, err := a.getCuratedEpisodeSource()
+	if err != nil {
+		return nil, err
+	}
+
+	ccs, err := a.getCuratedClipSource()
+	if err != nil {
+		return nil, err
+	}
+
+	prs, err := a.getPendingResearchSource()
+	if err != nil {
+		return nil, err
+	}
+
+	crs, err := a.getCompletedResearchSource()
+	if err != nil {
+		return nil, err
+	}
+
+	errSrc := make(chan error)
+	go func() {
+		allChannelsOpen := true
+		for allChannelsOpen {
+			select {
+			case ce, ok := <-ces:
+				if !ok {
+					allChannelsOpen = false
+				} else {
+					catch(a.processCuratedEpisode(ce), errSrc)
+				}
+			case cc, ok := <-ccs:
+				if !ok {
+					allChannelsOpen = false
+				} else {
+					catch(a.processCuratedClip(cc), errSrc)
+				}
+			case pr, ok := <-prs:
+				if !ok {
+					allChannelsOpen = false
+				} else {
+					catch(a.processPendingResearch(pr), errSrc)
+				}
+			case cr, ok := <-crs:
+				if !ok {
+					allChannelsOpen = false
+				} else {
+					catch(a.processCompletedResearch(cr), errSrc)
+
+				}
+			}
+		}
+	}()
+
+	a.errorSource = errSrc
+	return a, nil
 }
 
-func (a *API) poll(workerSource []<-chan worker) <-chan error {
-	backlog := make(chan worker)
-	go func() {
-		defer close(backlog)
-		wg := new(sync.WaitGroup)
-		for _, w := range workerSource {
-			wg.Add(1)
-			go func(w <-chan worker) {
-				for workItem := range w {
-					backlog <- workItem
-				}
-				wg.Done()
-			}(w)
-		}
-		wg.Wait()
-	}()
-
-	errorSource := make(chan error)
-	go func() {
-		defer close(errorSource)
-		for work := range backlog {
-			errorSource <- work.delegate(work.source)
-		}
-	}()
-
-	return errorSource
+func catch(err error, ch chan<- error) {
+	if err != nil {
+		ch <- err
+	}
 }
 
 //TODO: Set Qos for channels to control how much work is buffered for
@@ -95,7 +133,7 @@ func (a *API) getPendingResearchSource() (<-chan contracts.ResearchPending, erro
 	panic("not implemented")
 }
 
-func processPendingResearch(pendingResearch contracts.ResearchPending) error {
+func (a *API) processPendingResearch(pendingResearch contracts.ResearchPending) error {
 	panic("not implemented")
 }
 
@@ -104,6 +142,6 @@ func (a *API) getCompletedResearchSource() (<-chan contracts.ResearchComplete, e
 	panic("not implemented")
 }
 
-func processCompletedResearch(completedResearch contracts.ResearchComplete) error {
+func (a *API) processCompletedResearch(completedResearch contracts.ResearchComplete) error {
 	panic("not implemented")
 }
