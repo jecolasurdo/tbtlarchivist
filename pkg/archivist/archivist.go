@@ -2,8 +2,6 @@ package archivist
 
 import (
 	"context"
-
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
 // API is an instance of an archivist. An archivist is responsible for the
@@ -111,53 +109,4 @@ func catch(err error, ch chan<- error) {
 	if err != nil {
 		ch <- err
 	}
-}
-
-//TODO: Set Qos for channels to control how much work is buffered for
-// each consumer instance.
-
-func (a *API) getCuratedEpisodeSource(ctx context.Context) (<-chan contracts.EpisodeInfo, error) {
-
-	// episodes are unique by name + date aired
-	// check to see if the episode exists
-	//	if it does not: add it
-	//	else:
-	//		check if any of its details of changed
-	//		if so, update the details
-	//	etc...
-	panic("not implemented")
-}
-
-func (a *API) processCuratedEpisode(ctx context.Context, episode contracts.EpisodeInfo) error {
-	panic("not implemented")
-}
-
-func (a *API) getCuratedClipSource(ctx context.Context) (<-chan contracts.ClipInfo, error) {
-	// similar process to episode handling, except clips are unique by name only
-	panic("not implemented")
-}
-
-func (a *API) processCuratedClip(ctx context.Context, clip contracts.ClipInfo) error {
-	panic("not implemented")
-}
-
-func (a *API) getPendingResearchSource(ctx context.Context) (<-chan contracts.ResearchPending, error) {
-	// check to see how many consumers there are for a queue
-	// compare the consumer count to the message count
-	// Then determine how much work to create, ie consumerCount - messageCount
-	// Create that much work (including leases) and send it to the queue
-	panic("not implemented")
-}
-
-func (a *API) processPendingResearch(ctx context.Context, pendingResearch contracts.ResearchPending) error {
-	panic("not implemented")
-}
-
-func (a *API) getCompletedResearchSource(ctx context.Context) (<-chan contracts.ResearchComplete, error) {
-	// upsert research and update leases if applicable
-	panic("not implemented")
-}
-
-func (a *API) processCompletedResearch(ctx context.Context, completedResearch contracts.ResearchComplete) error {
-	panic("not implemented")
 }
