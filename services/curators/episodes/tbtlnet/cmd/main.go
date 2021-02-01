@@ -6,11 +6,10 @@ import (
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/curatorbase"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/episodecurators"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/messagebus"
 )
 
 func main() {
-	msgbus, err := messagebus.Initialize(context.Background(), "curated_episodes", 5)
+	msgbus, err := amqpmessagebus.Initialize(context.Background(), "curated_episodes", 5)
 	if err != nil {
 		log.Fatal(err)
 	}
