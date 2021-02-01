@@ -1,16 +1,19 @@
 package archivist
 
 import (
+	"context"
+
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
 // API is an instance of an archivist. An archivist is responsible for the
 // following tasks:
-//  - Recording episode and clip metadata as reported from the curators.
+//  - Recording episode metadata as reported from the curators.
+//  - Recording clip metadata as reported from the curators.
 //  - Creating work for researchers.
 //  - Checking in work returned from the researchers.
 type API struct {
-	errorSource <-chan error
+	Errors <-chan error
 }
 
 type worker struct {
@@ -18,78 +21,90 @@ type worker struct {
 	delegate func(interface{}) error
 }
 
-// Initialize activates a set of workers. If there is an error activating any
-// of the workers, this method will immediately return an error. Each worker
-// produces a stream of pending-work-items. The places all pending-work-items
-// from all workers into a common queue, and polls this queue.  As each item is
-// dequeued, the item is executed by the worker's delegate function. If the
-// delegate function returns an error, that error is passed into the APIs error
-// channel.
-func Initialize() (*API, error) {
-	
-	panic("TODO: Finish documenting the theory of operation for this method and
-	figure out how to wind down the workers safely in the event of an error
-	during initialization, during a channel closure, or other context
-	cancelation")
-
+// Initialize activates a set of workers. Each worker returns a stream of data
+// to be processed. The streams are processed across the workers as a
+// round-robin.  The general status of the API can be monitored via the
+// API.Errors channel.  API.Errors returns a stream of any errors that might
+// arise during operation.  The API.Errors channel remains open until all
+// workers have safely wound down.  Thus, API.Errors can/should be used by the
+// caller as a waiter to avoid premature termination of an application.
+// parentCtx is propogated to all downstream workers, and should be used to
+// safely broadcast cancellation requests to the API.
+func Initialize(parentCtx context.Context) *API {
+	const numberOfSourceChannels = 4
+	ctx, cancel := context.WithCancel(parentCtx)
 	a := new(API)
 
-	ces, err := a.getCuratedEpisodeSource()
-	if err != nil {
-		return nil, err
-	}
-
-	ccs, err := a.getCuratedClipSource()
-	if err != nil {
-		return nil, err
-	}
-
-	prs, err := a.getPendingResearchSource()
-	if err != nil {
-		return nil, err
-	}
-
-	crs, err := a.getCompletedResearchSource()
-	if err != nil {
-		return nil, err
-	}
-
 	errSrc := make(chan error)
+	a.Errors = errSrc
+
 	go func() {
-		allChannelsOpen := true
-		for allChannelsOpen {
+		defer close(errSrc)
+
+		// Each of the following blocks calls `cancel()` if an error is
+		// encountered.  If a subsequent block encounters an error, it
+		// broadcasts a cancellation upon the receipt of which, each preceding
+		// block can wind down and close their channels cleanly. The polling
+		// loop keeps track of how many channels are open. Once all channels
+		// have closed, the loop is stopped, and the error channel is closed.
+		// This signals to upstream consumers who are monitoring the API.Errors
+		// channel, that everything has wound down cleanly.
+		ces, err := a.getCuratedEpisodeSource(ctx)
+		if err != nil {
+			cancel()
+			errSrc <- err
+		}
+
+		ccs, err := a.getCuratedClipSource(ctx)
+		if err != nil {
+			cancel()
+			errSrc <- err
+		}
+
+		prs, err := a.getPendingResearchSource(ctx)
+		if err != nil {
+			cancel()
+			errSrc <- err
+		}
+
+		crs, err := a.getCompletedResearchSource(ctx)
+		if err != nil {
+			cancel()
+			errSrc <- err
+		}
+
+		openChannelCount := numberOfSourceChannels
+		for openChannelCount > 0 {
 			select {
 			case ce, ok := <-ces:
 				if !ok {
-					allChannelsOpen = false
+					openChannelCount--
 				} else {
-					catch(a.processCuratedEpisode(ce), errSrc)
+					catch(a.processCuratedEpisode(ctx, ce), errSrc)
 				}
 			case cc, ok := <-ccs:
 				if !ok {
-					allChannelsOpen = false
+					openChannelCount--
 				} else {
-					catch(a.processCuratedClip(cc), errSrc)
+					catch(a.processCuratedClip(ctx, cc), errSrc)
 				}
 			case pr, ok := <-prs:
 				if !ok {
-					allChannelsOpen = false
+					openChannelCount--
 				} else {
-					catch(a.processPendingResearch(pr), errSrc)
+					catch(a.processPendingResearch(ctx, pr), errSrc)
 				}
 			case cr, ok := <-crs:
 				if !ok {
-					allChannelsOpen = false
+					openChannelCount--
 				} else {
-					catch(a.processCompletedResearch(cr), errSrc)
-
+					catch(a.processCompletedResearch(ctx, cr), errSrc)
 				}
 			}
 		}
 	}()
 
-	a.errorSource = errSrc
-	return a, nil
+	return a
 }
 
 func catch(err error, ch chan<- error) {
@@ -101,7 +116,8 @@ func catch(err error, ch chan<- error) {
 //TODO: Set Qos for channels to control how much work is buffered for
 // each consumer instance.
 
-func (a *API) getCuratedEpisodeSource() (<-chan contracts.EpisodeInfo, error) {
+func (a *API) getCuratedEpisodeSource(ctx context.Context) (<-chan contracts.EpisodeInfo, error) {
+
 	// episodes are unique by name + date aired
 	// check to see if the episode exists
 	//	if it does not: add it
@@ -112,20 +128,20 @@ func (a *API) getCuratedEpisodeSource() (<-chan contracts.EpisodeInfo, error) {
 	panic("not implemented")
 }
 
-func (a *API) processCuratedEpisode(episode contracts.EpisodeInfo) error {
+func (a *API) processCuratedEpisode(ctx context.Context, episode contracts.EpisodeInfo) error {
 	panic("not implemented")
 }
 
-func (a *API) getCuratedClipSource() (<-chan contracts.ClipInfo, error) {
+func (a *API) getCuratedClipSource(ctx context.Context) (<-chan contracts.ClipInfo, error) {
 	// similar process to episode handling, except clips are unique by name only
 	panic("not implemented")
 }
 
-func (a *API) processCuratedClip(clip contracts.ClipInfo) error {
+func (a *API) processCuratedClip(ctx context.Context, clip contracts.ClipInfo) error {
 	panic("not implemented")
 }
 
-func (a *API) getPendingResearchSource() (<-chan contracts.ResearchPending, error) {
+func (a *API) getPendingResearchSource(ctx context.Context) (<-chan contracts.ResearchPending, error) {
 	// check to see how many consumers there are for a queue
 	// compare the consumer count to the message count
 	// Then determine how much work to create, ie consumerCount - messageCount
@@ -133,15 +149,15 @@ func (a *API) getPendingResearchSource() (<-chan contracts.ResearchPending, erro
 	panic("not implemented")
 }
 
-func (a *API) processPendingResearch(pendingResearch contracts.ResearchPending) error {
+func (a *API) processPendingResearch(ctx context.Context, pendingResearch contracts.ResearchPending) error {
 	panic("not implemented")
 }
 
-func (a *API) getCompletedResearchSource() (<-chan contracts.ResearchComplete, error) {
+func (a *API) getCompletedResearchSource(ctx context.Context) (<-chan contracts.ResearchComplete, error) {
 	// upsert research and update leases if applicable
 	panic("not implemented")
 }
 
-func (a *API) processCompletedResearch(completedResearch contracts.ResearchComplete) error {
+func (a *API) processCompletedResearch(ctx context.Context, completedResearch contracts.ResearchComplete) error {
 	panic("not implemented")
 }
