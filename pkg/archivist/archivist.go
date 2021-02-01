@@ -2,6 +2,9 @@ package archivist
 
 import (
 	"context"
+	"math/rand"
+	"runtime"
+	"time"
 )
 
 // API is an instance of an archivist. An archivist is responsible for the
@@ -14,9 +17,12 @@ type API struct {
 	Errors <-chan error
 }
 
-type worker struct {
-	source   <-chan interface{}
-	delegate func(interface{}) error
+// A StreamWorker is anything that 1( provides a means of initializing a stream
+// of data from some source, and 2) provides a method that can be used by a
+// consumer to process each datum from that stream.
+type StreamWorker interface {
+	InitializeDataStream(context.Context) (<-chan interface{}, error)
+	ProcessDatum(context.Context, interface{}) error
 }
 
 // Initialize activates a set of workers. Each worker returns a stream of data
@@ -28,7 +34,7 @@ type worker struct {
 // caller as a waiter to avoid premature termination of an application.
 // parentCtx is propogated to all downstream workers, and should be used to
 // safely broadcast cancellation requests to the API.
-func Initialize(parentCtx context.Context) *API {
+func Initialize(parentCtx context.Context, workers []StreamWorker) *API {
 	const numberOfSourceChannels = 4
 	ctx, cancel := context.WithCancel(parentCtx)
 	a := new(API)
@@ -39,74 +45,40 @@ func Initialize(parentCtx context.Context) *API {
 	go func() {
 		defer close(errSrc)
 
-		// Each of the following blocks calls `cancel()` if an error is
-		// encountered.  If a subsequent block encounters an error, it
-		// broadcasts a cancellation upon the receipt of which, each preceding
-		// block can wind down and close their channels cleanly. The polling
-		// loop keeps track of how many channels are open. Once all channels
-		// have closed, the loop is stopped, and the error channel is closed.
-		// This signals to upstream consumers who are monitoring the API.Errors
-		// channel, that everything has wound down cleanly.
-		ces, err := a.getCuratedEpisodeSource(ctx)
-		if err != nil {
-			cancel()
-			errSrc <- err
+		dataStreams := make([]<-chan interface{}, len(workers))
+		dataProcessors := make([]func(context.Context, interface{}) error, len(workers))
+		for i, worker := range workers {
+			dataStream, err := worker.InitializeDataStream(ctx)
+			dataStreams[i] = dataStream
+			dataProcessors[i] = worker.ProcessDatum
+			if err != nil {
+				errSrc <- err
+				cancel()
+			}
 		}
 
-		ccs, err := a.getCuratedClipSource(ctx)
-		if err != nil {
-			cancel()
-			errSrc <- err
-		}
-
-		prs, err := a.getPendingResearchSource(ctx)
-		if err != nil {
-			cancel()
-			errSrc <- err
-		}
-
-		crs, err := a.getCompletedResearchSource(ctx)
-		if err != nil {
-			cancel()
-			errSrc <- err
-		}
-
-		openChannelCount := numberOfSourceChannels
+		rand.Seed(time.Now().UnixNano())
+		openChannelCount := len(workers)
 		for openChannelCount > 0 {
+			i := rand.Intn(len(workers))
 			select {
-			case ce, ok := <-ces:
+			case item, ok := <-dataStreams[i]:
 				if !ok {
 					openChannelCount--
 				} else {
-					catch(a.processCuratedEpisode(ctx, ce), errSrc)
+					if err := dataProcessors[i](ctx, item); err != nil {
+						errSrc <- err
+					}
 				}
-			case cc, ok := <-ccs:
-				if !ok {
-					openChannelCount--
-				} else {
-					catch(a.processCuratedClip(ctx, cc), errSrc)
-				}
-			case pr, ok := <-prs:
-				if !ok {
-					openChannelCount--
-				} else {
-					catch(a.processPendingResearch(ctx, pr), errSrc)
-				}
-			case cr, ok := <-crs:
-				if !ok {
-					openChannelCount--
-				} else {
-					catch(a.processCompletedResearch(ctx, cr), errSrc)
-				}
+			default:
+				// If none of the channels we're polling have any work ready,
+				// we can end up in a busy loop. We call Gosched to prevent
+				// unintentionally hogging the processor when there's no work
+				// to do.
+				runtime.Gosched()
 			}
 		}
 	}()
 
 	return a
-}
-
-func catch(err error, ch chan<- error) {
-	if err != nil {
-		ch <- err
-	}
 }
