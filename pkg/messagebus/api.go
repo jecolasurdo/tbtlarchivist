@@ -1,8 +1,10 @@
 package messagebus
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/jecolasurdo/tbtlarchivist/pkg/messagebus/messagebusiface"
 	"github.com/streadway/amqp"
 )
 
@@ -11,12 +13,14 @@ import (
 type API struct {
 	defaultChannel *amqp.Channel
 	queue          *amqp.Queue
+	inboundMsgs    <-chan amqp.Delivery
 }
 
 // Initialize establishes a connection with the underlaying message bus. Once
 // a connection is established, the function then verifies or creates a queue
-// with the specified name.
-func Initialize(queueName string) (*API, error) {
+// with the specified name. The API then immediately begins receiving messages
+// from the queue.
+func Initialize(ctx context.Context, queueName string, prefetchCount int) (*API, error) {
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to RabbitMQ")
@@ -27,7 +31,6 @@ func Initialize(queueName string) (*API, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open a channel")
 	}
-	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
 		queueName, // name
@@ -41,9 +44,33 @@ func Initialize(queueName string) (*API, error) {
 		return nil, fmt.Errorf("Failed to declare a queue")
 	}
 
+	err = ch.Qos(prefetchCount, 0, false)
+	if err != nil {
+		return nil, err
+	}
+
+	msgs, err := ch.Consume(
+		queueName, // queue
+		"",        // consumer
+		false,     // auto-ack
+		false,     // exclusive
+		false,     // no-local
+		false,     // no-wait
+		nil,       // args
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// monitor the channel.Notify methods and a parent context.Done for
+	// close requests, and call ch.Close if warranted
+	// defer ch.Close()
+
 	return &API{
 		defaultChannel: ch,
 		queue:          &q,
+		inboundMsgs:    msgs,
 	}, nil
 }
 
@@ -64,7 +91,17 @@ func (a *API) Send(msg []byte) error {
 	return err
 }
 
-// Receive retrives a message from the message bus.
-func (a *API) Receive() ([]byte, error) {
-	panic("not implemented")
+// Receive retrieves a message from the message bus. This method does not
+// block.  If no message is available the method will return nil.
+func (a *API) Receive() *messagebusiface.MessageBusMessage {
+	select {
+	case msg := <-a.inboundMsgs:
+		acknowledger := NewAcknowledger(a.defaultChannel, msg.DeliveryTag)
+		return &messagebusiface.MessageBusMessage{
+			Body:         msg.Body,
+			Acknowledger: acknowledger,
+		}
+	default:
+		return nil
+	}
 }

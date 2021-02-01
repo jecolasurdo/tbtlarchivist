@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/clipcurators"
@@ -9,7 +10,7 @@ import (
 )
 
 func main() {
-	msgbus, err := messagebus.Initialize("curated_clips")
+	msgbus, err := messagebus.Initialize(context.Background(), "curated_clips", 5)
 	if err != nil {
 		log.Fatal(err)
 	}

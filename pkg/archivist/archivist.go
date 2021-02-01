@@ -40,7 +40,6 @@ type ArchiveWorker interface {
 // workers, and should be used to safely broadcast cancellation requests to the
 // API.
 func Initialize(parentCtx context.Context, workers []ArchiveWorker) *API {
-	const numberOfSourceChannels = 4
 	ctx, cancel := context.WithCancel(parentCtx)
 	a := new(API)
 
