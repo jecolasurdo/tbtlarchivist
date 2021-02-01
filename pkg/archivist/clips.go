@@ -2,15 +2,21 @@ package archivist
 
 import (
 	"context"
-
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
-func (a *API) getCuratedClipSource(ctx context.Context) (<-chan contracts.ClipInfo, error) {
-	// similar process to episode handling, except clips are unique by name only
+// A CuratedClipWorker can initialize a stream of inbound curated clips, and
+// supplies a method for processing each clip.
+type CuratedClipWorker struct{}
+
+// InitializeDataStream opens a stream of inbound clip metadata that needs to
+// be processed.
+func (c *CuratedClipWorker) InitializeDataStream(ctx context.Context) (<-chan interface{}, error) {
+	// clips are unique by name only
 	panic("not implemented")
 }
 
-func (a *API) processCuratedClip(ctx context.Context, clip contracts.ClipInfo) error {
+// ProcessDatum processes a clip, determing whether or not it should be added
+// to the underlaying datastore.
+func (c *CuratedClipWorker) ProcessDatum(ctx context.Context, datum interface{}) error {
 	panic("not implemented")
 }

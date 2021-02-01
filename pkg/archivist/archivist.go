@@ -17,24 +17,29 @@ type API struct {
 	Errors <-chan error
 }
 
-// A StreamWorker is anything that 1( provides a means of initializing a stream
-// of data from some source, and 2) provides a method that can be used by a
-// consumer to process each datum from that stream.
-type StreamWorker interface {
+// An ArchiveWorker is anything that 1) provides a means of initializing a
+// stream of data from some source, and 2) provides a method that can be used
+// by a consumer to process each datum from that stream.
+type ArchiveWorker interface {
 	InitializeDataStream(context.Context) (<-chan interface{}, error)
 	ProcessDatum(context.Context, interface{}) error
 }
 
-// Initialize activates a set of workers. Each worker returns a stream of data
-// to be processed. The streams are processed across the workers as a
-// round-robin.  The general status of the API can be monitored via the
-// API.Errors channel.  API.Errors returns a stream of any errors that might
-// arise during operation.  The API.Errors channel remains open until all
-// workers have safely wound down.  Thus, API.Errors can/should be used by the
-// caller as a waiter to avoid premature termination of an application.
-// parentCtx is propogated to all downstream workers, and should be used to
-// safely broadcast cancellation requests to the API.
-func Initialize(parentCtx context.Context, workers []StreamWorker) *API {
+// Initialize activates a set of archive-workers. As each worker is
+// initialized, it returns a stream of data to be processed. These streams are
+// then forwarded to a poller.  The poller selects one of the streams at
+// random.  If the stream has data, one datum is dequeued and sent to the
+// appropriate worker's ProcessDatum method. If the stream has no data ready,
+// the poller selects another worker's stream at random, and process repeats.
+// The poll continues so long as all streams remain open. The general status of
+// the API can be monitored via the API.Errors channel.  API.Errors returns a
+// stream of any errors that might arise during operation.  The API.Errors
+// channel remains open until all workers have safely wound down.  Thus,
+// API.Errors can/should be used by the caller as a waiter to avoid premature
+// termination of an application.  parentCtx is propogated to all downstream
+// workers, and should be used to safely broadcast cancellation requests to the
+// API.
+func Initialize(parentCtx context.Context, workers []ArchiveWorker) *API {
 	const numberOfSourceChannels = 4
 	ctx, cancel := context.WithCancel(parentCtx)
 	a := new(API)
