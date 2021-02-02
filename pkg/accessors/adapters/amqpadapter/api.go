@@ -1,10 +1,10 @@
-package messagebus
+package amqpadapter
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/messagebus/messagebusiface"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/streadway/amqp"
 )
 
@@ -25,7 +25,6 @@ func Initialize(ctx context.Context, queueName string, prefetchCount int) (*API,
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to RabbitMQ")
 	}
-	defer conn.Close()
 
 	ch, err := conn.Channel()
 	if err != nil {
@@ -93,11 +92,11 @@ func (a *API) Send(msg []byte) error {
 
 // Receive retrieves a message from the message bus. This method does not
 // block.  If no message is available the method will return nil.
-func (a *API) Receive() *messagebusiface.MessageBusMessage {
+func (a *API) Receive() *messagebus.Message {
 	select {
 	case msg := <-a.inboundMsgs:
 		acknowledger := NewAcknowledger(a.defaultChannel, msg.DeliveryTag)
-		return &messagebusiface.MessageBusMessage{
+		return &messagebus.Message{
 			Body:         msg.Body,
 			Acknowledger: acknowledger,
 		}

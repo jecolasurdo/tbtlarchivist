@@ -12,8 +12,7 @@ import (
 	"github.com/antchfx/htmlquery"
 	"github.com/antchfx/xpath"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/internal/util"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/pacer"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/utils"
 )
 
 const (
@@ -72,12 +71,12 @@ func (m *MarsupialGurgle) Curate() (<-chan interface{}, <-chan error) {
 			return
 		}
 
-		pace := pacer.SetPace(pacingAverage, pacingSigma, time.Millisecond)
+		pace := utils.SetPace(pacingAverage, pacingSigma, time.Millisecond)
 
 		// We visit the pages in random order to increase the breadth of each
 		// search, in case the search gets terminated before all pages have
 		// been visited.
-		shuffledPages := util.GetShuffledIntList(pageCount)
+		shuffledPages := utils.GetShuffledIntList(pageCount)
 		for _, pageNumber := range shuffledPages {
 			log.Printf("Scraping page %v of %v...", pageNumber, pageCount)
 			resp, err := http.Get(fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber))

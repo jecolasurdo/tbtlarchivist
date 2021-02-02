@@ -1,4 +1,4 @@
-package pacer
+package utils
 
 import (
 	"log"
@@ -8,8 +8,8 @@ import (
 	"github.com/gonum/stat/distuv"
 )
 
-// Pace provides a means of pausing program execution for a period of time.
-type Pace struct {
+// A Pacer provides a means of pausing program execution for a period of time.
+type Pacer struct {
 	basis        time.Duration
 	lastCallTime time.Time
 	jitter       *distuv.Normal
@@ -18,8 +18,8 @@ type Pace struct {
 // SetPace returns a Pace where mu is the average wait time, sigma is the
 // standard deviation of the wait time, and basis is the wait-time unit
 // duration.
-func SetPace(mu, sigma float64, basis time.Duration) Pace {
-	return Pace{
+func SetPace(mu, sigma float64, basis time.Duration) Pacer {
+	return Pacer{
 		basis:        basis,
 		lastCallTime: time.Now(),
 		jitter: &distuv.Normal{
@@ -33,7 +33,7 @@ func SetPace(mu, sigma float64, basis time.Duration) Pace {
 // Wait blocks until the time since the last call has exceeded a minimum pacing
 // duration. The pace duration is centered around a mean wait time plus or
 // minus a normally distributed jitter period.
-func (p *Pace) Wait() {
+func (p *Pacer) Wait() {
 	paceDuration := time.Duration(p.jitter.Rand()) * p.basis
 	paceTime := p.lastCallTime.Add(paceDuration)
 	if time.Now().Before(paceTime) {

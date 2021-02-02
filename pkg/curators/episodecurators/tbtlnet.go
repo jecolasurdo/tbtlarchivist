@@ -11,9 +11,7 @@ import (
 
 	"github.com/chromedp/chromedp"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/internal/cdp"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/internal/util"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/pacer"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/utils"
 )
 
 const (
@@ -61,10 +59,10 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 
 		var rawPageCount string
 		err := chromedp.Run(ctx,
-			cdp.Logf("Navigating to main episodes page..."),
+			utils.Logf("Navigating to main episodes page..."),
 			chromedp.Navigate(`https://www.tbtl.net/episodes`),
 
-			cdp.Logf("Getting page count..."),
+			utils.Logf("Getting page count..."),
 			chromedp.Text(".pagination_link-last", &rawPageCount, chromedp.BySearch),
 		)
 		if err != nil {
@@ -79,12 +77,12 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 		}
 
 		log.Println("Scraping...")
-		pace := pacer.SetPace(1000, 300, time.Millisecond)
+		pace := utils.SetPace(1000, 300, time.Millisecond)
 
 		// We visit the pages in random order to increase the breadth of each
 		// search, in case the search gets terminated before all pages have
 		// been visited.
-		shuffledPages := util.GetShuffledIntList(pageCount)
+		shuffledPages := utils.GetShuffledIntList(pageCount)
 		for _, pageNumber := range shuffledPages {
 			var collectionResults string
 			err := chromedp.Run(ctx,

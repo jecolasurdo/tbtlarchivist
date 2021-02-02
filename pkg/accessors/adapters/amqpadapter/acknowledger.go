@@ -1,4 +1,4 @@
-package messagebus
+package amqpadapter
 
 import "github.com/streadway/amqp"
 

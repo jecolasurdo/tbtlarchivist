@@ -3,18 +3,18 @@ package curatorbase
 import (
 	"encoding/json"
 
+	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/curatoriface"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/messagebus/messagebusiface"
 )
 
 // CuratorBase manages communication between a curator and a message bus.
 type CuratorBase struct {
 	curator    curatoriface.Curator
-	messageBus messagebusiface.MessageBus
+	messageBus messagebus.Sender
 }
 
 // New returns a reference to a new CuratorBase instance.
-func New(curator curatoriface.Curator, messageBus messagebusiface.MessageBus) *CuratorBase {
+func New(curator curatoriface.Curator, messageBus messagebus.Sender) *CuratorBase {
 	if curator == nil {
 		panic("curator must not be nil")
 	}
