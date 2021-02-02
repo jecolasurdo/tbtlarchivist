@@ -54,6 +54,15 @@ func StartWork(ctx context.Context, queue messagebus.Receiver, db datastore.Data
 			err = db.UpsertClipInfo(clipInfo)
 			if err != nil {
 				errorSource <- err
+				err := msg.Acknowledger.Nack(true)
+				if err != nil {
+					errorSource <- err
+				}
+			}
+
+			err = msg.Acknowledger.Ack()
+			if err != nil {
+				errorSource <- err
 			}
 		}
 	}()
