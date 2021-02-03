@@ -85,12 +85,13 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 		shuffledPages := utils.GetShuffledIntList(pageCount)
 		for _, pageNumber := range shuffledPages {
 			var collectionResults string
+			uri := fmt.Sprintf("https://www.tbtl.net/episodes/page/%v", pageNumber)
 			err := chromedp.Run(ctx,
-				chromedp.Navigate(fmt.Sprintf("https://www.tbtl.net/episodes/page/%v", pageNumber)),
+				chromedp.Navigate(uri),
 				chromedp.InnerHTML(".collection_results", &collectionResults, chromedp.NodeVisible, chromedp.BySearch),
 			)
 			if err != nil {
-				errorSource <- err
+				errorSource <- fmt.Errorf("error while accessing %v (%v)", uri, err)
 				return
 			}
 
@@ -108,31 +109,33 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 					chromedp.TextContent(".content_date", &rawDate, chromedp.BySearch),
 				)
 				if err != nil {
-					errorSource <- err
-					return
+					errorSource <- fmt.Errorf("error while extracting episode page data. %v", err)
+					continue
 				}
 
 				mediaURI := mp3Re.FindString(nextDataInnerHTML)
 				if mediaURI == "" {
-					log.Fatal("Media URI Not Identified")
+					errorSource <- fmt.Errorf("unable to extract media URI. %v", episodeLink)
+					continue
 				}
 				mediaURI = strings.Replace(mediaURI, unreplacedUAToken, userAgent, -1)
 				mediaType := mediaURI[len(mediaURI)-3:]
 
 				rawDuration := durationRe.FindStringSubmatch(nextDataInnerHTML)
 				if len(rawDuration) < 2 {
-					log.Fatal("Unable to extract duration for episode.")
+					errorSource <- fmt.Errorf("Unable to extract duration for episode. %v", episodeLink)
+					continue
 				}
 				durationMS, err := strconv.Atoi(rawDuration[1])
 				if err != nil {
-					errorSource <- err
-					return
+					errorSource <- fmt.Errorf("Unable to parse episode duration. (%v) %v", err, episodeLink)
+					continue
 				}
 
 				dateAired, err := time.Parse("January 2, 2006", rawDate)
 				if err != nil {
-					errorSource <- err
-					return
+					errorSource <- fmt.Errorf("Unable to parse date aired. (%v) %v", err, episodeLink)
+					continue
 				}
 
 				episodeInfoSource <- contracts.EpisodeInfo{
