@@ -7,10 +7,17 @@ type Message struct {
 	Body         []byte
 }
 
+// QueueInfo contains information about the status of a queue.
+type QueueInfo struct {
+	Messages  int
+	Consumers int
+}
+
 // A Sender is anything that is capable of transmitting a message to a message
 // bus.
 type Sender interface {
 	Send([]byte) error
+	Inspect() (*QueueInfo, error)
 }
 
 // A Receiver is anything that is capable of consuming a message from a message

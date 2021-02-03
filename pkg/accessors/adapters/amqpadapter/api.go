@@ -90,6 +90,19 @@ func (a *API) Send(msg []byte) error {
 	return err
 }
 
+// Inspect returns information about the number of messages and consumers
+// associated with the queue.
+func (a *API) Inspect() (*messagebus.QueueInfo, error) {
+	info, err := a.defaultChannel.QueueInspect(a.queue.Name)
+	if err != nil {
+		return nil, err
+	}
+	return &messagebus.QueueInfo{
+		Messages:  info.Messages,
+		Consumers: info.Consumers,
+	}, nil
+}
+
 // Receive retrieves a message from the message bus. This method does not
 // block.  If no message is available the method will return nil.
 func (a *API) Receive() *messagebus.Message {
