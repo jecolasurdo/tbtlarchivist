@@ -57,9 +57,10 @@ func (m *MarsupialGurgle) Curate() (<-chan interface{}, <-chan error) {
 		defer close(errorSource)
 
 		log.Printf("Navigating to global search results page...")
-		doc, err := htmlquery.LoadURL(`https://www.marsupialgurgle.com/page/1/?s`)
+		uri := `https://www.marsupialgurgle.com/page/1/?s`
+		doc, err := htmlquery.LoadURL(uri)
 		if err != nil {
-			errorSource <- err
+			errorSource <- fmt.Errorf("error loading %v (%v)", uri, err)
 			return
 		}
 
@@ -67,7 +68,7 @@ func (m *MarsupialGurgle) Curate() (<-chan interface{}, <-chan error) {
 		rawPageCount := htmlquery.QuerySelector(doc, pageCountXp).FirstChild.Data
 		pageCount, err := strconv.Atoi(rawPageCount)
 		if err != nil {
-			errorSource <- err
+			errorSource <- fmt.Errorf("error while extracting page count: %v", err)
 			return
 		}
 
@@ -79,20 +80,21 @@ func (m *MarsupialGurgle) Curate() (<-chan interface{}, <-chan error) {
 		shuffledPages := utils.GetShuffledIntList(pageCount)
 		for _, pageNumber := range shuffledPages {
 			log.Printf("Scraping page %v of %v...", pageNumber, pageCount)
-			resp, err := http.Get(fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber))
+			pageURI := fmt.Sprintf("https://www.marsupialgurgle.com/page/%v/?s", pageNumber)
+			resp, err := http.Get(pageURI)
 			if err != nil {
-				errorSource <- err
-				return
+				errorSource <- fmt.Errorf("error accessing page %v (%v)", pageURI, err)
+				continue
 			}
 			if resp.StatusCode != 200 {
-				errorSource <- fmt.Errorf("received non-200 response")
-				return
+				errorSource <- fmt.Errorf("received non-200 response when requesting page %v", pageURI)
+				continue
 			}
 
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				errorSource <- err
-				return
+				errorSource <- fmt.Errorf("error occured when reading the response body for page %v (%v)", pageURI, err)
+				continue
 			}
 
 			mp3s := extractMP3s(string(body))
