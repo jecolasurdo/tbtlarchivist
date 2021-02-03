@@ -19,6 +19,7 @@ func main() {
 	log.Println("Starting episode archivist...")
 	episodeArchivist := episodearchivist.StartWork(context.Background(), msgbus, new(fakeDataStore))
 
+	log.Println("Running...")
 	for {
 		select {
 		case err := <-episodeArchivist.Errors:

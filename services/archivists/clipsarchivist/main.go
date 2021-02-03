@@ -19,6 +19,7 @@ func main() {
 	log.Println("Starting clips archivist...")
 	clipsArchivist := clipsarchivist.StartWork(context.Background(), msgbus, new(fakeDataStore))
 
+	log.Println("Running...")
 	for {
 		select {
 		case err := <-clipsArchivist.Errors:
