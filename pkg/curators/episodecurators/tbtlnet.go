@@ -77,7 +77,7 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 		}
 
 		log.Println("Scraping...")
-		pace := utils.SetPace(1000, 300, time.Millisecond)
+		pace := utils.SetNormalPace(1000, 300, time.Millisecond)
 
 		// We visit the pages in random order to increase the breadth of each
 		// search, in case the search gets terminated before all pages have

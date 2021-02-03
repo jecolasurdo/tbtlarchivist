@@ -72,7 +72,7 @@ func (m *MarsupialGurgle) Curate() (<-chan interface{}, <-chan error) {
 			return
 		}
 
-		pace := utils.SetPace(pacingAverage, pacingSigma, time.Millisecond)
+		pace := utils.SetNormalPace(pacingAverage, pacingSigma, time.Millisecond)
 
 		// We visit the pages in random order to increase the breadth of each
 		// search, in case the search gets terminated before all pages have

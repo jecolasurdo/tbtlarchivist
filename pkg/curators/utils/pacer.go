@@ -12,19 +12,37 @@ import (
 type Pacer struct {
 	basis        time.Duration
 	lastCallTime time.Time
-	jitter       *distuv.Normal
+	jitter       distribution
 }
 
-// SetPace returns a Pace where mu is the average wait time, sigma is the
+type distribution interface {
+	Rand() float64
+}
+
+// SetNormalPace returns a Pace where mu is the average wait time, sigma is the
 // standard deviation of the wait time, and basis is the wait-time unit
 // duration.
-func SetPace(mu, sigma float64, basis time.Duration) Pacer {
-	return Pacer{
+func SetNormalPace(mu, sigma float64, basis time.Duration) *Pacer {
+	return &Pacer{
 		basis:        basis,
 		lastCallTime: time.Now(),
-		jitter: &distuv.Normal{
+		jitter: distuv.Normal{
 			Mu:     mu,
 			Sigma:  sigma,
+			Source: rand.New(rand.NewSource(time.Now().UnixNano())),
+		},
+	}
+}
+
+// SetUniformPace returns a pace where the wait time is uniformly distributed
+// between min and max, and basis is the wait-time unit duration.
+func SetUniformPace(min, max float64, basis time.Duration) *Pacer {
+	return &Pacer{
+		basis:        basis,
+		lastCallTime: time.Now(),
+		jitter: distuv.Uniform{
+			Min:    min,
+			Max:    max,
 			Source: rand.New(rand.NewSource(time.Now().UnixNano())),
 		},
 	}
