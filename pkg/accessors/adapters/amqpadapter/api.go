@@ -94,7 +94,10 @@ func (a *API) Send(msg []byte) error {
 // block.  If no message is available the method will return nil.
 func (a *API) Receive() *messagebus.Message {
 	select {
-	case msg := <-a.inboundMsgs:
+	case msg, open := <-a.inboundMsgs:
+		if !open {
+			return nil
+		}
 		acknowledger := NewAcknowledger(a.defaultChannel, msg.DeliveryTag)
 		return &messagebus.Message{
 			Body:         msg.Body,

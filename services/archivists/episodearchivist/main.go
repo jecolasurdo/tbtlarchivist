@@ -5,23 +5,23 @@ import (
 	"log"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/adapters/amqpadapter"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/archivists/clipsarchivist"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/archivists/episodearchivist"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
 func main() {
-	msgbus, err := amqpadapter.Initialize(context.Background(), "curated_clips", 5)
+	msgbus, err := amqpadapter.Initialize(context.Background(), "curated_episodes", 5)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	clipsArchivist := clipsarchivist.StartWork(context.Background(), msgbus, new(fakeDataStore))
+	episodeArchivist := episodearchivist.StartWork(context.Background(), msgbus, new(fakeDataStore))
 
 	for {
 		select {
-		case err := <-clipsArchivist.Errors:
+		case err := <-episodeArchivist.Errors:
 			log.Println(err)
-		case <-clipsArchivist.Done:
+		case <-episodeArchivist.Done:
 			log.Println("Done")
 			return
 		}
