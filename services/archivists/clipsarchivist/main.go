@@ -10,11 +10,13 @@ import (
 )
 
 func main() {
+	log.Println("Connecting to message bus...")
 	msgbus, err := amqpadapter.Initialize(context.Background(), "curated_clips", 5)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	log.Println("Starting clips archivist...")
 	clipsArchivist := clipsarchivist.StartWork(context.Background(), msgbus, new(fakeDataStore))
 
 	for {
