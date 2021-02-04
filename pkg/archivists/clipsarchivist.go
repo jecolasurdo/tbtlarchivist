@@ -8,6 +8,7 @@ import (
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
 )
 
 // A ClipsArchivist looks for clips that have been supplied by an upstream
@@ -30,20 +31,20 @@ func StartClipsArchivist(ctx context.Context, queue messagebus.Receiver, db data
 		defer close(errorSource)
 		defer close(done)
 		for {
-			select {
-			case <-ctx.Done():
+			if utils.ContextIsDone(ctx) {
 				return
-			default:
 			}
 
-			msg := queue.Receive()
-			if msg == nil {
-				runtime.Gosched()
+			runtime.Gosched()
+
+			msg, err := queue.Receive()
+			if err != nil {
+				errorSource <- err
 				continue
 			}
 
 			var clipInfo contracts.ClipInfo
-			err := json.Unmarshal(msg.Body, &clipInfo)
+			err = json.Unmarshal(msg.Body, &clipInfo)
 			if err != nil {
 				errorSource <- err
 				err := msg.Acknowledger.Nack(true)

@@ -8,6 +8,7 @@ import (
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
 )
 
 // An EpisodesArchivist looks for episodes that have been supplied by an
@@ -30,20 +31,31 @@ func StartEpisodesArchivist(ctx context.Context, queue messagebus.Receiver, db d
 		defer close(errorSource)
 		defer close(done)
 		for {
-			select {
-			case <-ctx.Done():
+			if utils.ContextIsDone(ctx) {
 				return
-			default:
 			}
 
-			msg := queue.Receive()
+			// If we're in a position where we're getting a lot of errors or
+			// nil messages from the queue, we can end up hogging resources
+			// from other goroutines. So, we yield to get out of their way.
+			// Though the runtime technically can yield on any function call,
+			// it will only do so on non-inlined calls. Since we don't know for
+			// sure if the next call is inlined, we explicitly yield to be
+			// safe.
+			runtime.Gosched()
+
+			msg, err := queue.Receive()
+			if err != nil {
+				errorSource <- err
+				continue
+			}
+
 			if msg == nil {
-				runtime.Gosched()
 				continue
 			}
 
 			var episodeInfo contracts.EpisodeInfo
-			err := json.Unmarshal(msg.Body, &episodeInfo)
+			err = json.Unmarshal(msg.Body, &episodeInfo)
 			if err != nil {
 				errorSource <- err
 				err := msg.Acknowledger.Nack(true)

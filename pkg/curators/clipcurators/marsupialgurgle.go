@@ -12,7 +12,7 @@ import (
 	"github.com/antchfx/htmlquery"
 	"github.com/antchfx/xpath"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/utils"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
 )
 
 const (

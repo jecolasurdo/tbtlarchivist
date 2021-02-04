@@ -15,6 +15,7 @@ type DataStorer interface {
 	GetMostRecentUnleasedEpisode() (*contracts.EpisodeInfo, error)
 	SetEpisodeLease(contracts.EpisodeInfo, time.Time) error
 	GetUnresearchedClipsForEpisode(contracts.EpisodeInfo) ([]contracts.ClipInfo, error)
+	UpsertEpisodeClipInfo(contracts.CompletedResearchItem) error
 }
 
 // FakeDataStorer is a minimal fake data store implementation that does little
@@ -51,4 +52,10 @@ func (f *FakeDataStorer) SetEpisodeLease(episodeInfo contracts.EpisodeInfo, dead
 func (f *FakeDataStorer) GetUnresearchedClipsForEpisode(episodeInfo contracts.EpisodeInfo) ([]contracts.ClipInfo, error) {
 	fmt.Println("GetUnresearchedClipsForEpisode", episodeInfo)
 	return nil, nil
+}
+
+// UpsertEpisodeClipInfo .
+func (f *FakeDataStorer) UpsertEpisodeClipInfo(episodeClipInfo contracts.CompletedResearchItem) error {
+	fmt.Println("UpsertEpisodeClipInfo", episodeClipInfo)
+	return nil
 }

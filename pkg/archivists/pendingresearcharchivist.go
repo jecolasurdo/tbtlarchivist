@@ -10,7 +10,7 @@ import (
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/utils"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
 )
 
 const (
@@ -66,7 +66,7 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 
 		pace := utils.SetUniformPace(lowerPacingBound, upperPacingBound, pacingBasis)
 		for {
-			if contextIsDone(ctx) {
+			if utils.ContextIsDone(ctx) {
 				break
 			}
 
@@ -133,8 +133,4 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 		Errors: errorSource,
 		Done:   done,
 	}
-}
-
-func contextIsDone(ctx context.Context) bool {
-	return ctx.Err() != nil
 }

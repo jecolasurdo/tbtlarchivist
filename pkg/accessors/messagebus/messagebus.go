@@ -23,7 +23,7 @@ type Sender interface {
 // A Receiver is anything that is capable of consuming a message from a message
 // bus.
 type Receiver interface {
-	Receive() *Message
+	Receive() (*Message, error)
 }
 
 // SenderReceiver is anything that is capable of sending and receiving messages

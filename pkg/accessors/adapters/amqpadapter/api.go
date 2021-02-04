@@ -105,18 +105,18 @@ func (a *API) Inspect() (*messagebus.QueueInfo, error) {
 
 // Receive retrieves a message from the message bus. This method does not
 // block.  If no message is available the method will return nil.
-func (a *API) Receive() *messagebus.Message {
+func (a *API) Receive() (*messagebus.Message, error) {
 	select {
 	case msg, open := <-a.inboundMsgs:
 		if !open {
-			return nil
+			return nil, fmt.Errorf("message bus is closed")
 		}
 		acknowledger := NewAcknowledger(a.defaultChannel, msg.DeliveryTag)
 		return &messagebus.Message{
 			Body:         msg.Body,
 			Acknowledger: acknowledger,
-		}
+		}, nil
 	default:
-		return nil
+		return nil, nil
 	}
 }
