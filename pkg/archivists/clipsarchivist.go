@@ -35,6 +35,13 @@ func StartClipsArchivist(ctx context.Context, queue messagebus.Receiver, db data
 				return
 			}
 
+			// If we're in a position where we're getting a lot of errors or
+			// nil messages from the queue, we can end up hogging resources
+			// from other goroutines. So, we yield to get out of their way.
+			// Though the runtime technically can yield on any function call,
+			// it will only do so on non-inlined calls. Since we don't know for
+			// sure if the next call is inlined, we explicitly yield to be
+			// safe.
 			runtime.Gosched()
 
 			msg, err := queue.Receive()
