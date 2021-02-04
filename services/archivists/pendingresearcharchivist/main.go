@@ -10,21 +10,22 @@ import (
 )
 
 func main() {
+
 	log.Println("Connecting to message bus...")
-	msgbus, err := amqpadapter.Initialize(context.Background(), "curated_episodes", 5)
+	msgbus, err := amqpadapter.Initialize(context.Background(), "pending_research", 5)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Starting episode archivist...")
-	episodeArchivist := archivists.StartEpisodesArchivist(context.Background(), msgbus, new(datastore.FakeDataStorer))
+	log.Println("Starting pending-research archivist...")
+	pendingResearchArchivist := archivists.StartPendingResearchArchivist(context.Background(), msgbus, new(datastore.FakeDataStorer))
 
 	log.Println("Running...")
 	for {
 		select {
-		case err := <-episodeArchivist.Errors:
+		case err := <-pendingResearchArchivist.Errors:
 			log.Println(err)
-		case <-episodeArchivist.Done:
+		case <-pendingResearchArchivist.Done:
 			log.Println("Done")
 			return
 		}

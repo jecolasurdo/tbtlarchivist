@@ -1,4 +1,4 @@
-package clipsarchivist
+package archivists
 
 import (
 	"context"
@@ -10,19 +10,20 @@ import (
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
-// API provides information about the state of a clipsarchivist.
-type API struct {
+// An EpisodesArchivist looks for episodes that have been supplied by an
+// upstream episode curator, and places new episodes into the collection.
+type EpisodesArchivist struct {
 	Errors <-chan error
 	Done   <-chan struct{}
 }
 
-// StartWork initializes a clips archivist. The archvist will begin polling the
-// supplied queue for new clips, and will place those clips in the supplied
-// datastore. The clips archivist operates indefinitely, or until its parent
+// StartEpisodesArchivist initializes an episode archivist. The archvist will begin polling
+// the supplied queue for new episodes, and will place those episodes in the
+// supplied datastore. The archivist operates indefinitely, or until its parent
 // context signals that it is done. Once the archivist is initialized, the
 // resulting API.Errors and API.Done channels can be monitored. The caller may
 // safely exit only when the Errors and Done channels have closed.
-func StartWork(ctx context.Context, queue messagebus.Receiver, db datastore.DataStorer) *API {
+func StartEpisodesArchivist(ctx context.Context, queue messagebus.Receiver, db datastore.DataStorer) *EpisodesArchivist {
 	errorSource := make(chan error)
 	done := make(chan struct{})
 	go func() {
@@ -41,8 +42,8 @@ func StartWork(ctx context.Context, queue messagebus.Receiver, db datastore.Data
 				continue
 			}
 
-			var clipInfo contracts.ClipInfo
-			err := json.Unmarshal(msg.Body, &clipInfo)
+			var episodeInfo contracts.EpisodeInfo
+			err := json.Unmarshal(msg.Body, &episodeInfo)
 			if err != nil {
 				errorSource <- err
 				err := msg.Acknowledger.Nack(true)
@@ -52,7 +53,7 @@ func StartWork(ctx context.Context, queue messagebus.Receiver, db datastore.Data
 				continue
 			}
 
-			err = db.UpsertClipInfo(clipInfo)
+			err = db.UpsertEpisodeInfo(episodeInfo)
 			if err != nil {
 				errorSource <- err
 				err := msg.Acknowledger.Nack(true)
@@ -69,7 +70,7 @@ func StartWork(ctx context.Context, queue messagebus.Receiver, db datastore.Data
 		}
 	}()
 
-	return &API{
+	return &EpisodesArchivist{
 		Errors: errorSource,
 		Done:   done,
 	}

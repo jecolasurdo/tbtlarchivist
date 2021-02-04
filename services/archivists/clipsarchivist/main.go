@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/adapters/amqpadapter"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/archivists/clipsarchivist"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/archivists"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 	}
 
 	log.Println("Starting clips archivist...")
-	clipsArchivist := clipsarchivist.StartWork(context.Background(), msgbus, new(fakeDataStore))
+	clipsArchivist := archivists.StartClipsArchivist(context.Background(), msgbus, new(datastore.FakeDataStorer))
 
 	log.Println("Running...")
 	for {
@@ -29,16 +29,4 @@ func main() {
 			return
 		}
 	}
-}
-
-type fakeDataStore struct{}
-
-func (f *fakeDataStore) UpsertEpisodeInfo(info contracts.EpisodeInfo) error {
-	log.Println(info)
-	return nil
-}
-
-func (f *fakeDataStore) UpsertClipInfo(clipInfo contracts.ClipInfo) error {
-	log.Println(clipInfo)
-	return nil
 }

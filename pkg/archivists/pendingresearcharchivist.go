@@ -1,4 +1,4 @@
-package pendingresearcharchivist
+package archivists
 
 import (
 	"context"
@@ -15,14 +15,21 @@ import (
 
 const (
 	episodeLeaseDuration = 2 * time.Hour
+	lowerPacingBound     = 0.0
+	upperPacingBound     = 2000.0
+	pacingBasis          = time.Millisecond
 )
 
-type API struct {
+// A PendingResearchArchivist determines if any research work should be done,
+// and, if so, produces a pending-work-item for a downstream researcher to act
+// upon.
+type PendingResearchArchivist struct {
 	Errors <-chan error
 	Done   <-chan struct{}
 }
 
-// Initialize starts the archivist, and begins the following process:
+// StartPendingResearchArchivist starts the archivist, and begins the following
+// process:
 // 0) The archivist pauses for a random short interval to ensure its start time
 // is unlikely to be the same as some other parallel archivist instances.
 // 1) Available new-research overhead is calculated. Overhead is equal to the
@@ -49,7 +56,7 @@ type API struct {
 // start work at jittered intervals. Thus, if two archivists are initialized at
 // nearly the same moment, the jitter will reduce the likelihood that they try
 // to access the database at the same time.
-func Initialize(ctx context.Context, messageBus messagebus.Sender, db datastore.DataStorer) *API {
+func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Sender, db datastore.DataStorer) *PendingResearchArchivist {
 	errorSource := make(chan error)
 	done := make(chan struct{})
 
@@ -57,7 +64,7 @@ func Initialize(ctx context.Context, messageBus messagebus.Sender, db datastore.
 		defer close(errorSource)
 		defer close(done)
 
-		pace := utils.SetUniformPace(0, 2000, time.Millisecond)
+		pace := utils.SetUniformPace(lowerPacingBound, upperPacingBound, pacingBasis)
 		for {
 			if contextIsDone(ctx) {
 				break
@@ -122,7 +129,7 @@ func Initialize(ctx context.Context, messageBus messagebus.Sender, db datastore.
 		}
 	}()
 
-	return &API{
+	return &PendingResearchArchivist{
 		Errors: errorSource,
 		Done:   done,
 	}
