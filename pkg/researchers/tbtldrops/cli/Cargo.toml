@@ -1,0 +1,10 @@
+[package]
+name = "cli"
+version = "0.1.0"
+authors = ["Joe <jecolasurdo@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0.33"
+analyzer = { path = "../analyzer" }
+snmalloc-rs = "0.2"
