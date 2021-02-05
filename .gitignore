@@ -1,0 +1,5 @@
+.terraform
+*.key
+*.crt
+*.tfstate.*
+*.terraform.lock.*
