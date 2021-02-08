@@ -106,12 +106,12 @@ resource "azurerm_storage_account" "tbtlarchivist_sa" {
 }
 
 
-resource "tls_private_key" "example_ssh" {
+resource "tls_private_key" "test_ssh" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
-output "tls_private_key" { value = tls_private_key.example_ssh.private_key_pem }
+output "tls_private_key" { value = tls_private_key.test_ssh.private_key_pem }
 
 resource "azurerm_linux_virtual_machine" "tbtlarchivist_vm" {
   name                  = "tbtlarchivist_vm"
@@ -139,7 +139,7 @@ resource "azurerm_linux_virtual_machine" "tbtlarchivist_vm" {
 
   admin_ssh_key {
     username   = "joe"
-    public_key = tls_private_key.example_ssh.public_key_openssh
+    public_key = tls_private_key.test_ssh.public_key_openssh
   }
 
   boot_diagnostics {

@@ -1,5 +1,0 @@
-
-brew requirements
- - k3d: makes it so we can run k3s in docker
- - kubectl: the k8s cli
- - step: used to generate certificate

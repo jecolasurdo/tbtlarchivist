@@ -1,5 +1,6 @@
 .terraform
 *.key
 *.crt
-*.tfstate.*
+*.tfstate*
 *.terraform.lock.*
+*.output
