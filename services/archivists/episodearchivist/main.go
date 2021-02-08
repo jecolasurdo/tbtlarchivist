@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore/adapters/fakedatastore"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/adapters/amqpadapter"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/archivists"
 )
@@ -17,7 +17,7 @@ func main() {
 	}
 
 	log.Println("Starting episode archivist...")
-	episodeArchivist := archivists.StartEpisodesArchivist(context.Background(), msgbus, new(datastore.FakeDataStorer))
+	episodeArchivist := archivists.StartEpisodesArchivist(context.Background(), msgbus, new(fakedatastore.FakeDataStorer))
 
 	log.Println("Running...")
 	for {

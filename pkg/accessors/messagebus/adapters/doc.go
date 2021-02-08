@@ -1,2 +1,2 @@
-// Package adapters contains concrete implementations of accessors.
+// Package adapters contains concrete message bus implementations.
 package adapters

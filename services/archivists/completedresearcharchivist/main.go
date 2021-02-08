@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore/adapters/fakedatastore"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/adapters/amqpadapter"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/archivists"
 )
@@ -18,7 +18,7 @@ func main() {
 	}
 
 	log.Println("Starting completed-research archivist...")
-	completedResearchArchivist := archivists.StartCompletedResearchArchivist(context.Background(), msgbus, new(datastore.FakeDataStorer))
+	completedResearchArchivist := archivists.StartCompletedResearchArchivist(context.Background(), msgbus, new(fakedatastore.FakeDataStorer))
 
 	log.Println("Running...")
 	for {
