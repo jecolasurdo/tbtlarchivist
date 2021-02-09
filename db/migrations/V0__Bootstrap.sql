@@ -1,4 +1,4 @@
-CREATE TABLE `clip_info` (
+CREATE TABLE `curated_clips` (
   `clip_id` int(11) NOT NULL AUTO_INCREMENT,
   `date_curated` datetime NOT NULL,
   `curator_info` varchar(50) NOT NULL,
@@ -11,12 +11,11 @@ CREATE TABLE `clip_info` (
   UNIQUE KEY `media_uri_UNIQUE` (`media_uri`) USING HASH
 );
 
-CREATE TABLE `episode_info` (
+CREATE TABLE `curated_episodes` (
   `episode_id` int(11) NOT NULL AUTO_INCREMENT,
   `date_curated` datetime NOT NULL,
   `curator_info` varchar(50) NOT NULL,
   `date_aired` datetime NOT NULL,
-  `duration` int(11),
   `title` varchar(250),
   `description` longtext NOT NULL,
   `media_uri` varchar(2048) NOT NULL,
@@ -30,4 +29,21 @@ CREATE TABLE `episode_leases` (
   `episode_id` int(11) NOT NULL,
   `expiration` datetime NOT NULL,
   PRIMARY KEY (`episode_id`)
+);
+
+CREATE TABLE `episode_clip_research` (
+  `episode_clip_id` int(11) NOT NULL AUTO_INCREMENT,
+  `episode_id` int(11) NOT NULL,
+  `clip_id` int(11) NOT NULL,
+  `episode_duration_ns` bigint(20) NOT NULL,
+  `clip_duration_ns` bigint(20) NOT NULL,
+  `research_date` datetime NOT NULL,
+  PRIMARY KEY (`research_item_id`),
+  UNIQUE KEY `episode_id_clip_id_UNIQUE` (`episode_id`, `clip_id`)
+);
+
+CREATE TABLE `episode_clip_offsets` (
+  `episode_clip_id` int(11) NOT NULL,
+  `offset_ns` bigint(20) NOT NULL,
+  PRIMARY KEY (`episode_clip_id`)
 );

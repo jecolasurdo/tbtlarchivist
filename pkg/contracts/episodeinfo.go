@@ -18,9 +18,6 @@ type EpisodeInfo struct {
 	// DateAired is the date that the episode was originally aired.
 	DateAired time.Time
 
-	// Duration is the length of the episode.
-	Duration time.Duration
-
 	// Title is the name of the episode.
 	Title string
 

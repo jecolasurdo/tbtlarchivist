@@ -8,9 +8,12 @@ import (
 // A CompletedResearchItem represents the results of researching a clip for an
 // episode.
 type CompletedResearchItem struct {
-	Episode     EpisodeInfo
-	Clip        ClipInfo
-	ClipOffsets []time.Duration
+	ResearchDate    time.Time
+	Episode         EpisodeInfo
+	EpisodeDuration Nanosecond
+	Clip            ClipInfo
+	ClipDuration    Nanosecond
+	ClipOffsets     []Nanosecond
 }
 
 // String returns a string representation of the CompletedResearchItem instance.
@@ -21,3 +24,6 @@ func (c CompletedResearchItem) String() string {
 	}
 	return string(jsonBytes)
 }
+
+// A Nanosecond is a duration equal to 1e9 seconds.
+type Nanosecond int64

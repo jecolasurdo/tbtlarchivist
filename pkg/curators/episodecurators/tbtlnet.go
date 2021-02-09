@@ -17,22 +17,13 @@ import (
 const (
 	scraperName = `tbtl.net scraper`
 
-	// Duration is extracted from the __NEXT_DATA__ structure within the DOM.
-	// __NEXT_DATA__ may contain data for m4a files in addition to mp3s, and
-	// the m4a durations may not match that of the mp3s.  To address this,
-	// durationRegex qualifies the duration_ms field as being directly
-	// preceeded by the value `mp3\",\"`. This ensures that the duration data
-	// is associated with the correct file, but is admittedly a little fragile
-	// in that it presumes field order is fixed.
-	durationRegex = `mp3\\",\\"duration_ms\\":(\d+)`
-	hrefRegex     = `/episode/\d{4}/\d\d/\d\d/(?:[[:alnum:]]|-)+`
-	mp3Regex      = `https://(?:(?:\w+|-|\.)+/)+\d{4}/\d{1,2}/(?:\d{1,2}/)?(?:\w+|-)+\.mp3`
+	hrefRegex = `/episode/\d{4}/\d\d/\d\d/(?:[[:alnum:]]|-)+`
+	mp3Regex  = `https://(?:(?:\w+|-|\.)+/)+\d{4}/\d{1,2}/(?:\d{1,2}/)?(?:\w+|-)+\.mp3`
 
 	unreplacedUAToken = "unreplaced_ua"
 	userAgent         = "web"
 )
 
-var durationRe = regexp.MustCompile(durationRegex)
 var hrefRe = regexp.MustCompile(hrefRegex)
 var mp3Re = regexp.MustCompile(mp3Regex)
 
@@ -121,17 +112,6 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 				mediaURI = strings.Replace(mediaURI, unreplacedUAToken, userAgent, -1)
 				mediaType := mediaURI[len(mediaURI)-3:]
 
-				rawDuration := durationRe.FindStringSubmatch(nextDataInnerHTML)
-				if len(rawDuration) < 2 {
-					errorSource <- fmt.Errorf("Unable to extract duration for episode. %v", episodeLink)
-					continue
-				}
-				durationMS, err := strconv.Atoi(rawDuration[1])
-				if err != nil {
-					errorSource <- fmt.Errorf("Unable to parse episode duration. (%v) %v", err, episodeLink)
-					continue
-				}
-
 				dateAired, err := time.Parse("January 2, 2006", rawDate)
 				if err != nil {
 					errorSource <- fmt.Errorf("Unable to parse date aired. (%v) %v", err, episodeLink)
@@ -142,7 +122,6 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 					CuratorInformation: scraperName,
 					DateCurated:        time.Now().UTC(),
 					DateAired:          dateAired,
-					Duration:           time.Duration(durationMS) * time.Millisecond,
 					Title:              title,
 					Description:        description,
 					MediaURI:           mediaURI,
