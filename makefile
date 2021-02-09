@@ -24,3 +24,8 @@ kill-maria-db:
 
 restart: kill-all start-all
 .PHONY: restart
+
+bootstrap-maria-db:
+	echo "create database tbtlarchivist" | mariadb -h 127.0.0.1 -P 3306 -u root	
+	flyway migrate
+.PHONY: bootstrap-maria-db
