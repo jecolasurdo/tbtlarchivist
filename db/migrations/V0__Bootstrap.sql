@@ -25,3 +25,9 @@ CREATE TABLE `episode_info` (
   UNIQUE KEY `date_aired_title_UNIQUE` (`date_aired`, `title`),
   UNIQUE KEY `media_uri_UNIQUE` (`media_uri`) USING HASH
 );
+
+CREATE TABLE `episode_leases` (
+  `episode_id` int(11) NOT NULL,
+  `expiration` datetime NOT NULL,
+  PRIMARY KEY (`episode_id`)
+);
