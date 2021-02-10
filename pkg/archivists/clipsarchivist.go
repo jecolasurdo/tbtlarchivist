@@ -50,6 +50,10 @@ func StartClipsArchivist(ctx context.Context, queue messagebus.Receiver, db data
 				continue
 			}
 
+			if msg == nil || len(msg.Body) == 0 {
+				continue
+			}
+
 			var clipInfo contracts.ClipInfo
 			err = json.Unmarshal(msg.Body, &clipInfo)
 			if err != nil {

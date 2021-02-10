@@ -6,6 +6,7 @@ require (
 	github.com/antchfx/htmlquery v1.2.3
 	github.com/antchfx/xpath v1.1.11
 	github.com/chromedp/chromedp v0.6.5
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gonum/blas v0.0.0-20181208220705-f22b278b28ac // indirect
 	github.com/gonum/diff v0.0.0-20181124234638-500114f11e71 // indirect
 	github.com/gonum/floats v0.0.0-20181209220543-c233463c7e82 // indirect
