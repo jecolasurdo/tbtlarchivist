@@ -26,9 +26,12 @@ CREATE TABLE `curated_episodes` (
 );
 
 CREATE TABLE `episode_leases` (
+  `lease_id` int(11) NOT NULL AUTO_INCREMENT,
   `episode_id` int(11) NOT NULL,
+  `clip_id` int(11) NOT NULL,
   `expiration` datetime NOT NULL,
-  PRIMARY KEY (`episode_id`)
+  PRIMARY KEY (`lease_id`),
+  UNIQUE KEY `episode_id_clip_id_UNIQUE` (`episode_id`, `clip_id`)
 );
 
 CREATE TABLE `episode_clip_research` (
