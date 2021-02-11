@@ -28,7 +28,7 @@ A PWA will create a work-item based on the following process.
 
 > **Episode and clip curated "priority" values:** Upstream episode and clip curator services optionally assign each episode or clip a priority value. This value is an integer where higher values represent a higher priority over lower values. The values used for clips are contextually independent from the values used for episodes and vice versa. That is to say that clip priority values only have meaning within the context of clips, and episode priority values only have meaning within the context of episodes. Priority values can be arbitrarily assigned, but should be agreed upon across curators to ensure that they are applied in a meaningful and consistent manner by the archivists. The specifics about how priority values are applied are coverd in the following sections.
 
-**Identifying Epsidoes:**
+**Identifying Episodes:**
 
 Episodes take priority over clips because they are the base unit of work assigned to each researcher, and are the central data element of the TBTL Archivist system as a whole. A PWA will select the highest priority episode to assign. *(Note that the actual algorithm may differ in its implementation, but achieves the same result.)*
 
