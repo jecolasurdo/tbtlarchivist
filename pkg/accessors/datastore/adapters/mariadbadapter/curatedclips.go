@@ -47,7 +47,8 @@ func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo contracts.ClipIn
 		title = ?,
 		description = ?,
 		media_uri = ?,
-		media_type = ?
+		media_type = ?,
+		priority = ?
 	WHERE clip_id = ?;
 	`
 	result, err := m.db.Exec(updateStmt,
@@ -57,6 +58,7 @@ func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo contracts.ClipIn
 		clipInfo.Description,
 		clipInfo.MediaURI,
 		clipInfo.MediaType,
+		clipInfo.Priority,
 		clipID,
 	)
 
@@ -81,9 +83,10 @@ func (m *MariaDbConnection) insertClipInfo(clipInfo contracts.ClipInfo) error {
 			title,
 			description,
 			media_uri,
-			media_type
+			media_type,
+			priority
 		)
-		VALUES (?,?,?,?,?,?,?);
+		VALUES (?,?,?,?,?,?,?,?);
 	`
 	result, err := tx.Exec(insertCuratedClipStmt,
 		clipInfo.InitialDateCurated,
@@ -93,6 +96,7 @@ func (m *MariaDbConnection) insertClipInfo(clipInfo contracts.ClipInfo) error {
 		clipInfo.Description,
 		clipInfo.MediaURI,
 		clipInfo.MediaType,
+		clipInfo.Priority,
 	)
 
 	if err := expectOneRowAffected(result, err); err != nil {
