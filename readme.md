@@ -28,6 +28,8 @@ A PWA will create a work-item based on the following process.
 
 > **Episode and clip curated "priority" values:** Upstream episode and clip curator services optionally assign each episode or clip a priority value. This value is an integer where higher values represent a higher priority over lower values. The values used for clips are contextually independent from the values used for episodes and vice versa. That is to say that clip priority values only have meaning within the context of clips, and episode priority values only have meaning within the context of episodes. Priority values can be arbitrarily assigned, but should be agreed upon across curators to ensure that they are applied in a meaningful and consistent manner by the archivists. The specifics about how priority values are applied are coverd in the following sections.
 
+**Identifying Epsidoes:**
+
 Episodes take priority over clips because they are the base unit of work assigned to each researcher, and are the central data element of the TBTL Archivist system as a whole. A PWA will select the highest priority episode to assign. *(Note that the actual algorithm may differ in its implementation, but achieves the same result.)*
 
 0) If at any point no remaining episodes meet criteria, then the PWA simply makes no assignment and exits.
@@ -37,9 +39,11 @@ Episodes take priority over clips because they are the base unit of work assigne
 4) Of the remaining episodes:
     - Sort them first descending by their assigned "priority" value.
     - Within "priority", sort them descending by their initial curation date.
-      - *Two curation dates are tracked for each episode. The initial curation date, and the latest curation date. The lastest curation date can be expected to get udpated frequently, and is not a useful indicator of the relative age of an episode.*
+      - *Two curation dates are tracked for each episode. The initial curation date, and the latest curation date. The lastest curation date can be expected to get updated frequently, and is not a useful indicator of the relative age of an episode.*
 5) The top item has the most recent curation date for the highest "priority" value. This is the episode that will be assigned.
 6) Move on to identify which clips to lease for this episode.
+
+**Identifying clips:**
 
 0) If at any point no remaining clips meet criteria, then PWA simply makes no assignment and exits.
 1) Consider all clips in the data store.
@@ -48,7 +52,7 @@ Episodes take priority over clips because they are the base unit of work assigne
 4) Of the remaining clips:
     - Sort them decending by their assigned "priority" value.
     - Within "priority", sort them descending by their initial curation date.
-      - *Two curation dates are tracked for each clip. The initial curation date, and the latest curation date. The lastest curation date can be expected to get udpated frequently, and is not a useful indicator of the relative age of a clip.*
+      - *Two curation dates are tracked for each clip. The initial curation date, and the latest curation date. The lastest curation date can be expected to get updated frequently, and is not a useful indicator of the relative age of a clip.*
 5) Limit the resulting list of clips to the "max-clip limit".
 
 At this point, the PWA has selected which work it would like to assign. 
