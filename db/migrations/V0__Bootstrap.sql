@@ -38,7 +38,13 @@ CREATE TABLE `episode_leases` (
   UNIQUE KEY `episode_id_clip_id_UNIQUE` (`episode_id`, `clip_id`)
 );
 
-CREATE TABLE `episode_clip_research` (
+CREATE TABLE `episode_clip_backlog` (
+  `episode_id` int(11) NOT NULL,
+  `clip_id` int(11) NOT NULL,
+  PRIMARY KEY (`episode_id`, `clip_id`)
+);
+
+CREATE TABLE `episode_clip_matches` (
   `episode_clip_id` int(11) NOT NULL AUTO_INCREMENT,
   `episode_id` int(11) NOT NULL,
   `clip_id` int(11) NOT NULL,

@@ -67,19 +67,25 @@ func (m *MariaDbConnection) insertClipInfo(clipInfo contracts.ClipInfo) error {
 	if clipInfo.LastDateCurated.Before(clipInfo.InitialDateCurated) {
 		return fmt.Errorf("LastDateCurated must not be earlier than InitialDateCurated. %v", clipInfo)
 	}
-	const insertStmt = `
-	INSERT INTO curated_clips (
-		initial_date_curated,
-		last_date_curated,
-		curator_info,
-		title,
-		description,
-		media_uri,
-		media_type
-	)
-	VALUES (?,?,?,?,?,?,?);
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return tryTxRollback(tx, err)
+	}
+
+	const insertCuratedClipStmt = `
+		INSERT INTO curated_clips (
+			initial_date_curated,
+			last_date_curated,
+			curator_info,
+			title,
+			description,
+			media_uri,
+			media_type
+		)
+		VALUES (?,?,?,?,?,?,?);
 	`
-	result, err := m.db.Exec(insertStmt,
+	result, err := tx.Exec(insertCuratedClipStmt,
 		clipInfo.InitialDateCurated,
 		clipInfo.LastDateCurated,
 		clipInfo.CuratorInformation,
@@ -88,5 +94,26 @@ func (m *MariaDbConnection) insertClipInfo(clipInfo contracts.ClipInfo) error {
 		clipInfo.MediaURI,
 		clipInfo.MediaType,
 	)
-	return expectOneRowAffected(result, err)
+
+	if err := expectOneRowAffected(result, err); err != nil {
+		return tryTxRollback(tx, err)
+	}
+
+	newClipID, err := result.LastInsertId()
+	if err != nil {
+		return tryTxRollback(tx, err)
+	}
+
+	insertClipBacklog := fmt.Sprintf(`
+		INSERT INTO episode_clip_backlog (episode_id, clip_id)
+		SELECT episode_id, %v
+		FROM curated_episodes;
+	`, newClipID)
+
+	result, err = tx.Exec(insertClipBacklog)
+	if err != nil {
+		return tryTxRollback(tx, err)
+	}
+
+	return tx.Commit()
 }
