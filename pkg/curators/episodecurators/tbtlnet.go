@@ -118,14 +118,17 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 					continue
 				}
 
+				now := time.Now().UTC()
 				episodeInfoSource <- contracts.EpisodeInfo{
 					CuratorInformation: scraperName,
-					DateCurated:        time.Now().UTC(),
+					InitialDateCurated: now,
+					LastDateCurated:    now,
 					DateAired:          dateAired,
 					Title:              title,
 					Description:        description,
 					MediaURI:           mediaURI,
 					MediaType:          mediaType,
+					Priority:           0,
 				}
 
 				pace.Wait()

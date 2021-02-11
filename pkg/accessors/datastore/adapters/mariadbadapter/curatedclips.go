@@ -2,11 +2,16 @@ package mariadbadapter
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
-// UpsertClipInfo inserts or updates clip info.
+// UpsertClipInfo inserts or updates clip info. If the clip already exists, it
+// will be updated, but its InitialDateCurated value is ignored. If the clip
+// does not already exist, both InitialDateCurated and LastDateCurated are
+// evaluated, but the insert will fail and an error will be returned if
+// LastDateCurated is earlier than InitialDateCurated.
 func (m *MariaDbConnection) UpsertClipInfo(clipInfo contracts.ClipInfo) error {
 	clipExists, clipID, err := m.getClipInfoID(clipInfo)
 	if err != nil {
@@ -33,9 +38,11 @@ func (m *MariaDbConnection) getClipInfoID(clipInfo contracts.ClipInfo) (bool, in
 }
 
 func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo contracts.ClipInfo) error {
+	// Note that on updates, we update the `last_date_curated` field and ignore
+	// the  `initial_date_curated` field.
 	const updateStmt = `
 	UPDATE curated_clips
-	SET date_curated = ?,
+	SET last_date_curated = ?,
 		curator_info = ?,
 		title = ?,
 		description = ?,
@@ -44,7 +51,7 @@ func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo contracts.ClipIn
 	WHERE clip_id = ?;
 	`
 	result, err := m.db.Exec(updateStmt,
-		clipInfo.DateCurated,
+		clipInfo.LastDateCurated,
 		clipInfo.CuratorInformation,
 		clipInfo.Title,
 		clipInfo.Description,
@@ -57,19 +64,24 @@ func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo contracts.ClipIn
 }
 
 func (m *MariaDbConnection) insertClipInfo(clipInfo contracts.ClipInfo) error {
+	if clipInfo.LastDateCurated.Before(clipInfo.InitialDateCurated) {
+		return fmt.Errorf("LastDateCurated must not be earlier than InitialDateCurated. %v", clipInfo)
+	}
 	const insertStmt = `
 	INSERT INTO curated_clips (
-		date_curated,
+		initial_date_curated,
+		last_date_curated,
 		curator_info,
 		title,
 		description,
 		media_uri,
 		media_type
 	)
-	VALUES (?,?,?,?,?,?);
+	VALUES (?,?,?,?,?,?,?);
 	`
 	result, err := m.db.Exec(insertStmt,
-		clipInfo.DateCurated,
+		clipInfo.InitialDateCurated,
+		clipInfo.LastDateCurated,
 		clipInfo.CuratorInformation,
 		clipInfo.Title,
 		clipInfo.Description,

@@ -5,12 +5,12 @@
 # Work Assignment Process
 ## Checking Capacity
 Each time a pending-work-archivist activates, it follows these steps:
-1) Idenfity how many researchers are currently associated with the pending-work queue
+1) Identify how many researchers are currently associated with the pending-work queue
 2) Identify how many pending work items are currently in the pending-work queue
 3) If there are no researchers and no pending work items, move to step 7. Else continue to the next step.
 4) If there are no researchers but one or more pending-work-items, exit. Else, continue to the next step.
-5) If we're here, we have at least one active researcher. The pending-work-archivist then calculates its current position by subtracting the number of work=items from the number of researchers.
-    - Examples:
+5) If we're here, we have at least one active researcher. The pending-work-archivist then calculates its current position by subtracting the number of work-items from the number of researchers.
+    - Example:
       - *If there are 3 researchers and 4 work-items the current position is 3 minus 4, which is -1.*
       - *If there is 1 researcher and 1 work-items the current position is 1 minus 1, which is 0.*
       - *If there are 5 researchers and 2 work-items the current position is 5 minus 2, which is 3.*
@@ -28,15 +28,16 @@ A PWA will create a work-item based on the following process.
 
 > **Episode and clip curated "priority" values:** Upstream episode and clip curator services optionally assign each episode or clip a priority value. This value is an integer where higher values represent a higher priority over lower values. The values used for clips are contextually independent from the values used for episodes and vice versa. That is to say that clip priority values only have meaning within the context of clips, and episode priority values only have meaning within the context of episodes. Priority values can be arbitrarily assigned, but should be agreed upon across curators to ensure that they are applied in a meaningful and consistent manner by the archivists. The specifics about how priority values are applied are coverd in the following sections.
 
-Episodes take priority over clips because they are the base unit of work assigned to each researcher, and are the central data element of the TBTL Archivist system as a whole. PWA will select the highest priority episode to assign. *(Note that the actual algorithm may differ in its implementation, but achieves the same result.)*
+Episodes take priority over clips because they are the base unit of work assigned to each researcher, and are the central data element of the TBTL Archivist system as a whole. A PWA will select the highest priority episode to assign. *(Note that the actual algorithm may differ in its implementation, but achieves the same result.)*
 
-0) If at any point no remaining episodes meet criteria, then PWA simply makes no assignment and exits.
+0) If at any point no remaining episodes meet criteria, then the PWA simply makes no assignment and exits.
 1) Consider all episodes in the data store.
 2) Remove all episodes for which research is complete (i.e. there are no unresearched clips for the episode).
 3) Remove all episodes for which there are no unleased clips (i.e. there is research to do, but all is currently leased).
-4) Of the remaining episodes,
+4) Of the remaining episodes:
     - Sort them first descending by their assigned "priority" value.
-    - Within "priority", sort them descending by their curation date.
+    - Within "priority", sort them descending by their initial curation date.
+      - *Two curation dates are tracked for each episode. The initial curation date, and the latest curation date. The lastest curation date can be expected to get udpated frequently, and is not a useful indicator of the relative age of an episode.*
 5) The top item has the most recent curation date for the highest "priority" value. This is the episode that will be assigned.
 6) Move on to identify which clips to lease for this episode.
 
@@ -46,7 +47,8 @@ Episodes take priority over clips because they are the base unit of work assigne
 3) Remove all clips that have an active lease for the selected episode.
 4) Of the remaining clips:
     - Sort them decending by their assigned "priority" value.
-    - Within "priority", sort them decending by their curation date.
+    - Within "priority", sort them descending by their initial curation date.
+      - *Two curation dates are tracked for each clip. The initial curation date, and the latest curation date. The lastest curation date can be expected to get udpated frequently, and is not a useful indicator of the relative age of a clip.*
 5) Limit the resulting list of clips to the "max-clip limit".
 
 At this point, the PWA has selected which work it would like to assign. 
@@ -79,5 +81,4 @@ As work-items are placed on the pending work queue, downstream Researchers will 
 
 - A researcher started working on a work-item, but hung for an extended duration. Its leases expired, but when it came back online it resumed sending results back to the completed work queue. This doesn't pose any threat to the system other than being inefficient. If, in the meantime, another service has started work on a new lease that covers the same clip and episode, that work will continue unaffected. The original reseracher's transmissions will not alter the new reseracher's leases, since they are isolated by lease-id.
 - A researcher is sending a bunch of completed clips back to the completed work queue. Multiple CWA services are working in parallel pulling items off of the queue. One CWA service receives the completed-research item that has been flagged as final, and in response revokes the associated lease. The other parallel CWA instances have no awareness that the final item was received and that the lease was revoked. Their calls to extend the revoked lease simply have no effect. Their results are otherwise ingested into the database as normal.
-
-A related circumstance is that a final completed-research item is never received. This could occur because of a researcher failed to complete its work, is misconfigured and didn't send the notification when it should have, or due to a failure in the message bus. In this situation, the leases will simply expire after some time, and remaining unresolved work will be identified and prioritized by a PWA service on its next run.
+- A related circumstance is that a final completed-research item is never received. This could occur because a researcher failed to complete its work, is misconfigured and didn't send the notification when it should have, or due to a failure in the message bus. In this situation, the leases will simply expire after some time, and remaining unresolved work will be identified and prioritized by a PWA service on its next run.

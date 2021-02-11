@@ -134,13 +134,16 @@ func extractMP3s(body string) map[string]contracts.ClipInfo {
 			continue
 		}
 		mp3URI := rawMP3Matches[i][1]
+		now := time.Now().UTC()
 		distinctMP3URIs[mp3URI] = contracts.ClipInfo{
-			DateCurated:        time.Now().UTC(),
+			InitialDateCurated: now,
+			LastDateCurated:    now,
 			CuratorInformation: scraperName,
 			Title:              mp3URI,
 			Description:        "",
 			MediaURI:           mp3URI,
 			MediaType:          "mp3",
+			Priority:           0,
 		}
 	}
 	return distinctMP3URIs
@@ -154,13 +157,16 @@ func extractDecoratedMP3s(body string) map[string]contracts.ClipInfo {
 			continue
 		}
 		mp3URI := decoratedMP3Matches[i][2]
+		now := time.Now().UTC()
 		distinctDecoratedMP3URIs[mp3URI] = contracts.ClipInfo{
-			DateCurated:        time.Now().UTC(),
+			InitialDateCurated: now,
+			LastDateCurated:    now,
 			CuratorInformation: scraperName,
 			Title:              mp3URI,
 			Description:        decoratedMP3Matches[i][1],
 			MediaURI:           mp3URI,
 			MediaType:          "mp3",
+			Priority:           0,
 		}
 	}
 	return distinctDecoratedMP3URIs

@@ -7,9 +7,13 @@ import (
 
 // EpisodeInfo contains information about an episode.
 type EpisodeInfo struct {
-	// DateCurated represents the date that the curator service found and
-	// analyzed the episode.
-	DateCurated time.Time
+	// InitialDateCurated represents the date that a curator service first
+	// discovered this episode.
+	InitialDateCurated time.Time
+
+	// LastDateCurated respresents the most recent date that a curator
+	// service found this episode.
+	LastDateCurated time.Time
 
 	// CuratorInformation provides information about the utility that extracted
 	// this information.
@@ -29,6 +33,10 @@ type EpisodeInfo struct {
 
 	// MediaType is the media type for the episode (such as mp3, etc).
 	MediaType string
+
+	// Priority is a value used by the curators to help the archivists
+	// prioritize how episodes are assigned to researchers.
+	Priority int
 }
 
 // String returns a string representation of the EpisodeInfo instance.

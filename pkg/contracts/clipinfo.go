@@ -7,9 +7,13 @@ import (
 
 // ClipInfo contains information about an audio clip.
 type ClipInfo struct {
-	// DateCurated respresents the date that the curator service found and
-	// analyzed the clip.
-	DateCurated time.Time
+	// InitialDateCurated represents the date that a curator service first
+	// discovered this clip.
+	InitialDateCurated time.Time
+
+	// LastDateCurated respresents the most recent date that a curator
+	// service found this clip.
+	LastDateCurated time.Time
 
 	// CuratorInformation provides information about the utility that extracted
 	// this information.
@@ -26,6 +30,10 @@ type ClipInfo struct {
 
 	// MediaType is the media type for the episode (such as mp3, etc.).
 	MediaType string
+
+	// Priority is a value used by the curators to help the archivists prioritize
+	// how clips are assigned to researchers.
+	Priority int
 }
 
 // String returns a string representation of the ClipInfo instance.
