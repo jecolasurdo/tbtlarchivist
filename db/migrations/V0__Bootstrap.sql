@@ -38,7 +38,7 @@ CREATE TABLE `episode_leases` (
   UNIQUE KEY `episode_id_clip_id_UNIQUE` (`episode_id`, `clip_id`)
 );
 
-CREATE TABLE `episode_clip_backlog` (
+CREATE TABLE `research_backlog` (
   `episode_id` int(11) NOT NULL,
   `clip_id` int(11) NOT NULL,
   PRIMARY KEY (`episode_id`, `clip_id`)

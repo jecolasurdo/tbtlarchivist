@@ -109,7 +109,7 @@ func (m *MariaDbConnection) insertClipInfo(clipInfo contracts.ClipInfo) error {
 	}
 
 	insertClipBacklog := fmt.Sprintf(`
-		INSERT INTO episode_clip_backlog (episode_id, clip_id)
+		INSERT INTO research_backlog (episode_id, clip_id)
 		SELECT episode_id, %v
 		FROM curated_episodes;
 	`, newClipID)
