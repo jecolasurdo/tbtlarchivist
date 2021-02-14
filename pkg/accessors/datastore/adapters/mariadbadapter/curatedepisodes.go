@@ -92,7 +92,7 @@ func (m *MariaDbConnection) insertEpisodeInfo(episodeInfo contracts.EpisodeInfo)
 			media_type,
 			priority
 		)
-		VALUES (?,?,?,?,?,?,?,?);
+		VALUES (?,?,?,?,?,?,?,?,?);
 	`
 	result, err := tx.Exec(insertCuratedEpisodeStmt,
 		episodeInfo.InitialDateCurated,
