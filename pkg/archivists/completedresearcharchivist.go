@@ -101,7 +101,7 @@ func StartCompletedResearchArchivist(ctx context.Context, messageBus messagebus.
 				continue
 			}
 
-			err = db.UpsertCompletedResearch(completedResearchItem)
+			err = db.RecordCompletedResearch(completedResearchItem)
 			if err != nil {
 				errorSource <- fmt.Errorf("an error occured recording completed research to the datastore. %v %v", rawMessage.Body, err)
 				err = rawMessage.Acknowledger.Nack(true)

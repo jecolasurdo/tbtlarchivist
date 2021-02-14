@@ -128,7 +128,89 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode contracts.
 	return clips, nil
 }
 
-// UpsertCompletedResearch inserts or updates a reserach item.
-func (m *MariaDbConnection) UpsertCompletedResearch(completedResearchItem contracts.CompletedResearchItem) error {
-	panic("not implemented")
+// RecordCompletedResearch inserts a reserach item. The system currently
+// presumes that research is only assigned and conducted from the backlog
+// (episodes/clip pairs that have not previously been researched). Submitting
+// research for an episode/clip pair that has previously been researched is not
+// supported, and will result in an error (though database integrity is
+// maintained if this occurs).
+func (m *MariaDbConnection) RecordCompletedResearch(completedResearchItem contracts.CompletedResearchItem) error {
+	found, episodeID, err := m.getEpisodeInfoID(completedResearchItem.Episode)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return fmt.Errorf("episodeID not found for episode: %v", completedResearchItem.Episode)
+	}
+
+	found, clipID, err := m.getClipInfoID(completedResearchItem.Clip)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return fmt.Errorf("clipID not found for clip: %v", completedResearchItem.Clip)
+	}
+
+	found, researchID, err := m.getResearchIDFromBacklog(episodeID, clipID)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return fmt.Errorf("researchID not found for researchItem: %v", completedResearchItem)
+	}
+
+	tx, err := m.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	const deleteStmt = `DELETE FROM research_backlog WHERE research_id = ?`
+	_, err = tx.Exec(deleteStmt, researchID)
+	if err != nil {
+		return tryTxRollback(tx, err)
+	}
+
+	const insertStmt = `
+		INSERT INTO research_complete (
+			research_id,
+			episode_id,
+			clip_id,
+			episode_duration_ns,
+			research_date
+		) VALUES (?,?,?,?,?);
+	`
+	sqlResult, err := tx.Exec(insertStmt,
+		researchID,
+		episodeID,
+		clipID,
+		completedResearchItem.EpisodeDuration,
+		completedResearchItem.ClipDuration,
+		completedResearchItem.ResearchDate,
+	)
+	if err != nil {
+		return tryTxRollback(tx, err)
+	}
+	if err := expectOneRowAffected(sqlResult, nil); err != nil {
+		return tryTxRollback(tx, err)
+	}
+
+	return tx.Commit()
+}
+
+func (m *MariaDbConnection) getResearchIDFromBacklog(episodeID, clipID int) (bool, int, error) {
+	const selectStmt = `
+		SELECT research_id 
+		FROM research_backlog 
+		WHERE episode_id = ? AND clip_id = ?;
+	`
+	row := m.db.QueryRow(selectStmt, episodeID, clipID)
+	var researchID int
+	err := row.Scan(&researchID)
+	if err == sql.ErrNoRows {
+		return false, 0, nil
+	}
+	if err != nil {
+		return false, 0, err
+	}
+	return true, researchID, nil
 }

@@ -24,5 +24,5 @@ type DataStorer interface {
 
 	GetHighestPriorityEpisode() (*contracts.EpisodeInfo, error)
 	GetHighestPriorityClipsForEpisode(episode contracts.EpisodeInfo, limit int) ([]contracts.ClipInfo, error)
-	UpsertCompletedResearch(contracts.CompletedResearchItem) error
+	RecordCompletedResearch(contracts.CompletedResearchItem) error
 }
