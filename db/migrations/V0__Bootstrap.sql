@@ -44,19 +44,19 @@ CREATE TABLE `research_backlog` (
   PRIMARY KEY (`episode_id`, `clip_id`)
 );
 
-CREATE TABLE `episode_clip_matches` (
-  `episode_clip_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `research_complete` (
+  `research_id` int(11) NOT NULL AUTO_INCREMENT,
   `episode_id` int(11) NOT NULL,
   `clip_id` int(11) NOT NULL,
   `episode_duration_ns` bigint(20) NOT NULL,
   `clip_duration_ns` bigint(20) NOT NULL,
   `research_date` datetime NOT NULL,
-  PRIMARY KEY (`episode_clip_id`),
+  PRIMARY KEY (`research_id`),
   UNIQUE KEY `episode_id_clip_id_UNIQUE` (`episode_id`, `clip_id`)
 );
 
 CREATE TABLE `episode_clip_offsets` (
-  `episode_clip_id` int(11) NOT NULL,
+  `research_id` int(11) NOT NULL,
   `offset_ns` bigint(20) NOT NULL,
-  PRIMARY KEY (`episode_clip_id`)
+  PRIMARY KEY (`research_id`)
 );
