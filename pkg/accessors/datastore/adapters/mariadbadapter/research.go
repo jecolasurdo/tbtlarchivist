@@ -23,8 +23,10 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 			ce.priority
 		FROM 
 			research_backlog rb
-			LEFT JOIN research_leases rl ON rb.research_id != rl.research_id
+			LEFT JOIN research_leases rl ON rb.research_id = rl.research_id
 			JOIN curated_episodes ce ON rb.episode_id = ce.episode_id
+		WHERE
+			rl.research_id IS NULL
 		ORDER BY
 			ce.priority DESC,
 			cd.last_date_curated DESC
