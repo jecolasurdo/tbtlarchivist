@@ -15,11 +15,14 @@ import (
 // that describe the severity of the issue.
 type DataStorer interface {
 	UpsertClipInfo(contracts.ClipInfo) error
+
 	UpsertEpisodeInfo(contracts.EpisodeInfo) error
-	GetHighestPriorityEpisode() (*contracts.EpisodeInfo, error)
-	GetHighestPriorityClipsForEpisode(episode contracts.EpisodeInfo, limit int) ([]contracts.ClipInfo, error)
+
 	CreateResearchLease(contracts.EpisodeInfo, []contracts.ClipInfo, time.Time) (string, error)
 	RenewResearchLease(string, time.Time) error
 	RevokeResearchLease(string) error
+
+	GetHighestPriorityEpisode() (*contracts.EpisodeInfo, error)
+	GetHighestPriorityClipsForEpisode(episode contracts.EpisodeInfo, limit int) ([]contracts.ClipInfo, error)
 	UpsertCompletedResearch(contracts.CompletedResearchItem) error
 }

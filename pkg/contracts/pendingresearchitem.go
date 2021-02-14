@@ -5,7 +5,7 @@ import "encoding/json"
 // A PendingResearchItem represents an episode and a list of of associated
 // clips to research for that episode.
 type PendingResearchItem struct {
-	LeaseID int
+	LeaseID string
 	Episode EpisodeInfo
 	Clips   []ClipInfo
 }

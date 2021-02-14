@@ -18,6 +18,7 @@ const (
 	lowerPacingBound     = 0.0
 	upperPacingBound     = 2000.0
 	pacingBasis          = time.Millisecond
+	clipLimit            = 100
 )
 
 // A PendingResearchArchivist determines if any research work should be done,
@@ -28,34 +29,14 @@ type PendingResearchArchivist struct {
 	Done   <-chan struct{}
 }
 
-// StartPendingResearchArchivist starts the archivist, and begins the following
-// process:
-// 0) The archivist pauses for a random short interval to ensure its start time
-// is unlikely to be the same as some other parallel archivist instances.
-// 1) Available new-research overhead is calculated. Overhead is equal to the
-// number of known downstream researchers minus the number of work-items
-// currently on the pending queue.
-// 2) If the available overhead is negative or zero, the archivist exits, and
-// no further steps are taken.
-// 3) If the number is positive (or if there are both no active researchers and
-// no queued work) then one work item is added to the queue.
-// 4) The process repeats at step 0.
+// StartPendingResearchArchivist starts the archivist, which attempts to create
+// pending work-items for downstream researchers to consume.
 //
 // An archivist's host should expect the archivist to exit when the archivist
 // has determined that no overhead is available to queue more work.  It is the
 // host's responsibility to initialize the archivist periodically to check if
 // work needs to be queued.  This can be done via an automated cron job or
 // other scheduler as desired.
-//
-// When queuing work, it's technically possible that multiple archivists try to
-// set the episode lease for the same episode at the same time. 1) This should
-// be fairly infrequent, as it would require multiple services to try and take
-// out the same lease at the same moment. 2) If it does happen, there is no
-// detriment to the system aside from an inefficient use of resources. 3) The
-// possibility of this happening is futher reduced by having each archivist
-// start work at jittered intervals. Thus, if two archivists are initialized at
-// nearly the same moment, the jitter will reduce the likelihood that they try
-// to access the database at the same time.
 func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Sender, db datastore.DataStorer) *PendingResearchArchivist {
 	errorSource := make(chan error)
 	done := make(chan struct{})
@@ -87,31 +68,32 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 
 			episode, err := db.GetHighestPriorityEpisode()
 			if err != nil {
-				errorSource <- fmt.Errorf("error occured while finding unleased episode, %v", err)
+				errorSource <- fmt.Errorf("error occured finding highest priority episode, %v", err)
 				return
 			}
 			if episode == nil {
-				log.Println("No unleased episodes available.")
+				log.Println("No episodes available to assign for research.")
 				return
 			}
 
-			err = db.SetResearchLease(*episode, time.Now().Add(episodeLeaseDuration).UTC())
+			clips, err := db.GetHighestPriorityClipsForEpisode(*episode, clipLimit)
 			if err != nil {
-				errorSource <- fmt.Errorf("error setting episode lease: %v\n%v", err, episode)
-				return
-			}
-
-			clips, err := db.GetHighestPriorityClipsForEpisode(*episode)
-			if err != nil {
-				errorSource <- fmt.Errorf("error retrieving unresearched clips for episode: %v\n%v", err, episode)
+				errorSource <- fmt.Errorf("error retrieving clips for episode: %v\n%v", err, episode)
 				return
 			}
 			if len(clips) == 0 {
-				log.Println("No unresearched clips for this episode")
+				log.Println("No clips available to assign for research for this episode.")
+				return
+			}
+
+			leaseID, err := db.CreateResearchLease(*episode, clips, time.Now().Add(episodeLeaseDuration).UTC())
+			if err != nil {
+				errorSource <- fmt.Errorf("error creating lease: %v\n%v", err, episode)
 				return
 			}
 
 			pendingResearchItem := contracts.PendingResearchItem{
+				LeaseID: leaseID,
 				Episode: *episode,
 				Clips:   clips,
 			}
