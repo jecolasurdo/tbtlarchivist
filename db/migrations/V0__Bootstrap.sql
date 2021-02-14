@@ -38,7 +38,7 @@ CREATE TABLE `research_backlog` (
 );
 
 CREATE TABLE `research_leases` (
-  `lease_id` int(11) NOT NULL AUTO_INCREMENT,
+  `lease_id` char(36) NOT NULL,
   `research_id` int(11) NOT NULL,
   `expiration` datetime NOT NULL,
   PRIMARY KEY (`lease_id`),

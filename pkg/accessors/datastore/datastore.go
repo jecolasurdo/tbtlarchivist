@@ -16,8 +16,10 @@ import (
 type DataStorer interface {
 	UpsertClipInfo(contracts.ClipInfo) error
 	UpsertEpisodeInfo(contracts.EpisodeInfo) error
-	GetMostRecentUnleasedEpisode() (*contracts.EpisodeInfo, error)
-	SetEpisodeLease(contracts.EpisodeInfo, time.Time) error
-	GetUnresearchedClipsForEpisode(contracts.EpisodeInfo) ([]contracts.ClipInfo, error)
-	UpsertEpisodeClipInfo(contracts.CompletedResearchItem) error
+	GetHighestPriorityEpisode() (*contracts.EpisodeInfo, error)
+	GetHighestPriorityClipsForEpisode(episode contracts.EpisodeInfo, limit int) ([]contracts.ClipInfo, error)
+	CreateResearchLease(contracts.EpisodeInfo, []contracts.ClipInfo, time.Time) (string, error)
+	RenewResearchLease(string, time.Time) error
+	RevokeResearchLease(string) error
+	UpsertCompletedResearch(contracts.CompletedResearchItem) error
 }

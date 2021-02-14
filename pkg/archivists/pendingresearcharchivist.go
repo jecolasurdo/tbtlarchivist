@@ -85,7 +85,7 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 				}
 			}
 
-			episode, err := db.GetMostRecentUnleasedEpisode()
+			episode, err := db.GetHighestPriorityEpisode()
 			if err != nil {
 				errorSource <- fmt.Errorf("error occured while finding unleased episode, %v", err)
 				return
@@ -95,13 +95,13 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 				return
 			}
 
-			err = db.SetEpisodeLease(*episode, time.Now().Add(episodeLeaseDuration).UTC())
+			err = db.SetResearchLease(*episode, time.Now().Add(episodeLeaseDuration).UTC())
 			if err != nil {
 				errorSource <- fmt.Errorf("error setting episode lease: %v\n%v", err, episode)
 				return
 			}
 
-			clips, err := db.GetUnresearchedClipsForEpisode(*episode)
+			clips, err := db.GetHighestPriorityClipsForEpisode(*episode)
 			if err != nil {
 				errorSource <- fmt.Errorf("error retrieving unresearched clips for episode: %v\n%v", err, episode)
 				return
