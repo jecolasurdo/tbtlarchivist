@@ -2,6 +2,7 @@ package mariadbadapter
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
@@ -10,7 +11,7 @@ import (
 // episode to be researched. If no episodes are available, this returns nil,
 // nil.
 func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo, error) {
-	selectStmt := `
+	const selectStmt = `
 		SELECT 
 			ce.initial_date_curated,
 			ce.last_date_curated,
@@ -29,12 +30,12 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 			rl.research_id IS NULL
 		ORDER BY
 			ce.priority DESC,
-			cd.last_date_curated DESC
+			cd.initial_date_curated DESC
 		LIMIT 1;
 	`
 
 	row := m.db.QueryRow(selectStmt)
-	episodeInfo := new(contracts.EpisodeInfo)
+	episodeInfo := contracts.EpisodeInfo{}
 	err := row.Scan(
 		&episodeInfo.InitialDateCurated,
 		&episodeInfo.LastDateCurated,
@@ -55,7 +56,7 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 		return nil, err
 	}
 
-	return episodeInfo, nil
+	return &episodeInfo, nil
 }
 
 // GetHighestPriorityClipsForEpisode identifies and returns the highest
@@ -63,7 +64,68 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 // returned is limited to `clipLimit`. If no clips are available for the
 // supplied episode, this returns nil, nil.
 func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode contracts.EpisodeInfo, clipLimit int) ([]contracts.ClipInfo, error) {
-	panic("not implemented")
+	const selectStmt = `
+		SELECT
+			cc.initial_date_curated,
+			cc.last_date_curated,
+			cc.curator_info,
+			cc.title,
+			cc.description,
+			cc.media_uri,
+			cc.media_type,
+			cc.priority
+		FROM 
+			research_backlog rb
+			LEFT JOIN research_leases rl ON rb.research_id = rl.research_id
+			JOIN curated_clips cc ON rb.clip_id = cc.clip_id
+		WHERE
+			rl.research_id IS NULL
+		ORDER BY
+			cc.priority DESC,
+			cc.initial_date_curated DESC
+		LIMIT %v;
+	`
+	preparedStmt := fmt.Sprintf(selectStmt, clipLimit)
+
+	rows, err := m.db.Query(preparedStmt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	clips := make([]contracts.ClipInfo, clipLimit)
+	for rows.Next() {
+		err := rows.Err()
+		if err != nil {
+			return nil, err
+		}
+
+		clip := contracts.ClipInfo{}
+		err = rows.Scan(
+			&clip.InitialDateCurated,
+			&clip.LastDateCurated,
+			&clip.CuratorInformation,
+			&clip.Title,
+			&clip.Description,
+			&clip.MediaURI,
+			&clip.MediaType,
+			&clip.Priority,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		clips = append(clips, clip)
+	}
+
+	if len(clips) == 0 {
+		return nil, nil
+	}
+
+	return clips, nil
 }
 
 // UpsertCompletedResearch inserts or updates a reserach item.
