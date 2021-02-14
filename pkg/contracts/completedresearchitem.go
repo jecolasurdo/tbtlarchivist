@@ -14,6 +14,8 @@ type CompletedResearchItem struct {
 	Clip            ClipInfo
 	ClipDuration    Nanosecond
 	ClipOffsets     []Nanosecond
+	LeaseID         string
+	RevokeLease     bool
 }
 
 // String returns a string representation of the CompletedResearchItem instance.

@@ -83,20 +83,28 @@ func StartCompletedResearchArchivist(ctx context.Context, messageBus messagebus.
 				continue
 			}
 
-			err = db.UpsertEpisodeClipInfo(completedResearchItem)
+			var operationType string
+			if completedResearchItem.RevokeLease {
+				err = db.RevokeResearchLease(completedResearchItem.LeaseID)
+				operationType = "revoke"
+			} else {
+				err = db.RenewResearchLease(completedResearchItem.LeaseID, time.Now().Add(episodeLeaseDuration).UTC())
+				operationType = "renew"
+			}
+
 			if err != nil {
-				errorSource <- fmt.Errorf("an error occured recording completed research to the datastore. %v %v", rawMessage.Body, err)
-				err = rawMessage.Acknowledger.Nack(true)
+				errorSource <- fmt.Errorf("an error occured trying to %v a lease. %v %v", operationType, rawMessage.Body, err)
+				err = rawMessage.Acknowledger.Nack(false)
 				if err != nil {
 					errorSource <- fmt.Errorf("an error occured while trying to send a negative achnowledgement to the message bus %v", err)
 				}
 				continue
 			}
 
-			err = db.SetEpisodeLease(completedResearchItem.Episode, time.Now().Add(episodeLeaseDuration).UTC())
+			err = db.UpsertCompletedResearch(completedResearchItem)
 			if err != nil {
-				errorSource <- fmt.Errorf("an error occured trying to extend an episode's lease. %v %v", rawMessage.Body, err)
-				err = rawMessage.Acknowledger.Nack(false)
+				errorSource <- fmt.Errorf("an error occured recording completed research to the datastore. %v %v", rawMessage.Body, err)
+				err = rawMessage.Acknowledger.Nack(true)
 				if err != nil {
 					errorSource <- fmt.Errorf("an error occured while trying to send a negative achnowledgement to the message bus %v", err)
 				}
