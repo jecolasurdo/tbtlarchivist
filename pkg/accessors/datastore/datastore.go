@@ -18,7 +18,7 @@ type DataStorer interface {
 
 	UpsertEpisodeInfo(contracts.EpisodeInfo) error
 
-	CreateResearchLease(contracts.EpisodeInfo, []contracts.ClipInfo, time.Time) (string, error)
+	CreateResearchLease(string, contracts.EpisodeInfo, []contracts.ClipInfo, time.Time) error
 	RenewResearchLease(string, time.Time) error
 	RevokeResearchLease(string) error
 
