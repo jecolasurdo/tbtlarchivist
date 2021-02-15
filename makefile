@@ -28,11 +28,11 @@ kill-message-bus: ## shut down the rabbitmq docker container and reclaim resourc
 	docker container kill archivist-mq && \
 	docker container prune -f
 .PHONY: kill-message-bus
-	
+
 list-queues: ## list queues currently registered in the message bus
 	docker exec archivist-mq rabbitmqctl list_queues
 .PHONY: list-queues
-	
+
 purge-queues: ## purge the message bus queues
 	  docker exec archivist-mq rabbitmqctl purge_queue pending_research
 .PHONY: purge-queues
