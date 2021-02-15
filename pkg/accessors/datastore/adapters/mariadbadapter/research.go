@@ -30,7 +30,7 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 			rl.research_id IS NULL
 		ORDER BY
 			ce.priority DESC,
-			cd.initial_date_curated DESC
+			ce.initial_date_curated DESC
 		LIMIT 1;
 	`
 
