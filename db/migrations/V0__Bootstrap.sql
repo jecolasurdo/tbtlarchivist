@@ -41,7 +41,7 @@ CREATE TABLE `research_leases` (
   `lease_id` char(36) NOT NULL,
   `research_id` int(11) NOT NULL,
   `expiration` datetime NOT NULL,
-  PRIMARY KEY (`lease_id`),
+  PRIMARY KEY (`lease_id`, `research_id`),
   UNIQUE KEY `research_id_UNIQUE` (`research_id`)
 );
 

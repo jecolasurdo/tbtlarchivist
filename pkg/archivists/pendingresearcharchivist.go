@@ -16,8 +16,8 @@ import (
 
 const (
 	episodeLeaseDuration = 2 * time.Hour
-	lowerPacingBound     = 0.0
-	upperPacingBound     = 2000.0
+	lowerPacingBound     = 2000.0
+	upperPacingBound     = 5000.0
 	pacingBasis          = time.Millisecond
 	clipLimit            = 100
 )
@@ -63,6 +63,7 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 			if !(queueInfo.Consumers == 0 && queueInfo.Messages == 0) {
 				overhead := queueInfo.Consumers - queueInfo.Messages
 				if overhead <= 0 {
+					log.Println("The pending work queue is at capacity. No need to assign anything.")
 					break
 				}
 			}
@@ -88,7 +89,7 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 			}
 
 			leaseID := uuid.New()
-			err = db.CreateResearchLease(leaseID, *episode, clips, time.Now().Add(episodeLeaseDuration).UTC())
+			err = db.CreateResearchLease(&leaseID, *episode, clips, time.Now().Add(episodeLeaseDuration).UTC())
 			if err != nil {
 				errorSource <- fmt.Errorf("error creating lease: %v\n%v", err, episode)
 				return

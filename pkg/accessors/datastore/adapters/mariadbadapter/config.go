@@ -22,6 +22,7 @@ func (c *Config) formatDSN() string {
 	dbconfig.DBName = c.DBName
 	dbconfig.User = c.User
 	dbconfig.ParseTime = true
+	dbconfig.Loc = time.UTC
 
 	// Internal error checking requires that Update statements return the number
 	// of rows matched, not just the number of rows altered.

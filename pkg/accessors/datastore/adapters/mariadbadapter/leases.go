@@ -2,17 +2,21 @@ package mariadbadapter
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
+const dbTimeFormat = `2006-01-02 15:04:05`
+
 // CreateResearchLease attempts to create a lease that is shared between the
 // episode and all provided clips.  This method will panic if clips is empty or
 // nil. If there are no clips to lease for an episode, that should be handled
 // without attempting to call this method.
-func (m *MariaDbConnection) CreateResearchLease(newLeaseID uuid.UUID, episode contracts.EpisodeInfo, clips []contracts.ClipInfo, expiration time.Time) error {
+func (m *MariaDbConnection) CreateResearchLease(newLeaseID *uuid.UUID, episode contracts.EpisodeInfo, clips []contracts.ClipInfo, expiration time.Time) error {
+	log.Println("creating leases:", newLeaseID.String())
 	if len(clips) == 0 {
 		panic("a non-zero number of clips must be supplied to this method")
 	}
@@ -40,7 +44,7 @@ func (m *MariaDbConnection) CreateResearchLease(newLeaseID uuid.UUID, episode co
 	// The sql engine cannot prepare placeholders in select clauses, so we
 	// prepare those manually. Any placeholders that can be prepared by the sql
 	// engine are prepared there.
-	partiallyPreparedInsert := fmt.Sprintf(insertStmt, newLeaseID, expiration.UTC().Format(time.RFC3339Nano))
+	partiallyPreparedInsert := fmt.Sprintf(insertStmt, newLeaseID, expiration.UTC().Format(dbTimeFormat))
 
 	for _, clip := range clips {
 		sqlResult, err := tx.Exec(partiallyPreparedInsert, episodeID, clip.Title)

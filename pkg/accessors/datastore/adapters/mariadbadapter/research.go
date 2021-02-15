@@ -103,7 +103,7 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode contracts.
 		return nil, err
 	}
 
-	clips := make([]contracts.ClipInfo, clipLimit)
+	clips := []contracts.ClipInfo{}
 	for rows.Next() {
 		err := rows.Err()
 		if err != nil {

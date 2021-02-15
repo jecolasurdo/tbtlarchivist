@@ -74,6 +74,10 @@ func tryTxRollback(tx *sql.Tx, previousErr error) error {
 	}
 
 	err := tx.Rollback()
+	if err == nil {
+		return previousErr
+	}
+
 	if err != nil && previousErr != nil {
 		err = fmt.Errorf("%v\n%v", previousErr, err)
 	}
