@@ -30,6 +30,7 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 			rl.research_id IS NULL
 		ORDER BY
 			ce.priority DESC,
+			ce.date_aired DESC,
 			ce.initial_date_curated DESC
 		LIMIT 1;
 	`
@@ -64,6 +65,14 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 // returned is limited to `clipLimit`. If no clips are available for the
 // supplied episode, this returns nil, nil.
 func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode contracts.EpisodeInfo, clipLimit int) ([]contracts.ClipInfo, error) {
+	found, episodeID, err := m.getEpisodeInfoID(episode)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, fmt.Errorf("episode not found: %v", episode)
+	}
+
 	const selectStmt = `
 		SELECT
 			cc.initial_date_curated,
@@ -80,14 +89,13 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode contracts.
 			JOIN curated_clips cc ON rb.clip_id = cc.clip_id
 		WHERE
 			rl.research_id IS NULL
+			AND rb.episode_id = ?
 		ORDER BY
 			cc.priority DESC,
 			cc.initial_date_curated DESC
-		LIMIT %v;
+		LIMIT ?;
 	`
-	preparedStmt := fmt.Sprintf(selectStmt, clipLimit)
-
-	rows, err := m.db.Query(preparedStmt)
+	rows, err := m.db.Query(selectStmt, episodeID, clipLimit)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
