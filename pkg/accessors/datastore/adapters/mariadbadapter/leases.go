@@ -35,7 +35,7 @@ func (m *MariaDbConnection) CreateResearchLease(newLeaseID uuid.UUID, episode co
 			SELECT "%v", bl.research_id, "%v" 
 			FROM research_backlog bl
 				JOIN curated_clips cc ON bl.clip_id = cc.clip_id
-			WHERE bl.episode_id = ? AND cc.title = ?
+			WHERE bl.episode_id = ? AND cc.title = ?;
 	`
 	// The sql engine cannot prepare placeholders in select clauses, so we
 	// prepare those manually. Any placeholders that can be prepared by the sql
@@ -62,7 +62,7 @@ func (m *MariaDbConnection) RenewResearchLease(leaseID uuid.UUID, expiration tim
 	const selectStmt = `
 		UPDATE research_leases
 		SET expiration = ?
-		WHERE lease_id = ?
+		WHERE lease_id = ?;
 	`
 	// We ignore the returned SQLResult value since we're not concerned with
 	// how many (if any) leases were renewed.
@@ -75,7 +75,7 @@ func (m *MariaDbConnection) RenewResearchLease(leaseID uuid.UUID, expiration tim
 func (m *MariaDbConnection) RevokeResearchLease(leaseID uuid.UUID) error {
 	const deleteStmt = `
 		DELETE FROM research_leases
-		WHERE lease_id = ?
+		WHERE lease_id = ?;
 	`
 	// We ignore the returned SQLResult value since we're not concerned with
 	// how many (if any) leases were revoked.
