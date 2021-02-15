@@ -3,6 +3,8 @@ package contracts
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // A CompletedResearchItem represents the results of researching a clip for an
@@ -14,7 +16,7 @@ type CompletedResearchItem struct {
 	Clip            ClipInfo
 	ClipDuration    Nanosecond
 	ClipOffsets     []Nanosecond
-	LeaseID         string
+	LeaseID         uuid.UUID
 	RevokeLease     bool
 }
 

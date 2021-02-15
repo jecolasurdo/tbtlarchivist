@@ -1,11 +1,15 @@
 package contracts
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/google/uuid"
+)
 
 // A PendingResearchItem represents an episode and a list of of associated
 // clips to research for that episode.
 type PendingResearchItem struct {
-	LeaseID string
+	LeaseID uuid.UUID
 	Episode EpisodeInfo
 	Clips   []ClipInfo
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
@@ -16,7 +17,7 @@ import (
 // method will panic if clips is empty or nil. If there are no clips to lease
 // for an episode, that should be handled without attempting to call this
 // method.
-func (m *MariaDbConnection) CreateResearchLease(newLeaseID string, episode contracts.EpisodeInfo, clips []contracts.ClipInfo, expiration time.Time) error {
+func (m *MariaDbConnection) CreateResearchLease(newLeaseID uuid.UUID, episode contracts.EpisodeInfo, clips []contracts.ClipInfo, expiration time.Time) error {
 	if len(clips) == 0 {
 		panic("a non-zero number of clips must be supplied to this method")
 	}
@@ -39,32 +40,35 @@ func (m *MariaDbConnection) CreateResearchLease(newLeaseID string, episode contr
 			SELECT "%v", bl.research_id, "%v" 
 			FROM research_backlog bl
 				JOIN curated_clips cc ON bl.clip_id = cc.clip_id
-			WHERE cc.title = ?
+			WHERE bl.episode_id = ? AND cc.title = ?
 	`
-	// Preparing the statement with newLeaseID and expiration here, but leaving
-	// the title value to be prepared by the sql package. Placeholders can't be
-	// used in the select clause, but we prefer to rely on the sql engine to
-	// escape/convert datatypes as much as possible.
-	partiallyPreparedInsert := fmt.Sprintf(insertStmt, newLeaseID, expiration)
+	// The sql engine cannot prepare placeholders in select clauses, so we
+	// prepare those manually. Any placeholders that can be prepared by the sql
+	// engine are prepared there.
+	partiallyPreparedInsert := fmt.Sprintf(insertStmt, newLeaseID, expiration.UTC().Format(time.RFC3339Nano))
 
 	for _, clip := range clips {
-		panic("TODO (see below)")
-		// range over the clips
-		// prepare each insert statement
-		// if the insert fails, or alters 0 records rollback and return an error
+		sqlResult, err := tx.Exec(partiallyPreparedInsert, episodeID, clip.Title)
+		if err != nil {
+			return tryTxRollback(tx, err)
+		}
+
+		if err := expectOneRowAffected(sqlResult, nil); err != nil {
+			return tryTxRollback(tx, err)
+		}
 	}
 
-	panic("not implemented")
+	return tx.Commit()
 }
 
 // RenewResearchLease updates the deadline for an existing lease. If the lease
 // doesn't exist, no action is taken.
-func (m *MariaDbConnection) RenewResearchLease(leaseID string, deadline time.Time) error {
+func (m *MariaDbConnection) RenewResearchLease(leaseID uuid.UUID, deadline time.Time) error {
 	panic("not implemented")
 }
 
 // RevokeResearchLease removes the leases for all items assigned to the
 // specified leaseID. If the leaseID doesn't exist, no action is taken.
-func (m *MariaDbConnection) RevokeResearchLease(leaseID string) error {
+func (m *MariaDbConnection) RevokeResearchLease(leaseID uuid.UUID) error {
 	panic("not implemented")
 }

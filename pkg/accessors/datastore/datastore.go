@@ -3,6 +3,7 @@ package datastore
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
@@ -18,9 +19,9 @@ type DataStorer interface {
 
 	UpsertEpisodeInfo(contracts.EpisodeInfo) error
 
-	CreateResearchLease(string, contracts.EpisodeInfo, []contracts.ClipInfo, time.Time) error
-	RenewResearchLease(string, time.Time) error
-	RevokeResearchLease(string) error
+	CreateResearchLease(uuid.UUID, contracts.EpisodeInfo, []contracts.ClipInfo, time.Time) error
+	RenewResearchLease(uuid.UUID, time.Time) error
+	RevokeResearchLease(uuid.UUID) error
 
 	GetHighestPriorityEpisode() (*contracts.EpisodeInfo, error)
 	GetHighestPriorityClipsForEpisode(episode contracts.EpisodeInfo, limit int) ([]contracts.ClipInfo, error)

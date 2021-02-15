@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
@@ -86,7 +87,8 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 				return
 			}
 
-			leaseID, err := db.CreateResearchLease(*episode, clips, time.Now().Add(episodeLeaseDuration).UTC())
+			leaseID := uuid.New()
+			err = db.CreateResearchLease(leaseID, *episode, clips, time.Now().Add(episodeLeaseDuration).UTC())
 			if err != nil {
 				errorSource <- fmt.Errorf("error creating lease: %v\n%v", err, episode)
 				return
