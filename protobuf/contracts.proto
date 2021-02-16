@@ -1,9 +1,13 @@
 syntax = "proto3";
 package contracts;
 
+import "google/protobuf/timestamp.proto";
+
+option go_package = "pkg/contracts";
+
 message ClipInfo {
-    Timestamp initial_date_curated = 1;
-    Timestamp last_date_curated = 2;
+    google.protobuf.Timestamp initial_date_curated = 1;
+    google.protobuf.Timestamp last_date_curated = 2;
     string curator_information = 3;
     string title = 4;
     string description = 5;
@@ -13,10 +17,10 @@ message ClipInfo {
 }
 
 message EpisodeInfo {
-    Timestamp initial_date_curated = 1;
-    Timestamp last_date_curated = 2;
+    google.protobuf.Timestamp initial_date_curated = 1;
+    google.protobuf.Timestamp last_date_curated = 2;
     string curator_information = 3;
-    Timestamp date_aired = 4;
+    google.protobuf.Timestamp date_aired = 4;
     string title = 5;
     string description = 6;
     string media_uri = 7;
@@ -31,7 +35,7 @@ message PendingResearchItem {
 }
 
 message CompletedResearchItem {
-    Timestamp research_date = 1;
+    google.protobuf.Timestamp research_date = 1;
     EpisodeInfo episode_info = 2;
     int64 clip_duration = 3;
     repeated int64 clip_offsets = 4;

@@ -14,7 +14,7 @@ help: ## this help message
 	grep --color '^[^ ]*'
 .PHONY: help
 
-start-all: start-message-bus start-maria-db ## start all dockers
+start-all: generate_protobuf start-message-bus start-maria-db ## start all dockers
 .PHONY: start-all
 	
 kill-all: kill-message-bus kill-maria-db ## shut down all dockers and clean up
@@ -54,3 +54,7 @@ bootstrap-maria-db: ## apply db migrations
 	flyway migrate
 .PHONY: bootstrap-maria-db
 
+generate_protobuf: ## generate concrete implementations of protocol buffer messages.
+	go install google.golang.org/protobuf/cmd/protoc-gen-go
+	protoc --go_out=. protobuf/contracts.proto
+.PHONY: generate_protobuf
