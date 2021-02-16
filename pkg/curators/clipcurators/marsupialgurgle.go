@@ -141,7 +141,7 @@ func extractMP3s(body string) map[string]contracts.ClipInfo {
 			CuratorInformation: scraperName,
 			Title:              mp3URI,
 			Description:        "",
-			MediaURI:           mp3URI,
+			MediaUri:           mp3URI,
 			MediaType:          "mp3",
 			Priority:           0,
 		}
@@ -164,7 +164,7 @@ func extractDecoratedMP3s(body string) map[string]contracts.ClipInfo {
 			CuratorInformation: scraperName,
 			Title:              mp3URI,
 			Description:        decoratedMP3Matches[i][1],
-			MediaURI:           mp3URI,
+			MediaUri:           mp3URI,
 			MediaType:          "mp3",
 			Priority:           0,
 		}

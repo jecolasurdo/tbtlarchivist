@@ -7,6 +7,7 @@ require (
 	github.com/antchfx/xpath v1.1.11
 	github.com/chromedp/chromedp v0.6.5
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/golang/protobuf v1.4.1
 	github.com/gonum/blas v0.0.0-20181208220705-f22b278b28ac // indirect
 	github.com/gonum/diff v0.0.0-20181124234638-500114f11e71 // indirect
 	github.com/gonum/floats v0.0.0-20181209220543-c233463c7e82 // indirect
@@ -20,5 +21,5 @@ require (
 	github.com/streadway/amqp v1.0.0
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
-	google.golang.org/protobuf v1.25.0 // indirect
+	google.golang.org/protobuf v1.25.0
 )

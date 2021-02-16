@@ -104,13 +104,13 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 					continue
 				}
 
-				mediaURI := mp3Re.FindString(nextDataInnerHTML)
-				if mediaURI == "" {
+				MediaUri := mp3Re.FindString(nextDataInnerHTML)
+				if MediaUri == "" {
 					errorSource <- fmt.Errorf("unable to extract media URI. %v", episodeLink)
 					continue
 				}
-				mediaURI = strings.Replace(mediaURI, unreplacedUAToken, userAgent, -1)
-				mediaType := mediaURI[len(mediaURI)-3:]
+				MediaUri = strings.Replace(MediaUri, unreplacedUAToken, userAgent, -1)
+				mediaType := MediaUri[len(MediaUri)-3:]
 
 				dateAired, err := time.Parse("January 2, 2006", rawDate)
 				if err != nil {
@@ -126,7 +126,7 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 					DateAired:          dateAired,
 					Title:              title,
 					Description:        description,
-					MediaURI:           mediaURI,
+					MediaUri:           MediaUri,
 					MediaType:          mediaType,
 					Priority:           0,
 				}

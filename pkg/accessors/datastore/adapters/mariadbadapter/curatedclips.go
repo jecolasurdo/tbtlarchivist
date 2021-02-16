@@ -12,7 +12,7 @@ import (
 // does not already exist, both InitialDateCurated and LastDateCurated are
 // evaluated, but the insert will fail and an error will be returned if
 // LastDateCurated is earlier than InitialDateCurated.
-func (m *MariaDbConnection) UpsertClipInfo(clipInfo contracts.ClipInfo) error {
+func (m *MariaDbConnection) UpsertClipInfo(clipInfo *contracts.ClipInfo) error {
 	clipExists, clipID, err := m.getClipInfoID(clipInfo)
 	if err != nil {
 		return err
@@ -23,7 +23,7 @@ func (m *MariaDbConnection) UpsertClipInfo(clipInfo contracts.ClipInfo) error {
 	return m.insertClipInfo(clipInfo)
 }
 
-func (m *MariaDbConnection) getClipInfoID(clipInfo contracts.ClipInfo) (bool, int, error) {
+func (m *MariaDbConnection) getClipInfoID(clipInfo *contracts.ClipInfo) (bool, int, error) {
 	const selectStmt = `SELECT clip_id FROM curated_clips WHERE title = ?;`
 	row := m.db.QueryRow(selectStmt, clipInfo.Title)
 	var clipID int
@@ -37,7 +37,7 @@ func (m *MariaDbConnection) getClipInfoID(clipInfo contracts.ClipInfo) (bool, in
 	return true, clipID, nil
 }
 
-func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo contracts.ClipInfo) error {
+func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo *contracts.ClipInfo) error {
 	// Note that on updates, we update the `last_date_curated` field and ignore
 	// the  `initial_date_curated` field.
 	const updateStmt = `
@@ -56,7 +56,7 @@ func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo contracts.ClipIn
 		clipInfo.CuratorInformation,
 		clipInfo.Title,
 		clipInfo.Description,
-		clipInfo.MediaURI,
+		clipInfo.MediaUri,
 		clipInfo.MediaType,
 		clipInfo.Priority,
 		clipID,
@@ -65,8 +65,8 @@ func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo contracts.ClipIn
 	return expectOneRowAffected(result, err)
 }
 
-func (m *MariaDbConnection) insertClipInfo(clipInfo contracts.ClipInfo) error {
-	if clipInfo.LastDateCurated.Before(clipInfo.InitialDateCurated) {
+func (m *MariaDbConnection) insertClipInfo(clipInfo *contracts.ClipInfo) error {
+	if clipInfo.LastDateCurated.AsTime().Before(clipInfo.InitialDateCurated.AsTime()) {
 		return fmt.Errorf("LastDateCurated must not be earlier than InitialDateCurated. %v", clipInfo)
 	}
 
@@ -94,7 +94,7 @@ func (m *MariaDbConnection) insertClipInfo(clipInfo contracts.ClipInfo) error {
 		clipInfo.CuratorInformation,
 		clipInfo.Title,
 		clipInfo.Description,
-		clipInfo.MediaURI,
+		clipInfo.MediaUri,
 		clipInfo.MediaType,
 		clipInfo.Priority,
 	)

@@ -78,7 +78,7 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 				return
 			}
 
-			clips, err := db.GetHighestPriorityClipsForEpisode(*episode, clipLimit)
+			clips, err := db.GetHighestPriorityClipsForEpisode(episode, clipLimit)
 			if err != nil {
 				errorSource <- fmt.Errorf("error retrieving clips for episode: %v\n%v", err, episode)
 				return
@@ -89,15 +89,15 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 			}
 
 			leaseID := uuid.New()
-			err = db.CreateResearchLease(&leaseID, *episode, clips, time.Now().Add(episodeLeaseDuration).UTC())
+			err = db.CreateResearchLease(&leaseID, episode, clips, time.Now().Add(episodeLeaseDuration).UTC())
 			if err != nil {
 				errorSource <- fmt.Errorf("error creating lease: %v\n%v", err, episode)
 				return
 			}
 
 			pendingResearchItem := contracts.PendingResearchItem{
-				LeaseID: leaseID,
-				Episode: *episode,
+				LeaseId: leaseID.String(),
+				Episode: episode,
 				Clips:   clips,
 			}
 			messageBytes, err := json.MarshalIndent(pendingResearchItem, "", "  ")

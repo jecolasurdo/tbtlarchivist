@@ -15,15 +15,15 @@ import (
 // condition cannot be guaranteed, the implementor should expose error types
 // that describe the severity of the issue.
 type DataStorer interface {
-	UpsertClipInfo(contracts.ClipInfo) error
+	UpsertClipInfo(*contracts.ClipInfo) error
 
-	UpsertEpisodeInfo(contracts.EpisodeInfo) error
+	UpsertEpisodeInfo(*contracts.EpisodeInfo) error
 
-	CreateResearchLease(*uuid.UUID, contracts.EpisodeInfo, []contracts.ClipInfo, time.Time) error
+	CreateResearchLease(*uuid.UUID, *contracts.EpisodeInfo, []*contracts.ClipInfo, time.Time) error
 	RenewResearchLease(uuid.UUID, time.Time) error
 	RevokeResearchLease(uuid.UUID) error
 
 	GetHighestPriorityEpisode() (*contracts.EpisodeInfo, error)
-	GetHighestPriorityClipsForEpisode(episode contracts.EpisodeInfo, limit int) ([]contracts.ClipInfo, error)
-	RecordCompletedResearch(contracts.CompletedResearchItem) error
+	GetHighestPriorityClipsForEpisode(episode *contracts.EpisodeInfo, limit int) ([]*contracts.ClipInfo, error)
+	RecordCompletedResearch(*contracts.CompletedResearchItem) error
 }

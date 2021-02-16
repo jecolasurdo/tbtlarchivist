@@ -12,7 +12,7 @@ import (
 // does not already exist, both InitialDateCurated and LastDateCurated are
 // evaluated, but the insert will fail and an error will be returned if
 // LastDateCurated is earlier than InitialDateCurated.
-func (m *MariaDbConnection) UpsertEpisodeInfo(episodeInfo contracts.EpisodeInfo) error {
+func (m *MariaDbConnection) UpsertEpisodeInfo(episodeInfo *contracts.EpisodeInfo) error {
 	episodeExists, episodeID, err := m.getEpisodeInfoID(episodeInfo)
 	if err != nil {
 		return err
@@ -23,7 +23,7 @@ func (m *MariaDbConnection) UpsertEpisodeInfo(episodeInfo contracts.EpisodeInfo)
 	return m.insertEpisodeInfo(episodeInfo)
 }
 
-func (m *MariaDbConnection) getEpisodeInfoID(episodeInfo contracts.EpisodeInfo) (bool, int, error) {
+func (m *MariaDbConnection) getEpisodeInfoID(episodeInfo *contracts.EpisodeInfo) (bool, int, error) {
 	const selectStmt = `
 		SELECT episode_id 
 		FROM curated_episodes 
@@ -40,7 +40,7 @@ func (m *MariaDbConnection) getEpisodeInfoID(episodeInfo contracts.EpisodeInfo) 
 	return true, episodeID, nil
 }
 
-func (m *MariaDbConnection) updateEpisodeInfo(episodeID int, episodeInfo contracts.EpisodeInfo) error {
+func (m *MariaDbConnection) updateEpisodeInfo(episodeID int, episodeInfo *contracts.EpisodeInfo) error {
 	// Note that on updates, we update the `last_date_curated` field and ignore
 	// the  `initial_date_curated` field.
 	const updateStmt = `
@@ -61,7 +61,7 @@ func (m *MariaDbConnection) updateEpisodeInfo(episodeID int, episodeInfo contrac
 		episodeInfo.DateAired,
 		episodeInfo.Title,
 		episodeInfo.Description,
-		episodeInfo.MediaURI,
+		episodeInfo.MediaUri,
 		episodeInfo.MediaType,
 		episodeInfo.Priority,
 		episodeID,
@@ -70,8 +70,8 @@ func (m *MariaDbConnection) updateEpisodeInfo(episodeID int, episodeInfo contrac
 	return expectOneRowAffected(result, err)
 }
 
-func (m *MariaDbConnection) insertEpisodeInfo(episodeInfo contracts.EpisodeInfo) error {
-	if episodeInfo.LastDateCurated.Before(episodeInfo.InitialDateCurated) {
+func (m *MariaDbConnection) insertEpisodeInfo(episodeInfo *contracts.EpisodeInfo) error {
+	if episodeInfo.LastDateCurated.AsTime().Before(episodeInfo.InitialDateCurated.AsTime()) {
 		return fmt.Errorf("LastDateCurated must not be earlier than InitialDateCurated. %v", episodeInfo)
 	}
 
@@ -101,7 +101,7 @@ func (m *MariaDbConnection) insertEpisodeInfo(episodeInfo contracts.EpisodeInfo)
 		episodeInfo.DateAired,
 		episodeInfo.Title,
 		episodeInfo.Description,
-		episodeInfo.MediaURI,
+		episodeInfo.MediaUri,
 		episodeInfo.MediaType,
 		episodeInfo.Priority,
 	)

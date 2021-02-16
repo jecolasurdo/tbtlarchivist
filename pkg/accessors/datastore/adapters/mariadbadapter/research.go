@@ -44,7 +44,7 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 		&episodeInfo.DateAired,
 		&episodeInfo.Title,
 		&episodeInfo.Description,
-		&episodeInfo.MediaURI,
+		&episodeInfo.MediaUri,
 		&episodeInfo.MediaType,
 		&episodeInfo.Priority,
 	)
@@ -64,7 +64,7 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 // priority clips to be researched for given episode. The number of clips
 // returned is limited to `clipLimit`. If no clips are available for the
 // supplied episode, this returns nil, nil.
-func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode contracts.EpisodeInfo, clipLimit int) ([]contracts.ClipInfo, error) {
+func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode *contracts.EpisodeInfo, clipLimit int) ([]contracts.ClipInfo, error) {
 	found, episodeID, err := m.getEpisodeInfoID(episode)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode contracts.
 			&clip.CuratorInformation,
 			&clip.Title,
 			&clip.Description,
-			&clip.MediaURI,
+			&clip.MediaUri,
 			&clip.MediaType,
 			&clip.Priority,
 		)
@@ -143,20 +143,20 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode contracts.
 // supported, and will result in an error (though database integrity is
 // maintained if this occurs).
 func (m *MariaDbConnection) RecordCompletedResearch(completedResearchItem contracts.CompletedResearchItem) error {
-	found, episodeID, err := m.getEpisodeInfoID(completedResearchItem.Episode)
+	found, episodeID, err := m.getEpisodeInfoID(completedResearchItem.EpisodeInfo)
 	if err != nil {
 		return err
 	}
 	if !found {
-		return fmt.Errorf("episodeID not found for episode: %v", completedResearchItem.Episode)
+		return fmt.Errorf("episodeID not found for episode: %v", completedResearchItem.EpisodeInfo)
 	}
 
-	found, clipID, err := m.getClipInfoID(completedResearchItem.Clip)
+	found, clipID, err := m.getClipInfoID(completedResearchItem.ClipInfo)
 	if err != nil {
 		return err
 	}
 	if !found {
-		return fmt.Errorf("clipID not found for clip: %v", completedResearchItem.Clip)
+		return fmt.Errorf("clipID not found for clip: %v", completedResearchItem.ClipInfo)
 	}
 
 	found, researchID, err := m.getResearchIDFromBacklog(episodeID, clipID)

@@ -54,8 +54,8 @@ func StartClipsArchivist(ctx context.Context, queue messagebus.Receiver, db data
 				continue
 			}
 
-			var clipInfo contracts.ClipInfo
-			err = json.Unmarshal(msg.Body, &clipInfo)
+			var clipInfo *contracts.ClipInfo
+			err = json.Unmarshal(msg.Body, clipInfo)
 			if err != nil {
 				errorSource <- err
 				err := msg.Acknowledger.Nack(true)

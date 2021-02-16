@@ -54,7 +54,7 @@ func StartEpisodesArchivist(ctx context.Context, queue messagebus.Receiver, db d
 				continue
 			}
 
-			var episodeInfo contracts.EpisodeInfo
+			var episodeInfo *contracts.EpisodeInfo
 			err = json.Unmarshal(msg.Body, &episodeInfo)
 			if err != nil {
 				errorSource <- err

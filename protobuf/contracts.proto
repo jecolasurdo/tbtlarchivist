@@ -37,8 +37,10 @@ message PendingResearchItem {
 message CompletedResearchItem {
     google.protobuf.Timestamp research_date = 1;
     EpisodeInfo episode_info = 2;
-    int64 clip_duration = 3;
-    repeated int64 clip_offsets = 4;
-    string lease_id = 5;
-    bool revoke_lease = 6;
+    ClipInfo clip_info = 3;
+    int64 episode_duration = 4;
+    int64 clip_duration = 5;
+    repeated int64 clip_offsets = 6;
+    string lease_id = 7;
+    bool revoke_lease = 8;
 }

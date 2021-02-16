@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
@@ -72,7 +73,7 @@ func StartCompletedResearchArchivist(ctx context.Context, messageBus messagebus.
 				continue
 			}
 
-			var completedResearchItem contracts.CompletedResearchItem
+			var completedResearchItem *contracts.CompletedResearchItem
 			err = json.Unmarshal(rawMessage.Body, &completedResearchItem)
 			if err != nil {
 				errorSource <- fmt.Errorf("an error occured while unmarshalling a completed research item. %v %v", rawMessage.Body, err)
@@ -85,10 +86,10 @@ func StartCompletedResearchArchivist(ctx context.Context, messageBus messagebus.
 
 			var operationType string
 			if completedResearchItem.RevokeLease {
-				err = db.RevokeResearchLease(completedResearchItem.LeaseID)
+				err = db.RevokeResearchLease(uuid.MustParse(completedResearchItem.LeaseId))
 				operationType = "revoke"
 			} else {
-				err = db.RenewResearchLease(completedResearchItem.LeaseID, time.Now().Add(episodeLeaseDuration).UTC())
+				err = db.RenewResearchLease(uuid.MustParse(completedResearchItem.LeaseId), time.Now().Add(episodeLeaseDuration).UTC())
 				operationType = "renew"
 			}
 

@@ -14,7 +14,7 @@ const dbTimeFormat = `2006-01-02 15:04:05`
 // episode and all provided clips.  This method will panic if clips is empty or
 // nil. If there are no clips to lease for an episode, that should be handled
 // without attempting to call this method.
-func (m *MariaDbConnection) CreateResearchLease(newLeaseID *uuid.UUID, episode contracts.EpisodeInfo, clips []contracts.ClipInfo, expiration time.Time) error {
+func (m *MariaDbConnection) CreateResearchLease(newLeaseID *uuid.UUID, episode *contracts.EpisodeInfo, clips []contracts.ClipInfo, expiration time.Time) error {
 	if len(clips) == 0 {
 		panic("a non-zero number of clips must be supplied to this method")
 	}
