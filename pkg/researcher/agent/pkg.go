@@ -1,6 +1,12 @@
 package agent
 
-import "github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
+import (
+	"log"
+
+	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"google.golang.org/protobuf/proto"
+)
 
 // A ResearchAgent is responsible for gathering a pending work item from the
 // pending work queue, spawning an Analyst sub-process, communicating with that
@@ -24,6 +30,34 @@ func StartResearchAgent(ctx, queue messagebus.SenderReceiver) *ResearchAgent {
 		defer close(errorSource)
 		defer close(done)
 
+		msg, err := queue.Receive()
+		if err != nil {
+			errorSource <- err
+			return
+		}
+
+		if msg == nil || len(msg.Body) == 0 {
+			log.Println("No pending work to do.")
+			return
+		}
+
+		pendingResearchItem := new(contracts.PendingResearchItem)
+		err = proto.Unmarshal(msg.Body, pendingResearchItem)
+		if err != nil {
+			errorSource <- err
+			err := msg.Acknowledger.Nack(true)
+			if err != nil {
+				errorSource <- err
+			}
+			return
+		}
+
+		log.Println("At this point I would spawn an Analyst process with the following data.", pendingResearchItem.String())
+
+		err = msg.Acknowledger.Ack()
+		if err != nil {
+			errorSource <- err
+		}
 	}()
 
 	return &ResearchAgent{
