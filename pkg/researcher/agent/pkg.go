@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"log"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
@@ -23,21 +24,21 @@ type ResearchAgent struct {
 // Analyst process, and assign the work to that process.  As the Analyst
 // completes its work, it is reported back to the Agent, who then forwards the
 // results to the completed work queue.
-func StartResearchAgent(ctx, queue messagebus.SenderReceiver) *ResearchAgent {
+func StartResearchAgent(ctx context.Context, pendingResearchQueue messagebus.Receiver, completedWorkQueue messagebus.Sender) *ResearchAgent {
 	errorSource := make(chan error)
 	done := make(chan struct{})
 	go func() {
 		defer close(errorSource)
 		defer close(done)
 
-		msg, err := queue.Receive()
+		msg, err := pendingResearchQueue.Receive()
 		if err != nil {
 			errorSource <- err
 			return
 		}
 
 		if msg == nil || len(msg.Body) == 0 {
-			log.Println("No pending work to do.")
+			log.Println("No pending-research to do.")
 			return
 		}
 
@@ -52,7 +53,7 @@ func StartResearchAgent(ctx, queue messagebus.SenderReceiver) *ResearchAgent {
 			return
 		}
 
-		log.Println("At this point I would spawn an Analyst process with the following data.", pendingResearchItem.String())
+		log.Println("At this point the Agent would spawn an Analyst process with the following data:", pendingResearchItem.String())
 
 		err = msg.Acknowledger.Ack()
 		if err != nil {
