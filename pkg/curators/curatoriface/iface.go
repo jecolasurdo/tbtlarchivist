@@ -1,5 +1,7 @@
 package curatoriface
 
+import "google.golang.org/protobuf/reflect/protoreflect"
+
 type Curator interface {
-	Curate() (<-chan interface{}, <-chan error)
+	Curate() (<-chan protoreflect.ProtoMessage, <-chan error)
 }

@@ -12,6 +12,8 @@ import (
 	"github.com/chromedp/chromedp"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -33,8 +35,8 @@ type TBTLNet struct{}
 // Curate initializes the scraper and returns two channels, one providing a
 // stream of episode information that has been scraped, and the other containing
 // any errors that have been emited by the process.
-func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
-	episodeInfoSource := make(chan interface{})
+func (t *TBTLNet) Curate() (<-chan protoreflect.ProtoMessage, <-chan error) {
+	episodeInfoSource := make(chan protoreflect.ProtoMessage)
 	errorSource := make(chan error)
 
 	go func() {
@@ -104,13 +106,13 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 					continue
 				}
 
-				MediaUri := mp3Re.FindString(nextDataInnerHTML)
-				if MediaUri == "" {
+				mediaURI := mp3Re.FindString(nextDataInnerHTML)
+				if mediaURI == "" {
 					errorSource <- fmt.Errorf("unable to extract media URI. %v", episodeLink)
 					continue
 				}
-				MediaUri = strings.Replace(MediaUri, unreplacedUAToken, userAgent, -1)
-				mediaType := MediaUri[len(MediaUri)-3:]
+				mediaURI = strings.Replace(mediaURI, unreplacedUAToken, userAgent, -1)
+				mediaType := mediaURI[len(mediaURI)-3:]
 
 				dateAired, err := time.Parse("January 2, 2006", rawDate)
 				if err != nil {
@@ -118,15 +120,15 @@ func (t *TBTLNet) Curate() (<-chan interface{}, <-chan error) {
 					continue
 				}
 
-				now := time.Now().UTC()
-				episodeInfoSource <- contracts.EpisodeInfo{
+				now := timestamppb.New(time.Now().UTC())
+				episodeInfoSource <- &contracts.EpisodeInfo{
 					CuratorInformation: scraperName,
 					InitialDateCurated: now,
 					LastDateCurated:    now,
-					DateAired:          dateAired,
+					DateAired:          timestamppb.New(dateAired),
 					Title:              title,
 					Description:        description,
-					MediaUri:           MediaUri,
+					MediaUri:           mediaURI,
 					MediaType:          mediaType,
 					Priority:           0,
 				}

@@ -66,7 +66,7 @@ With a set of work identified, PWA creates a new lease in the datastore, which c
 
 ## Publishing a Work-Item
 With a set of work identified and leased, PWA can now publish the work-item to the pending-work queue.
-This is simply a JSON object that contains the lease ID, episode information, and list of clips to research for the episode.
+This is simply an object that contains the lease ID, episode information, and list of clips to research for the episode.
 
 **Note that the TTL for the work-item in the pending-work queue should be set to a value less than the lease duration used to calculate the lease expiration datetime. This ensures that if there is a surplus of work-items in the pending-work queue, that they items in the queue expire before the corresponding lease in the datastore expires. This prevents the PWA from accidentally trying to assign work to the pending queue that hasn't expired from the queue yet.**
 

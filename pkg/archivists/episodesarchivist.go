@@ -2,13 +2,13 @@ package archivists
 
 import (
 	"context"
-	"encoding/json"
 	"runtime"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 // An EpisodesArchivist looks for episodes that have been supplied by an
@@ -55,7 +55,7 @@ func StartEpisodesArchivist(ctx context.Context, queue messagebus.Receiver, db d
 			}
 
 			var episodeInfo *contracts.EpisodeInfo
-			err = json.Unmarshal(msg.Body, &episodeInfo)
+			err = proto.Unmarshal(msg.Body, episodeInfo)
 			if err != nil {
 				errorSource <- err
 				err := msg.Acknowledger.Nack(true)

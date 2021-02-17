@@ -2,7 +2,6 @@ package archivists
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -95,14 +95,14 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 				return
 			}
 
-			pendingResearchItem := contracts.PendingResearchItem{
+			pendingResearchItem := &contracts.PendingResearchItem{
 				LeaseId: leaseID.String(),
 				Episode: episode,
 				Clips:   clips,
 			}
-			messageBytes, err := json.MarshalIndent(pendingResearchItem, "", "  ")
+			messageBytes, err := proto.Marshal(pendingResearchItem)
 			if err != nil {
-				errorSource <- fmt.Errorf("error marshalling pendingResearchItem to json. %v %v", pendingResearchItem, err)
+				errorSource <- fmt.Errorf("error marshalling pendingResearchItem to protobuf. %v %v", pendingResearchItem, err)
 				return
 			}
 

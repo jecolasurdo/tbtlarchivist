@@ -13,6 +13,8 @@ import (
 	"github.com/antchfx/xpath"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -48,8 +50,8 @@ type MarsupialGurgle struct {
 // Curate initializes the scraper and returns two channels, one providing a
 // stream of clip information that has been scraped, and the other containing
 // any errors that have been emited by the process.
-func (m *MarsupialGurgle) Curate() (<-chan interface{}, <-chan error) {
-	clipInfoSource := make(chan interface{})
+func (m *MarsupialGurgle) Curate() (<-chan protoreflect.ProtoMessage, <-chan error) {
+	clipInfoSource := make(chan protoreflect.ProtoMessage)
 	errorSource := make(chan error)
 
 	go func() {
@@ -126,16 +128,16 @@ func (m *MarsupialGurgle) Curate() (<-chan interface{}, <-chan error) {
 	return clipInfoSource, errorSource
 }
 
-func extractMP3s(body string) map[string]contracts.ClipInfo {
-	distinctMP3URIs := map[string]contracts.ClipInfo{}
+func extractMP3s(body string) map[string]*contracts.ClipInfo {
+	distinctMP3URIs := map[string]*contracts.ClipInfo{}
 	rawMP3Matches := rawMP3LinkRe.FindAllStringSubmatch(body, -1)
 	for i := 0; i < len(rawMP3Matches); i++ {
 		if len(rawMP3Matches[i]) != 2 {
 			continue
 		}
 		mp3URI := rawMP3Matches[i][1]
-		now := time.Now().UTC()
-		distinctMP3URIs[mp3URI] = contracts.ClipInfo{
+		now := timestamppb.New(time.Now().UTC())
+		distinctMP3URIs[mp3URI] = &contracts.ClipInfo{
 			InitialDateCurated: now,
 			LastDateCurated:    now,
 			CuratorInformation: scraperName,
@@ -149,16 +151,16 @@ func extractMP3s(body string) map[string]contracts.ClipInfo {
 	return distinctMP3URIs
 }
 
-func extractDecoratedMP3s(body string) map[string]contracts.ClipInfo {
+func extractDecoratedMP3s(body string) map[string]*contracts.ClipInfo {
 	decoratedMP3Matches := mp3WithDescriptionRe.FindAllStringSubmatch(body, -1)
-	distinctDecoratedMP3URIs := map[string]contracts.ClipInfo{}
+	distinctDecoratedMP3URIs := map[string]*contracts.ClipInfo{}
 	for i := 0; i < len(decoratedMP3Matches); i++ {
 		if len(decoratedMP3Matches[i]) != 3 {
 			continue
 		}
 		mp3URI := decoratedMP3Matches[i][2]
-		now := time.Now().UTC()
-		distinctDecoratedMP3URIs[mp3URI] = contracts.ClipInfo{
+		now := timestamppb.New(time.Now().UTC())
+		distinctDecoratedMP3URIs[mp3URI] = &contracts.ClipInfo{
 			InitialDateCurated: now,
 			LastDateCurated:    now,
 			CuratorInformation: scraperName,

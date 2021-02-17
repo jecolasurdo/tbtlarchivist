@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
 )
 
 // MariaDb is an adapter that plugs into a mariadb instance.
@@ -84,3 +86,5 @@ func tryTxRollback(tx *sql.Tx, previousErr error) error {
 
 	return err
 }
+
+var _ datastore.DataStorer = (*MariaDbConnection)(nil)

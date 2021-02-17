@@ -64,7 +64,7 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 // priority clips to be researched for given episode. The number of clips
 // returned is limited to `clipLimit`. If no clips are available for the
 // supplied episode, this returns nil, nil.
-func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode *contracts.EpisodeInfo, clipLimit int) ([]contracts.ClipInfo, error) {
+func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode *contracts.EpisodeInfo, clipLimit int) ([]*contracts.ClipInfo, error) {
 	found, episodeID, err := m.getEpisodeInfoID(episode)
 	if err != nil {
 		return nil, err
@@ -103,14 +103,14 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode *contracts
 		return nil, err
 	}
 
-	clips := []contracts.ClipInfo{}
+	clips := []*contracts.ClipInfo{}
 	for rows.Next() {
 		err := rows.Err()
 		if err != nil {
 			return nil, err
 		}
 
-		clip := contracts.ClipInfo{}
+		clip := new(contracts.ClipInfo)
 		err = rows.Scan(
 			&clip.InitialDateCurated,
 			&clip.LastDateCurated,
@@ -142,7 +142,7 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode *contracts
 // research for an episode/clip pair that has previously been researched is not
 // supported, and will result in an error (though database integrity is
 // maintained if this occurs).
-func (m *MariaDbConnection) RecordCompletedResearch(completedResearchItem contracts.CompletedResearchItem) error {
+func (m *MariaDbConnection) RecordCompletedResearch(completedResearchItem *contracts.CompletedResearchItem) error {
 	found, episodeID, err := m.getEpisodeInfoID(completedResearchItem.EpisodeInfo)
 	if err != nil {
 		return err

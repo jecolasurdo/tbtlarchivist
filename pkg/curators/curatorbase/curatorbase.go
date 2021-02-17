@@ -1,10 +1,9 @@
 package curatorbase
 
 import (
-	"encoding/json"
-
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/curatoriface"
+	"google.golang.org/protobuf/proto"
 )
 
 // CuratorBase manages communication between a curator and a message bus.
@@ -37,11 +36,11 @@ poll:
 	for {
 		select {
 		case result := <-resultSource:
-			jsonBytes, err := json.MarshalIndent(result, "", "  ")
+			protoBytes, err := proto.Marshal(result)
 			if err != nil {
 				break poll
 			}
-			err = c.messageBus.Send(jsonBytes)
+			err = c.messageBus.Send(protoBytes)
 			if err != nil {
 				break poll
 			}

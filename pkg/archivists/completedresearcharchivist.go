@@ -2,7 +2,6 @@ package archivists
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"runtime"
@@ -13,6 +12,7 @@ import (
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
+	"google.golang.org/protobuf/proto"
 )
 
 // A CompletedResearchArchivist determines if any upstream researchers have
@@ -74,7 +74,7 @@ func StartCompletedResearchArchivist(ctx context.Context, messageBus messagebus.
 			}
 
 			var completedResearchItem *contracts.CompletedResearchItem
-			err = json.Unmarshal(rawMessage.Body, &completedResearchItem)
+			err = proto.Unmarshal(rawMessage.Body, completedResearchItem)
 			if err != nil {
 				errorSource <- fmt.Errorf("an error occured while unmarshalling a completed research item. %v %v", rawMessage.Body, err)
 				err = rawMessage.Acknowledger.Nack(true)
