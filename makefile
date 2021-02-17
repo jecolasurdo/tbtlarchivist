@@ -54,7 +54,7 @@ bootstrap-maria-db: ## apply db migrations
 	flyway migrate
 .PHONY: bootstrap-maria-db
 
-generate_protobuf: ## generate concrete implementations of protocol buffer messages.
+generate-protobuf: ## generate concrete implementations of protocol buffer messages.
 	go install google.golang.org/protobuf/cmd/protoc-gen-go
 	protoc --go_out=. protobuf/contracts.proto
 .PHONY: generate-protobuf
