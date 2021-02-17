@@ -52,7 +52,7 @@ func (m *MariaDbConnection) updateClipInfo(clipID int, clipInfo *contracts.ClipI
 	WHERE clip_id = ?;
 	`
 	result, err := m.db.Exec(updateStmt,
-		clipInfo.LastDateCurated,
+		clipInfo.LastDateCurated.AsTime(),
 		clipInfo.CuratorInformation,
 		clipInfo.Title,
 		clipInfo.Description,
@@ -89,8 +89,8 @@ func (m *MariaDbConnection) insertClipInfo(clipInfo *contracts.ClipInfo) error {
 		VALUES (?,?,?,?,?,?,?,?);
 	`
 	result, err := tx.Exec(insertCuratedClipStmt,
-		clipInfo.InitialDateCurated,
-		clipInfo.LastDateCurated,
+		clipInfo.InitialDateCurated.AsTime(),
+		clipInfo.LastDateCurated.AsTime(),
 		clipInfo.CuratorInformation,
 		clipInfo.Title,
 		clipInfo.Description,

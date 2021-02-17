@@ -3,8 +3,10 @@ package mariadbadapter
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // GetHighestPriorityEpisode identifies and returns the highest priority
@@ -37,17 +39,24 @@ func (m *MariaDbConnection) GetHighestPriorityEpisode() (*contracts.EpisodeInfo,
 
 	row := m.db.QueryRow(selectStmt)
 	episodeInfo := contracts.EpisodeInfo{}
+	initialDateCurated := new(time.Time)
+	lastDateCurated := new(time.Time)
+	dateAired := new(time.Time)
 	err := row.Scan(
-		&episodeInfo.InitialDateCurated,
-		&episodeInfo.LastDateCurated,
+		&initialDateCurated,
+		&lastDateCurated,
 		&episodeInfo.CuratorInformation,
-		&episodeInfo.DateAired,
+		&dateAired,
 		&episodeInfo.Title,
 		&episodeInfo.Description,
 		&episodeInfo.MediaUri,
 		&episodeInfo.MediaType,
 		&episodeInfo.Priority,
 	)
+
+	episodeInfo.InitialDateCurated = timestamppb.New(*initialDateCurated)
+	episodeInfo.LastDateCurated = timestamppb.New(*lastDateCurated)
+	episodeInfo.DateAired = timestamppb.New(*dateAired)
 
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -111,9 +120,11 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode *contracts
 		}
 
 		clip := new(contracts.ClipInfo)
+		initialDateCurated := new(time.Time)
+		lastDateCurated := new(time.Time)
 		err = rows.Scan(
-			&clip.InitialDateCurated,
-			&clip.LastDateCurated,
+			initialDateCurated,
+			lastDateCurated,
 			&clip.CuratorInformation,
 			&clip.Title,
 			&clip.Description,
@@ -121,6 +132,9 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode *contracts
 			&clip.MediaType,
 			&clip.Priority,
 		)
+
+		clip.InitialDateCurated = timestamppb.New(*initialDateCurated)
+		clip.LastDateCurated = timestamppb.New(*lastDateCurated)
 
 		if err != nil {
 			return nil, err
@@ -193,7 +207,7 @@ func (m *MariaDbConnection) RecordCompletedResearch(completedResearchItem *contr
 		clipID,
 		completedResearchItem.EpisodeDuration,
 		completedResearchItem.ClipDuration,
-		completedResearchItem.ResearchDate,
+		completedResearchItem.ResearchDate.AsTime(),
 	)
 	if err != nil {
 		return tryTxRollback(tx, err)

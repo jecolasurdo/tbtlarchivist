@@ -28,7 +28,7 @@ func (m *MariaDbConnection) getEpisodeInfoID(episodeInfo *contracts.EpisodeInfo)
 		SELECT episode_id 
 		FROM curated_episodes 
 		WHERE title = ?	AND date_aired = ?;`
-	row := m.db.QueryRow(selectStmt, episodeInfo.Title, episodeInfo.DateAired)
+	row := m.db.QueryRow(selectStmt, episodeInfo.Title, episodeInfo.DateAired.AsTime())
 	var episodeID int
 	err := row.Scan(&episodeID)
 	if err == sql.ErrNoRows {
@@ -56,9 +56,9 @@ func (m *MariaDbConnection) updateEpisodeInfo(episodeID int, episodeInfo *contra
 	WHERE episode_id = ?;
 	`
 	result, err := m.db.Exec(updateStmt,
-		episodeInfo.LastDateCurated,
+		episodeInfo.LastDateCurated.AsTime(),
 		episodeInfo.CuratorInformation,
-		episodeInfo.DateAired,
+		episodeInfo.DateAired.AsTime(),
 		episodeInfo.Title,
 		episodeInfo.Description,
 		episodeInfo.MediaUri,
@@ -95,10 +95,10 @@ func (m *MariaDbConnection) insertEpisodeInfo(episodeInfo *contracts.EpisodeInfo
 		VALUES (?,?,?,?,?,?,?,?,?);
 	`
 	result, err := tx.Exec(insertCuratedEpisodeStmt,
-		episodeInfo.InitialDateCurated,
-		episodeInfo.LastDateCurated,
+		episodeInfo.InitialDateCurated.AsTime(),
+		episodeInfo.LastDateCurated.AsTime(),
 		episodeInfo.CuratorInformation,
-		episodeInfo.DateAired,
+		episodeInfo.DateAired.AsTime(),
 		episodeInfo.Title,
 		episodeInfo.Description,
 		episodeInfo.MediaUri,

@@ -54,7 +54,7 @@ func StartClipsArchivist(ctx context.Context, queue messagebus.Receiver, db data
 				continue
 			}
 
-			var clipInfo *contracts.ClipInfo
+			clipInfo := new(contracts.ClipInfo)
 			err = proto.Unmarshal(msg.Body, clipInfo)
 			if err != nil {
 				errorSource <- err
