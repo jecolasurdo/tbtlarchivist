@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	msgbus, err := amqpadapter.Initialize(context.Background(), "curated_episodes", 5)
+	msgbus, err := amqpadapter.Initialize(context.Background(), "curated_episodes", amqpadapter.DirectionSendOnly)
 	if err != nil {
 		log.Fatal(err)
 	}

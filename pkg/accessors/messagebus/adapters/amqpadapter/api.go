@@ -8,19 +8,31 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// Direction denotes if the message queue allows sending and/or receiving.
+type Direction int
+
+const (
+	// DirectionReceiveOnly callers will only receive messages from this queue.
+	DirectionReceiveOnly Direction = 1
+
+	// DirectionSendOnly callers will only send messages to this queue.
+	DirectionSendOnly Direction = 2
+)
+
 // API is an instance of a message bus. This should to instantiated via the
 // Initialize function.
 type API struct {
 	defaultChannel *amqp.Channel
 	queue          *amqp.Queue
 	inboundMsgs    <-chan amqp.Delivery
+	direction      Direction
 }
 
-// Initialize establishes a connection with the underlaying message bus. Once
-// a connection is established, the function then verifies or creates a queue
-// with the specified name. The API then immediately begins receiving messages
-// from the queue.
-func Initialize(ctx context.Context, queueName string, prefetchCount int) (*API, error) {
+// Initialize establishes a connection with the underlaying message bus. Once a
+// connection is established, the function then verifies or creates a queue
+// with the specified name. If the supplied direction is DirectionReceiveOnly
+// then the API will immediately begin receiving messages from the queue.
+func Initialize(ctx context.Context, queueName string, direction Direction) (*API, error) {
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to RabbitMQ")
@@ -43,7 +55,15 @@ func Initialize(ctx context.Context, queueName string, prefetchCount int) (*API,
 		return nil, fmt.Errorf("Failed to declare a queue")
 	}
 
-	err = ch.Qos(prefetchCount, 0, false)
+	if direction == DirectionSendOnly {
+		return &API{
+			defaultChannel: ch,
+			queue:          &q,
+			inboundMsgs:    nil,
+		}, nil
+	}
+
+	err = ch.Qos(5, 0, false)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +93,13 @@ func Initialize(ctx context.Context, queueName string, prefetchCount int) (*API,
 	}, nil
 }
 
-// Send transmits a message to the message bus.
+// Send transmits a message to the message bus. This method will panic if the
+// message bus was initialized as receive-only.
 func (a *API) Send(msg []byte) error {
+	if a.direction == DirectionReceiveOnly {
+		panic("Cannot send on a receive-only connection.")
+	}
+
 	err := a.defaultChannel.Publish(
 		"",           // exchange
 		a.queue.Name, // routing key
@@ -104,8 +129,13 @@ func (a *API) Inspect() (*messagebus.QueueInfo, error) {
 }
 
 // Receive retrieves a message from the message bus. This method does not
-// block.  If no message is available the method will return nil.
+// block.  If no message is available the method will return nil. This method
+// will panic if the message bus was initialized as send-only.
 func (a *API) Receive() (*messagebus.Message, error) {
+	if a.direction == DirectionSendOnly {
+		panic("Cannot receive from a send-only connection.")
+	}
+
 	select {
 	case msg, open := <-a.inboundMsgs:
 		if !open {
@@ -120,3 +150,5 @@ func (a *API) Receive() (*messagebus.Message, error) {
 		return nil, nil
 	}
 }
+
+var _ messagebus.SenderReceiver = (*API)(nil)

@@ -12,7 +12,7 @@ package main
 // func main() {
 
 // 	log.Println("Connecting to message bus...")
-// 	msgbus, err := amqpadapter.Initialize(context.Background(), "completed_research", 5)
+// 	msgbus, err := amqpadapter.Initialize(context.Background(), "completed_research", amqpadapter.DirectionSendOnly)
 // 	if err != nil {
 // 		log.Fatal(err)
 // 	}

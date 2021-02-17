@@ -10,13 +10,13 @@ import (
 
 func main() {
 	log.Println("Connecting to pending-research queue...")
-	pendingQueue, err := amqpadapter.Initialize(context.Background(), "pending_research", 1)
+	pendingQueue, err := amqpadapter.Initialize(context.Background(), "pending_research", amqpadapter.DirectionReceiveOnly)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Println("Connecting to completed-research queue...")
-	completedQueue, err := amqpadapter.Initialize(context.Background(), "completed_research", 5)
+	completedQueue, err := amqpadapter.Initialize(context.Background(), "completed_research", amqpadapter.DirectionSendOnly)
 	if err != nil {
 		log.Fatal(err)
 	}

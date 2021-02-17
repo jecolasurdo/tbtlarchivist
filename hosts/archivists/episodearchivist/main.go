@@ -26,7 +26,7 @@ func main() {
 	}
 
 	log.Println("Connecting to message bus...")
-	msgbus, err := amqpadapter.Initialize(context.Background(), "curated_episodes", 5)
+	msgbus, err := amqpadapter.Initialize(context.Background(), "curated_episodes", amqpadapter.DirectionSendOnly)
 	if err != nil {
 		log.Fatal(err)
 	}
