@@ -58,3 +58,9 @@ generate-protobuf: ## generate concrete implementations of protocol buffer messa
 	go install google.golang.org/protobuf/cmd/protoc-gen-go
 	protoc --go_out=. protobuf/contracts.proto
 .PHONY: generate-protobuf
+
+generate-mocks: ## generate mocks for testing
+	rm -drf ./mocks
+	mkdir -p ./mocks/accessors/messagebus
+	mockgen -source=pkg/accessors/messagebus/messagebus.go > mocks/accessors/messagebus/messagebus.go
+.PHONY: generate-mocks
