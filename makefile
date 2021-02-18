@@ -61,6 +61,14 @@ generate-protobuf: ## generate concrete implementations of protocol buffer messa
 
 generate-mocks: ## generate mocks for testing
 	rm -drf ./mocks
-	mkdir -p ./mocks/accessors/messagebus
-	mockgen -source=pkg/accessors/messagebus/messagebus.go > mocks/accessors/messagebus/messagebus.go
+
+	mkdir -p ./mocks/accessors/mock_messagebus
+	mockgen -source=pkg/accessors/messagebus/messagebus.go > mocks/accessors/mock_messagebus/mock_messagebus.go
+
+	mkdir -p ./mocks/accessors/mock_messagebus/mock_acknowledger
+	mockgen -source=pkg/accessors/messagebus/acknowledger/acknack.go > mocks/accessors/mock_messagebus/mock_acknowledger/mock_acknack.go
 .PHONY: generate-mocks
+
+test: generate-mocks ## run unit tests
+	go run ./... -race -count=1
+.PHONY: test

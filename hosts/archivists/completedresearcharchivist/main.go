@@ -23,7 +23,8 @@ package main
 // 	log.Println("Running...")
 // 	for {
 // 		select {
-// 		case err := <-completedResearchArchivist.Errors:
+// 		case err, open := <-completedResearchArchivist.Errors:
+//			if !open { break }
 // 			log.Println(err)
 // 		case <-completedResearchArchivist.Done:
 // 			log.Println("Done")

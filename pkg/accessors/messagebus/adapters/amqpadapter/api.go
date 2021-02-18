@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/messagebustypes"
 	"github.com/streadway/amqp"
 )
 
@@ -117,12 +118,12 @@ func (a *API) Send(msg []byte) error {
 
 // Inspect returns information about the number of messages and consumers
 // associated with the queue.
-func (a *API) Inspect() (*messagebus.QueueInfo, error) {
+func (a *API) Inspect() (*messagebustypes.QueueInfo, error) {
 	info, err := a.defaultChannel.QueueInspect(a.queue.Name)
 	if err != nil {
 		return nil, err
 	}
-	return &messagebus.QueueInfo{
+	return &messagebustypes.QueueInfo{
 		Messages:  info.Messages,
 		Consumers: info.Consumers,
 	}, nil
@@ -131,7 +132,7 @@ func (a *API) Inspect() (*messagebus.QueueInfo, error) {
 // Receive retrieves a message from the message bus. This method does not
 // block.  If no message is available the method will return nil. This method
 // will panic if the message bus was initialized as send-only.
-func (a *API) Receive() (*messagebus.Message, error) {
+func (a *API) Receive() (*messagebustypes.Message, error) {
 	if a.direction == DirectionSendOnly {
 		panic("Cannot receive from a send-only connection.")
 	}
@@ -142,7 +143,7 @@ func (a *API) Receive() (*messagebus.Message, error) {
 			return nil, fmt.Errorf("message bus is closed")
 		}
 		acknowledger := NewAcknowledger(a.defaultChannel, msg.DeliveryTag)
-		return &messagebus.Message{
+		return &messagebustypes.Message{
 			Body:         msg.Body,
 			Acknowledger: acknowledger,
 		}, nil

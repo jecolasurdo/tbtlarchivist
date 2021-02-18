@@ -37,7 +37,10 @@ func main() {
 	log.Println("Running...")
 	for {
 		select {
-		case err := <-pendingResearchArchivist.Errors:
+		case err, open := <-pendingResearchArchivist.Errors:
+			if !open {
+				break
+			}
 			log.Println(err)
 		case <-pendingResearchArchivist.Done:
 			log.Println("Done")

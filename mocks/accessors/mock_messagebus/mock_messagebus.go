@@ -6,7 +6,7 @@ package mock_messagebus
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	messagebus "github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
+	messagebustypes "github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/messagebustypes"
 	reflect "reflect"
 )
 
@@ -48,10 +48,10 @@ func (mr *MockSenderMockRecorder) Send(arg0 interface{}) *gomock.Call {
 }
 
 // Inspect mocks base method
-func (m *MockSender) Inspect() (*messagebus.QueueInfo, error) {
+func (m *MockSender) Inspect() (*messagebustypes.QueueInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Inspect")
-	ret0, _ := ret[0].(*messagebus.QueueInfo)
+	ret0, _ := ret[0].(*messagebustypes.QueueInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -86,10 +86,10 @@ func (m *MockReceiver) EXPECT() *MockReceiverMockRecorder {
 }
 
 // Receive mocks base method
-func (m *MockReceiver) Receive() (*messagebus.Message, error) {
+func (m *MockReceiver) Receive() (*messagebustypes.Message, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Receive")
-	ret0, _ := ret[0].(*messagebus.Message)
+	ret0, _ := ret[0].(*messagebustypes.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -138,10 +138,10 @@ func (mr *MockSenderReceiverMockRecorder) Send(arg0 interface{}) *gomock.Call {
 }
 
 // Inspect mocks base method
-func (m *MockSenderReceiver) Inspect() (*messagebus.QueueInfo, error) {
+func (m *MockSenderReceiver) Inspect() (*messagebustypes.QueueInfo, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Inspect")
-	ret0, _ := ret[0].(*messagebus.QueueInfo)
+	ret0, _ := ret[0].(*messagebustypes.QueueInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -153,10 +153,10 @@ func (mr *MockSenderReceiverMockRecorder) Inspect() *gomock.Call {
 }
 
 // Receive mocks base method
-func (m *MockSenderReceiver) Receive() (*messagebus.Message, error) {
+func (m *MockSenderReceiver) Receive() (*messagebustypes.Message, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Receive")
-	ret0, _ := ret[0].(*messagebus.Message)
+	ret0, _ := ret[0].(*messagebustypes.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -165,55 +165,4 @@ func (m *MockSenderReceiver) Receive() (*messagebus.Message, error) {
 func (mr *MockSenderReceiverMockRecorder) Receive() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Receive", reflect.TypeOf((*MockSenderReceiver)(nil).Receive))
-}
-
-// MockAckNack is a mock of AckNack interface
-type MockAckNack struct {
-	ctrl     *gomock.Controller
-	recorder *MockAckNackMockRecorder
-}
-
-// MockAckNackMockRecorder is the mock recorder for MockAckNack
-type MockAckNackMockRecorder struct {
-	mock *MockAckNack
-}
-
-// NewMockAckNack creates a new mock instance
-func NewMockAckNack(ctrl *gomock.Controller) *MockAckNack {
-	mock := &MockAckNack{ctrl: ctrl}
-	mock.recorder = &MockAckNackMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockAckNack) EXPECT() *MockAckNackMockRecorder {
-	return m.recorder
-}
-
-// Ack mocks base method
-func (m *MockAckNack) Ack() error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Ack")
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Ack indicates an expected call of Ack
-func (mr *MockAckNackMockRecorder) Ack() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ack", reflect.TypeOf((*MockAckNack)(nil).Ack))
-}
-
-// Nack mocks base method
-func (m *MockAckNack) Nack(requeue bool) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Nack", requeue)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Nack indicates an expected call of Nack
-func (mr *MockAckNackMockRecorder) Nack(requeue interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Nack", reflect.TypeOf((*MockAckNack)(nil).Nack), requeue)
 }

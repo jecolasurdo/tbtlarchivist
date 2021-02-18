@@ -38,7 +38,10 @@ func main() {
 	log.Println("Running...")
 	for {
 		select {
-		case err := <-clipsArchivist.Errors:
+		case err, open := <-clipsArchivist.Errors:
+			if !open {
+				break
+			}
 			log.Println(err)
 		case <-clipsArchivist.Done:
 			log.Println("Done")
