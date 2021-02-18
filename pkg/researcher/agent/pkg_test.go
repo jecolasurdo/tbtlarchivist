@@ -2,20 +2,20 @@ package agent_test
 
 import (
 	"context"
+	"runtime"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/jecolasurdo/tbtlarchivist/mocks/accessors/mock_messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/mocks/accessors/mock_messagebus/mock_acknowledger"
+	"github.com/jecolasurdo/tbtlarchivist/mocks/researcher/mock_agent/mock_analystiface"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/messagebustypes"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/researcher/agent"
 	"google.golang.org/protobuf/proto"
 )
 
-// Verify that the agent picks up a message from the queue and tries to
-// forwared it to a spawned child service
-func Test_AgentReceiveAndSpawn(t *testing.T) {
+func Test_AgentHappyPath(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -23,6 +23,7 @@ func Test_AgentReceiveAndSpawn(t *testing.T) {
 	ctx := context.Background()
 	pendingQueue := mock_messagebus.NewMockReceiver(ctrl)
 	completedQueue := mock_messagebus.NewMockSender(ctrl)
+	analyst := mock_analystiface.NewMockAnalystAPI(ctrl)
 
 	// pendingQueue.Receive behavior/expectation
 	acknack := mock_acknowledger.NewMockAckNack(ctrl)
@@ -46,9 +47,18 @@ func Test_AgentReceiveAndSpawn(t *testing.T) {
 	acknack.EXPECT().Nack(gomock.Any()).Times(0)
 	pendingQueue.EXPECT().Receive().Return(inboundMsg, nil).Times(1)
 
-	// Run SUT
-	researchAgent := agent.StartResearchAgent(ctx, pendingQueue, completedQueue)
+	// Analyst behavior/expectations
+	completedWorkSrc := make(chan *contracts.CompletedResearchItem)
+	analystErrSrc := make(chan error)
+	analyst.EXPECT().Run(gomock.Any(), gomock.Any()).Return(completedWorkSrc, analystErrSrc).Times(1)
+	close(completedWorkSrc)
+	close(analystErrSrc)
 
+	// completedQueue.Send behavior/expectations
+	completedQueue.EXPECT().Send(gomock.Any()).Return(nil).Times(0)
+
+	// Run SUT
+	researchAgent := agent.StartResearchAgent(ctx, pendingQueue, completedQueue, analyst)
 	for {
 		select {
 		case err, open := <-researchAgent.Errors:
@@ -58,6 +68,8 @@ func Test_AgentReceiveAndSpawn(t *testing.T) {
 			t.Fatal(err)
 		case <-researchAgent.Done:
 			return
+		default:
+			runtime.Gosched()
 		}
 	}
 }

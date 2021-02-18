@@ -3,9 +3,12 @@ package agent
 import (
 	"context"
 	"log"
+	"runtime"
 
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/researcher/agent/analystiface"
+	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -24,7 +27,9 @@ type ResearchAgent struct {
 // Analyst process, and assign the work to that process.  As the Analyst
 // completes its work, it is reported back to the Agent, who then forwards the
 // results to the completed work queue.
-func StartResearchAgent(ctx context.Context, pendingResearchQueue messagebus.Receiver, completedWorkQueue messagebus.Sender) *ResearchAgent {
+func StartResearchAgent(ctx context.Context, pendingResearchQueue messagebus.Receiver, completedWorkQueue messagebus.Sender, analyst analystiface.AnalystAPI) *ResearchAgent {
+	utils.PanicIfNil(pendingResearchQueue, completedWorkQueue, analyst)
+
 	errorSource := make(chan error)
 	done := make(chan struct{})
 	go func() {
@@ -53,12 +58,43 @@ func StartResearchAgent(ctx context.Context, pendingResearchQueue messagebus.Rec
 			return
 		}
 
-		log.Println("At this point the Agent would spawn an Analyst process with the following data:", pendingResearchItem.String())
-
 		err = msg.Acknowledger.Ack()
 		if err != nil {
 			errorSource <- err
+			return
 		}
+
+		completedWorkSource, analystErrorSource := analyst.Run(ctx, pendingResearchItem)
+		utils.PanicIfNil(completedWorkSource, analystErrorSource)
+
+		completedWorkSrcOpen, analystErrorSrcOpen := true, true
+		for completedWorkSrcOpen || analystErrorSrcOpen {
+			select {
+			case completedWorkItem, open := <-completedWorkSource:
+				if !open {
+					completedWorkSrcOpen = false
+					break
+				}
+				cwiBytes, err := proto.Marshal(completedWorkItem)
+				if err != nil {
+					errorSource <- err
+					break
+				}
+				err = completedWorkQueue.Send(cwiBytes)
+				if err != nil {
+					errorSource <- err
+				}
+			case analystErr, open := <-analystErrorSource:
+				if !open {
+					analystErrorSrcOpen = false
+					break
+				}
+				errorSource <- analystErr
+			default:
+				runtime.Gosched()
+			}
+		}
+
 	}()
 
 	return &ResearchAgent{

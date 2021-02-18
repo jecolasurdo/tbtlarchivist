@@ -22,7 +22,7 @@ func main() {
 	}
 
 	log.Println("Starting the Research Agent...")
-	researchAgent := agent.StartResearchAgent(context.Background(), pendingQueue, completedQueue)
+	researchAgent := agent.StartResearchAgent(context.Background(), pendingQueue, completedQueue, nil)
 
 	log.Println("Running...")
 	for {

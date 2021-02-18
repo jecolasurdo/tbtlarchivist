@@ -67,6 +67,9 @@ generate-mocks: ## generate mocks for testing
 
 	mkdir -p ./mocks/accessors/mock_messagebus/mock_acknowledger
 	mockgen -source=pkg/accessors/messagebus/acknowledger/acknack.go > mocks/accessors/mock_messagebus/mock_acknowledger/mock_acknack.go
+
+	mkdir -p ./mocks/researcher/mock_agent/mock_analystiface
+	mockgen -source=pkg/researcher/agent/analystiface/iface.go > mocks/researcher/mock_agent/mock_analystiface/mock_analystiface.go
 .PHONY: generate-mocks
 
 test: generate-mocks ## run unit tests
