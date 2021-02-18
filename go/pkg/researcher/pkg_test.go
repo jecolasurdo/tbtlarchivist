@@ -1,4 +1,4 @@
-package agent_test
+package researcher_test
 
 import (
 	"context"

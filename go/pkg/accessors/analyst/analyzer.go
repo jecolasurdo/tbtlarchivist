@@ -1,4 +1,4 @@
-package analystiface
+package analyst
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
 )
 
-// AnalystAPI is anything that can take a PendingResearchItem, conduct an
+// An Analyzer is anything that can take a PendingResearchItem, conduct an
 // analysis, and return a channel of CompletedResearchItem in response.
-type AnalystAPI interface {
+type Analyzer interface {
 	Run(context.Context, *contracts.PendingResearchItem) (<-chan *contracts.CompletedResearchItem, <-chan error)
 }

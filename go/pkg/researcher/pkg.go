@@ -1,13 +1,13 @@
-package agent
+package researcher
 
 import (
 	"context"
 	"log"
 	"runtime"
 
+	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/analyst"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/researcher/agent/analystiface"
 	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
 	"google.golang.org/protobuf/proto"
 )
@@ -27,8 +27,8 @@ type ResearchAgent struct {
 // Analyst process, and assign the work to that process.  As the Analyst
 // completes its work, it is reported back to the Agent, who then forwards the
 // results to the completed work queue.
-func StartResearchAgent(ctx context.Context, pendingResearchQueue messagebus.Receiver, completedWorkQueue messagebus.Sender, analyst analystiface.AnalystAPI) *ResearchAgent {
-	utils.PanicIfNil(pendingResearchQueue, completedWorkQueue, analyst)
+func StartResearchAgent(ctx context.Context, pendingResearchQueue messagebus.Receiver, completedWorkQueue messagebus.Sender, analyzer analyst.Analyzer) *ResearchAgent {
+	utils.PanicIfNil(pendingResearchQueue, completedWorkQueue, analyzer)
 
 	errorSource := make(chan error)
 	done := make(chan struct{})
@@ -64,7 +64,7 @@ func StartResearchAgent(ctx context.Context, pendingResearchQueue messagebus.Rec
 			return
 		}
 
-		completedWorkSource, analystErrorSource := analyst.Run(ctx, pendingResearchItem)
+		completedWorkSource, analystErrorSource := analyzer.Run(ctx, pendingResearchItem)
 		utils.PanicIfNil(completedWorkSource, analystErrorSource)
 
 		completedWorkSrcOpen, analystErrorSrcOpen := true, true
