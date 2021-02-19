@@ -1,6 +1,8 @@
 package messagebustypes
 
-import "github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/acknowledger"
+import (
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus/acknowledger"
+)
 
 // Message is a wrapper around a message body that also provides capability of
 // aknowledging receipt of the message.

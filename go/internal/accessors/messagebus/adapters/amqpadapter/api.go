@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/messagebustypes"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus/messagebustypes"
 	"github.com/streadway/amqp"
 )
 

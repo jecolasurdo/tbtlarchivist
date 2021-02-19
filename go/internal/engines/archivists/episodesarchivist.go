@@ -4,10 +4,10 @@ import (
 	"context"
 	"runtime"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/datastore"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/utils"
 	"google.golang.org/protobuf/proto"
 )
 

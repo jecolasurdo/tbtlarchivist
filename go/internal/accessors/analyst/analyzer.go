@@ -3,7 +3,7 @@ package analyst
 import (
 	"context"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
 )
 
 // An Analyzer is anything that can take a PendingResearchItem, conduct an

@@ -4,8 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/adapters/amqpadapter"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/researcher/agent"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus/adapters/amqpadapter"
 )
 
 func main() {

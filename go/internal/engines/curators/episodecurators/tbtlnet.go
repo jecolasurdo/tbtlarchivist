@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/utils"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

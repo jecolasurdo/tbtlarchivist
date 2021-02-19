@@ -6,9 +6,9 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore/adapters/mariadbadapter"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/adapters/amqpadapter"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/archivists"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/datastore/adapters/mariadbadapter"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus/adapters/amqpadapter"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/engines/archivists"
 )
 
 func main() {

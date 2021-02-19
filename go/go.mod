@@ -1,4 +1,4 @@
-module github.com/jecolasurdo/tbtlarchivist
+module github.com/jecolasurdo/tbtlarchivist/go
 
 go 1.15
 

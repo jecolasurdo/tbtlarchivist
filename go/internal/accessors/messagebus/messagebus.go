@@ -1,6 +1,6 @@
 package messagebus
 
-import "github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/messagebustypes"
+import "github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus/messagebustypes"
 
 // A Sender is anything that is capable of transmitting a message to a message
 // bus.

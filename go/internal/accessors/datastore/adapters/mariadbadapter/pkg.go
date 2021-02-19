@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/datastore"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/datastore"
 )
 
 // MariaDb is an adapter that plugs into a mariadb instance.

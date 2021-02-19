@@ -5,10 +5,10 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/analyst"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/utils"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/analyst"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/utils"
 	"google.golang.org/protobuf/proto"
 )
 

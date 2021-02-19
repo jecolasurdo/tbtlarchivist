@@ -1,8 +1,8 @@
 package curatorbase
 
 import (
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/curators/curatoriface"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/engines/curators/curatoriface"
 	"google.golang.org/protobuf/proto"
 )
 

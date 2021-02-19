@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

@@ -6,12 +6,8 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/jecolasurdo/tbtlarchivist/mocks/accessors/mock_messagebus"
-	"github.com/jecolasurdo/tbtlarchivist/mocks/accessors/mock_messagebus/mock_acknowledger"
-	"github.com/jecolasurdo/tbtlarchivist/mocks/researcher/mock_agent/mock_analystiface"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/accessors/messagebus/messagebustypes"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/researcher/agent"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus/messagebustypes"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
 	"google.golang.org/protobuf/proto"
 )
 
