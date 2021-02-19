@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
 )
 
 const dbTimeFormat = `2006-01-02 15:04:05`

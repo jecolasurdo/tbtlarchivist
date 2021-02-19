@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
 )
 
 // UpsertEpisodeInfo inserts or updates episode info. If the episode already exists, it

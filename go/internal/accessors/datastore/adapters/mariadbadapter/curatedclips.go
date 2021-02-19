@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/jecolasurdo/tbtlarchivist/pkg/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
 )
 
 // UpsertClipInfo inserts or updates clip info. If the clip already exists, it

@@ -8,6 +8,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus/messagebustypes"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/engines/researcher"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/mocks/accessors/mock_analyst"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/mocks/accessors/mock_messagebus"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/mocks/accessors/mock_messagebus/mock_acknowledger"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -19,7 +23,7 @@ func Test_AgentHappyPath(t *testing.T) {
 	ctx := context.Background()
 	pendingQueue := mock_messagebus.NewMockReceiver(ctrl)
 	completedQueue := mock_messagebus.NewMockSender(ctrl)
-	analyst := mock_analystiface.NewMockAnalystAPI(ctrl)
+	analyst := mock_analyst.NewMockAnalyzer(ctrl)
 
 	// pendingQueue.Receive behavior/expectation
 	acknack := mock_acknowledger.NewMockAckNack(ctrl)
@@ -54,7 +58,7 @@ func Test_AgentHappyPath(t *testing.T) {
 	completedQueue.EXPECT().Send(gomock.Any()).Return(nil).Times(0)
 
 	// Run SUT
-	researchAgent := agent.StartResearchAgent(ctx, pendingQueue, completedQueue, analyst)
+	researchAgent := researcher.StartResearchAgent(ctx, pendingQueue, completedQueue, analyst)
 	for {
 		select {
 		case err, open := <-researchAgent.Errors:

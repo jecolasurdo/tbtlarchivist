@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus/adapters/amqpadapter"
+	"github.com/jecolasurdo/tbtlarchivist/go/internal/engines/researcher"
 )
 
 func main() {
@@ -21,7 +22,7 @@ func main() {
 	}
 
 	log.Println("Starting the Research Agent...")
-	researchAgent := agent.StartResearchAgent(context.Background(), pendingQueue, completedQueue, nil)
+	researchAgent := researcher.StartResearchAgent(context.Background(), pendingQueue, completedQueue, nil)
 
 	log.Println("Running...")
 	for {
