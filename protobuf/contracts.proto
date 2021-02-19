@@ -3,7 +3,7 @@ package contracts;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "pkg/contracts";
+option go_package = "go/internal/contracts";
 
 message ClipInfo {
     google.protobuf.Timestamp initial_date_curated = 1;

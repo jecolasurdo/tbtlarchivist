@@ -55,21 +55,21 @@ bootstrap-maria-db: ## apply db migrations
 .PHONY: bootstrap-maria-db
 
 generate-protobuf: ## generate concrete implementations of protocol buffer messages.
-	go install google.golang.org/protobuf/cmd/protoc-gen-go
+	# go install google.golang.org/protobuf/cmd/protoc-gen-go 
 	protoc --go_out=. protobuf/contracts.proto
 .PHONY: generate-protobuf
 
 generate-mocks: ## generate mocks for testing
-	rm -drf ./mocks
+	rm -drf go/internal/mocks
 
-	mkdir -p ./mocks/accessors/mock_messagebus
-	mockgen -source=pkg/accessors/messagebus/messagebus.go > mocks/accessors/mock_messagebus/mock_messagebus.go
+	mkdir -p go/internal/mocks/accessors/mock_messagebus
+	mockgen -source=go/internal/accessors/messagebus/messagebus.go > go/internal/mocks/accessors/mock_messagebus/mock_messagebus.go
 
-	mkdir -p ./mocks/accessors/mock_messagebus/mock_acknowledger
-	mockgen -source=pkg/accessors/messagebus/acknowledger/acknack.go > mocks/accessors/mock_messagebus/mock_acknowledger/mock_acknack.go
+	mkdir -p go/internal/mocks/accessors/mock_messagebus/mock_acknowledger
+	mockgen -source=go/internal/accessors/messagebus/acknowledger/acknack.go > go/internal/mocks/accessors/mock_messagebus/mock_acknowledger/mock_acknack.go
 
-	mkdir -p ./mocks/researcher/mock_agent/mock_analystiface
-	mockgen -source=pkg/researcher/agent/analystiface/iface.go > mocks/researcher/mock_agent/mock_analystiface/mock_analystiface.go
+	mkdir -p go/internal/mocks/accessors/mock_analyst
+	mockgen -source=go/internal/accessors/analyst/analyzer.go > go/internal/mocks/accessors/mock_analyst/mock_analyzer.go
 .PHONY: generate-mocks
 
 test: generate-mocks ## run unit tests
