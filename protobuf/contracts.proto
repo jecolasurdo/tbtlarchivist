@@ -39,8 +39,10 @@ message CompletedResearchItem {
     EpisodeInfo episode_info = 2;
     ClipInfo clip_info = 3;
     int64 episode_duration = 4;
-    int64 clip_duration = 5;
-    repeated int64 clip_offsets = 6;
-    string lease_id = 7;
-    bool revoke_lease = 8;
+    bytes episode_hash = 5;
+    int64 clip_duration = 6;
+    bytes clip_hash = 7;
+    repeated int64 clip_offsets = 8;
+    string lease_id = 9;
+    bool revoke_lease = 10;
 }

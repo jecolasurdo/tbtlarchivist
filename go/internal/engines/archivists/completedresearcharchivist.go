@@ -102,6 +102,12 @@ func StartCompletedResearchArchivist(ctx context.Context, messageBus messagebus.
 				continue
 			}
 
+			// A number of actions (such as updating hashes, choosing whether
+			// or not to insert a new completd research item, etc.) are
+			// deferred to the data layer so the operations can be done
+			// atomically without having to expose transaction awareness to the
+			// archivist. This does bleed some business logic to the data
+			// layer, so be careful if refactoring.
 			err = db.RecordCompletedResearch(completedResearchItem)
 			if err != nil {
 				errorSource <- fmt.Errorf("an error occured recording completed research to the datastore. %v %v", rawMessage.Body, err)

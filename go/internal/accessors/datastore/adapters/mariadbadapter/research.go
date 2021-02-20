@@ -150,12 +150,23 @@ func (m *MariaDbConnection) GetHighestPriorityClipsForEpisode(episode *contracts
 	return clips, nil
 }
 
-// RecordCompletedResearch inserts a reserach item. The system currently
+// RecordCompletedResearch inserts a research item. The system currently
 // presumes that research is only assigned and conducted from the backlog
 // (episodes/clip pairs that have not previously been researched). Submitting
 // research for an episode/clip pair that has previously been researched is not
 // supported, and will result in an error (though database integrity is
-// maintained if this occurs).
+// maintained if this occurs). Episode and clip hash calculations are presumed
+// to be deterministic. Thus, episode and clip hashes are only inserted; not
+// updated. This is a means to an end, and may change in the future. Hashes are
+// maintained for all researached clips and episodes, but "completed research"
+// is only explicitly recorded for episode/clip pairs where the clip is found
+// within the episode. If research is conducted for a clip/episode pair, and
+// the clip is not found in the episode, the clip/episode pair is removed from
+// the backlog, and not added to the completed research table. This is
+// currently done to save space in the database since the vast majority of
+// clip/episode pairs are non-matches.  Researched but negative pairings can be
+// inferred as pairs that are in neither the backlog table nor the completed
+// table.
 func (m *MariaDbConnection) RecordCompletedResearch(completedResearchItem *contracts.CompletedResearchItem) error {
 	found, episodeID, err := m.getEpisodeInfoID(completedResearchItem.EpisodeInfo)
 	if err != nil {
@@ -181,9 +192,49 @@ func (m *MariaDbConnection) RecordCompletedResearch(completedResearchItem *contr
 		return fmt.Errorf("researchID not found for researchItem: %v", completedResearchItem)
 	}
 
+	foundClipHash := true
+	const selectClipHashStmt = `SELECT 1 FROM clip_hashes WHERE clip_id = ?;`
+	row := m.db.QueryRow(selectClipHashStmt, clipID)
+	if row == nil || row.Err() == sql.ErrNoRows {
+		foundClipHash = false
+	} else if row.Err() != nil {
+		return row.Err()
+	}
+
+	foundEpisodeHash := true
+	const selectEpisodeHashStmt = `SELECT 1 FROM episode_hashes WHERE episode_id = ?;`
+	row = m.db.QueryRow(selectEpisodeHashStmt, episodeID)
+	if row == nil || row.Err() == sql.ErrNoRows {
+		foundEpisodeHash = false
+	} else if row.Err() != nil {
+		return row.Err()
+	}
+
 	tx, err := m.db.Begin()
 	if err != nil {
 		return err
+	}
+
+	if !foundClipHash {
+		const insertClipHashStmt = `INSERT INTO clip_hashes (clip_id, hash) VALUES (?,?);`
+		sqlResult, err := tx.Exec(insertClipHashStmt, clipID, completedResearchItem.ClipHash)
+		if err != nil {
+			return tryTxRollback(tx, err)
+		}
+		if err := expectOneRowAffected(sqlResult, nil); err != nil {
+			return tryTxRollback(tx, err)
+		}
+	}
+
+	if !foundEpisodeHash {
+		const insertEpisodeHashStmt = `INSERT INTO episode_hashes (episode_id, hash) VALUES (?,?);`
+		sqlResult, err := tx.Exec(insertEpisodeHashStmt, episodeID, completedResearchItem.EpisodeHash)
+		if err != nil {
+			return tryTxRollback(tx, err)
+		}
+		if err := expectOneRowAffected(sqlResult, nil); err != nil {
+			return tryTxRollback(tx, err)
+		}
 	}
 
 	const deleteStmt = `DELETE FROM research_backlog WHERE research_id = ?`
@@ -192,7 +243,8 @@ func (m *MariaDbConnection) RecordCompletedResearch(completedResearchItem *contr
 		return tryTxRollback(tx, err)
 	}
 
-	const insertStmt = `
+	if len(completedResearchItem.ClipOffsets) > 0 {
+		const insertStmt = `
 		INSERT INTO research_complete (
 			research_id,
 			episode_id,
@@ -201,19 +253,34 @@ func (m *MariaDbConnection) RecordCompletedResearch(completedResearchItem *contr
 			research_date
 		) VALUES (?,?,?,?,?);
 	`
-	sqlResult, err := tx.Exec(insertStmt,
-		researchID,
-		episodeID,
-		clipID,
-		completedResearchItem.EpisodeDuration,
-		completedResearchItem.ClipDuration,
-		completedResearchItem.ResearchDate.AsTime(),
-	)
-	if err != nil {
-		return tryTxRollback(tx, err)
-	}
-	if err := expectOneRowAffected(sqlResult, nil); err != nil {
-		return tryTxRollback(tx, err)
+		sqlResult, err := tx.Exec(insertStmt,
+			researchID,
+			episodeID,
+			clipID,
+			completedResearchItem.EpisodeDuration,
+			completedResearchItem.ClipDuration,
+			completedResearchItem.ResearchDate.AsTime(),
+		)
+		if err != nil {
+			return tryTxRollback(tx, err)
+		}
+		if err := expectOneRowAffected(sqlResult, nil); err != nil {
+			return tryTxRollback(tx, err)
+		}
+
+		const insertOffsetStmt = `
+			INSERT INTO episode_clip_offsets (research_id, offset_ns)
+			VALUES (?, ?);
+		`
+		for _, offset := range completedResearchItem.ClipOffsets {
+			sqlResult, err = tx.Exec(insertOffsetStmt, researchID, offset)
+			if err != nil {
+				return tryTxRollback(tx, err)
+			}
+			if err := expectOneRowAffected(sqlResult, nil); err != nil {
+				return tryTxRollback(tx, err)
+			}
+		}
 	}
 
 	return tx.Commit()
