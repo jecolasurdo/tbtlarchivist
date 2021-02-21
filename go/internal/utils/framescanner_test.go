@@ -1,6 +1,8 @@
 package utils_test
 
 import (
+	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/utils"
@@ -19,7 +21,7 @@ func Test_FrameScanner(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		data       []byte
+		hexData    string
 		atEOF      bool
 		expAdvance int
 		expToken   []byte
@@ -27,18 +29,41 @@ func Test_FrameScanner(t *testing.T) {
 	}{
 		{
 			name:       "no data",
-			data:       []byte{},
+			hexData:    "",
 			atEOF:      false,
 			expAdvance: 0,
 			expToken:   nil,
 			expErr:     nil,
 		},
+		{
+			name:       "initial read insufficient",
+			hexData:    "000E",
+			atEOF:      false,
+			expAdvance: 2,
+			expToken:   nil,
+			expErr:     nil,
+		},
+		// {
+		// 	name:       "initial read insufficient",
+		// 	data:       []byte("000EE7C2"),
+		// 	atEOF:      false,
+		// 	expAdvance: 976834,
+		// 	expToken:   nil,
+		// 	expErr:     nil,
+		// },
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			frameScanner := new(utils.FrameScanner)
-			advance, token, err := frameScanner.ScanFrames(testCase.data, testCase.atEOF)
+
+			data := make([]byte, hex.DecodedLen(len(testCase.hexData)))
+			_, err := hex.Decode(data, []byte(testCase.hexData))
+			if err != nil {
+				panic(fmt.Sprintf("malformed test case: %v\n%v", testCase.name, err))
+			}
+
+			advance, token, err := frameScanner.ScanFrames(data, testCase.atEOF)
 			assert.Equal(t, testCase.expAdvance, advance, "incorrect advance value")
 			assert.Equal(t, testCase.expToken, token, "incorrect token value")
 			assert.Equal(t, testCase.expErr, err, "incorrect error value")

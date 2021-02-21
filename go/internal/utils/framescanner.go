@@ -10,11 +10,10 @@ type FrameScanner struct{}
 // https://golang.org/pkg/bufio/#SplitFunc
 func (fs *FrameScanner) ScanFrames(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	if len(data) == 0 && atEOF == false {
-		return fs.signalReadMore()
+		return 0, nil, nil
+	}
+	if len(data) < 4 {
+		return 4 - len(data), nil, nil
 	}
 	panic("not implemented")
-}
-
-func (FrameScanner) signalReadMore() (int, []byte, error) {
-	return 0, nil, nil
 }
