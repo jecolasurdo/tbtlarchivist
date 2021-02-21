@@ -7,6 +7,7 @@ import (
 
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/analyst"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
+	"google.golang.org/protobuf/proto"
 )
 
 // The Adapter spawns a child analyst-rust process, and marshals messages between
@@ -29,19 +30,18 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 		}
 
 		cmd := exec.Command(path)
+
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			errorSource <- err
 			return
 		}
 
-		scanner := bufio.NewScanner(stdout)
-
-		go func() {
-			for scanner.Scan() {
-
-			}
-		}()
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			errorSource <- err
+			return
+		}
 
 		err = cmd.Start()
 		if err != nil {
@@ -49,7 +49,34 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 			return
 		}
 
-		// proto.Unmarshal(nil)
+		pendingBytes, err := proto.Marshal(pendingResearch)
+		if err != nil {
+			errorSource <- err
+			return
+		}
+
+		_, writeErr := stdin.Write(pendingBytes)
+		if writeErr != nil {
+			errorSource <- writeErr
+		}
+
+		closeErr := stdin.Close()
+		if closeErr != nil {
+			errorSource <- closeErr
+		}
+
+		if writeErr != nil || closeErr != nil {
+			errorSource <- cmd.Process.Kill()
+			return
+		}
+
+		scanner := bufio.NewScanner(stdout)
+		go func() {
+			for scanner.Scan() {
+
+			}
+		}()
+
 	}()
 
 	return completedItemSource, errorSource
