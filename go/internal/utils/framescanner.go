@@ -14,7 +14,7 @@ const headerSize = 4
 // FrameScanner exposes a ScanFrames method which can be used as a
 // bufio.SplitFunc.  See FrameScanner.ScanFrames for more details.
 type FrameScanner struct {
-	State     frameState
+	state     frameState
 	frameSize int
 }
 
@@ -27,14 +27,14 @@ func (fs *FrameScanner) ScanFrames(data []byte, atEOF bool) (advance int, token 
 		return
 	}
 
-	switch fs.State {
+	switch fs.state {
 	case frameStateReadingHeader:
 		if len(data) < headerSize {
 			return
 		}
 		fs.frameSize = int(binary.BigEndian.Uint32(data[0:headerSize]))
-		advance = fs.frameSize
-		fs.State = frameStateReadingBody
+		advance = headerSize
+		fs.state = frameStateReadingBody
 	case frameStateReadingBody:
 		if len(data) < fs.frameSize {
 			return
@@ -42,7 +42,7 @@ func (fs *FrameScanner) ScanFrames(data []byte, atEOF bool) (advance int, token 
 		token = data[0:fs.frameSize]
 		advance = fs.frameSize
 		fs.frameSize = 0
-		fs.State = frameStateReadingHeader
+		fs.state = frameStateReadingHeader
 	}
 
 	return

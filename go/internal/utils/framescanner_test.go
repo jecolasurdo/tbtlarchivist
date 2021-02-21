@@ -32,7 +32,7 @@ func Test_FrameScanner(t *testing.T) {
 		reads []readCase
 	}{
 		{
-			name: "no data",
+			name: "initial read empty",
 			reads: []readCase{
 				{
 					hexData:    "",
@@ -58,22 +58,29 @@ func Test_FrameScanner(t *testing.T) {
 		},
 		{
 			// Should read first 4 bytes (00 0E E7 C2) and ignore the remaining.
-			name: "initial read",
+			name: "initial read sufficient",
 			reads: []readCase{
 				{
 					hexData:    "000EE7C2FFFF",
 					atEOF:      false,
-					expAdvance: 976834,
+					expAdvance: 4,
 					expToken:   nil,
 					expErr:     nil,
 				},
 			},
 		},
 		{
-			name: "initial read",
+			name: "subsequent read insufficient",
 			reads: []readCase{
 				{
-					hexData:    "7C2FFF",
+					hexData:    "000EE7C2FFFF",
+					atEOF:      false,
+					expAdvance: 4,
+					expToken:   nil,
+					expErr:     nil,
+				},
+				{
+					hexData:    "FFFF",
 					atEOF:      false,
 					expAdvance: 0,
 					expToken:   nil,
