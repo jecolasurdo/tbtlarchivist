@@ -27,6 +27,12 @@ func (fs *FrameScanner) ScanFrames(data []byte, atEOF bool) (advance int, token 
 		return
 	}
 
+	if atEOF {
+		fs.state = frameStateReadingHeader
+		fs.frameSize = 0
+		return 0, data, nil
+	}
+
 	switch fs.state {
 	case frameStateReadingHeader:
 		if len(data) < headerSize {

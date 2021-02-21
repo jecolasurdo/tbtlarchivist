@@ -10,15 +10,6 @@ import (
 )
 
 func Test_FrameScanner(t *testing.T) {
-	// incomplete frame header after first read
-	// incomplete frame header after first read
-	// incomplete record
-	// malformed frame header
-	// no records
-	// single record
-	// empty record
-	// multiple records
-
 	type readCase struct {
 		hexData    string
 		atEOF      bool
@@ -47,7 +38,6 @@ func Test_FrameScanner(t *testing.T) {
 			name: "initial read insufficient",
 			reads: []readCase{
 				{
-
 					hexData:    "000E",
 					atEOF:      false,
 					expAdvance: 0,
@@ -84,6 +74,63 @@ func Test_FrameScanner(t *testing.T) {
 					atEOF:      false,
 					expAdvance: 0,
 					expToken:   nil,
+					expErr:     nil,
+				},
+			},
+		},
+		{
+			name: "subsequent read sufficient",
+			reads: []readCase{
+				{
+					hexData:    "00000002FFFF",
+					atEOF:      false,
+					expAdvance: 4,
+					expToken:   nil,
+					expErr:     nil,
+				},
+				{
+					hexData:    "FFFF",
+					atEOF:      false,
+					expAdvance: 2,
+					expToken:   []byte{0xFF, 0xFF},
+					expErr:     nil,
+				},
+			},
+		},
+		{
+			name: "subsequent read excessive",
+			reads: []readCase{
+				{
+					hexData:    "00000002FFFF0000",
+					atEOF:      false,
+					expAdvance: 4,
+					expToken:   nil,
+					expErr:     nil,
+				},
+				{
+					hexData:    "FFFF0000",
+					atEOF:      false,
+					expAdvance: 2,
+					expToken:   []byte{0xFF, 0xFF},
+					expErr:     nil,
+				},
+			},
+		},
+		{
+			name: "eof flushes buffer",
+			reads: []readCase{
+				{
+					hexData:    "00000002FFFF0000",
+					atEOF:      false,
+					expAdvance: 4,
+					expToken:   nil,
+					expErr:     nil,
+				},
+				{
+					hexData:    "FFFF0000",
+					atEOF:      true,
+					expAdvance: 0,
+					expToken:   []byte{0xFF, 0xFF, 0x00, 0x00},
 					expErr:     nil,
 				},
 			},
