@@ -2,9 +2,20 @@ package utils
 
 import "encoding/binary"
 
+type frameState int
+
+const (
+	frameStateReadingHeader frameState = iota
+	frameStateReadingBody
+)
+
+const headerSize = 4
+
 // FrameScanner exposes a ScanFrames method which can be used as a
 // bufio.SplitFunc.  See FrameScanner.ScanFrames for more details.
 type FrameScanner struct {
+	State     frameState
+	frameSize int
 }
 
 // ScanFrames is a SplitFunc that terminates records based on a record length
@@ -16,12 +27,22 @@ func (fs *FrameScanner) ScanFrames(data []byte, atEOF bool) (advance int, token 
 		return
 	}
 
-	if len(data) < 4 {
-		advance = 4 - len(data)
-	}
-
-	if len(data) >= 4 {
-		advance = int(binary.BigEndian.Uint32(data[0:4]))
+	switch fs.State {
+	case frameStateReadingHeader:
+		if len(data) < headerSize {
+			return
+		}
+		fs.frameSize = int(binary.BigEndian.Uint32(data[0:headerSize]))
+		advance = fs.frameSize
+		fs.State = frameStateReadingBody
+	case frameStateReadingBody:
+		if len(data) < fs.frameSize {
+			return
+		}
+		token = data[0:fs.frameSize]
+		advance = fs.frameSize
+		fs.frameSize = 0
+		fs.State = frameStateReadingHeader
 	}
 
 	return
