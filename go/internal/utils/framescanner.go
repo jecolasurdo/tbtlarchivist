@@ -20,7 +20,9 @@ type FrameScanner struct {
 
 // ScanFrames is a SplitFunc that terminates records based on a record length
 // frame header. The first 4 bytes of each frame is expected to be a bigendian
-// int32 that denotes the length of the record to follow.  See also:
+// int32 that denotes the length of the record to follow. If atEOF is true,
+// data will be returned in full. No guarantees are made as to whether or not
+// the remaining data is valid when atEOF is true. See also:
 // https://golang.org/pkg/bufio/#SplitFunc
 func (fs *FrameScanner) ScanFrames(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	if len(data) == 0 && atEOF == false {
