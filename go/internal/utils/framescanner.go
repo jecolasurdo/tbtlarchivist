@@ -9,5 +9,12 @@ type FrameScanner struct{}
 // that denotes the length of the record to follow.  See also:
 // https://golang.org/pkg/bufio/#SplitFunc
 func (fs *FrameScanner) ScanFrames(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if len(data) == 0 && atEOF == false {
+		return fs.signalReadMore()
+	}
 	panic("not implemented")
+}
+
+func (FrameScanner) signalReadMore() (int, []byte, error) {
+	return 0, nil, nil
 }
