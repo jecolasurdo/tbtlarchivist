@@ -43,14 +43,15 @@ func Test_FrameScanner(t *testing.T) {
 			expToken:   nil,
 			expErr:     nil,
 		},
-		// {
-		// 	name:       "initial read insufficient",
-		// 	data:       []byte("000EE7C2"),
-		// 	atEOF:      false,
-		// 	expAdvance: 976834,
-		// 	expToken:   nil,
-		// 	expErr:     nil,
-		// },
+		{
+			// Should read first 4 bytes (00 0E E7 C2) and ignore the remaining.
+			name:       "initial read",
+			hexData:    "000EE7C2FFFF",
+			atEOF:      false,
+			expAdvance: 976834,
+			expToken:   nil,
+			expErr:     nil,
+		},
 	}
 
 	for _, testCase := range testCases {
