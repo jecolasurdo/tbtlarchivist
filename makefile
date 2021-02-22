@@ -70,6 +70,8 @@ generate-mocks: ## generate mocks for testing
 
 	mkdir -p go/internal/mocks/accessors/mock_analyst
 	mockgen -source=go/internal/accessors/analyst/analyzer.go > go/internal/mocks/accessors/mock_analyst/mock_analyzer.go
+	mockgen -source=go/internal/accessors/analyst/command.go > go/internal/mocks/accessors/mock_analyst/mock_command.go
+
 .PHONY: generate-mocks
 
 test: generate-mocks ## run unit tests
