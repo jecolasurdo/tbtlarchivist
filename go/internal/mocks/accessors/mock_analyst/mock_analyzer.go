@@ -35,16 +35,55 @@ func (m *MockAnalyzer) EXPECT() *MockAnalyzerMockRecorder {
 }
 
 // Run mocks base method
-func (m *MockAnalyzer) Run(arg0 context.Context, arg1 *contracts.PendingResearchItem) (<-chan *contracts.CompletedResearchItem, <-chan error) {
+func (m *MockAnalyzer) Run(arg0 context.Context, arg1 *contracts.PendingResearchItem) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Run", arg0, arg1)
-	ret0, _ := ret[0].(<-chan *contracts.CompletedResearchItem)
-	ret1, _ := ret[1].(<-chan error)
-	return ret0, ret1
+	m.ctrl.Call(m, "Run", arg0, arg1)
 }
 
 // Run indicates an expected call of Run
 func (mr *MockAnalyzerMockRecorder) Run(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockAnalyzer)(nil).Run), arg0, arg1)
+}
+
+// Errors mocks base method
+func (m *MockAnalyzer) Errors() <-chan error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Errors")
+	ret0, _ := ret[0].(<-chan error)
+	return ret0
+}
+
+// Errors indicates an expected call of Errors
+func (mr *MockAnalyzerMockRecorder) Errors() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Errors", reflect.TypeOf((*MockAnalyzer)(nil).Errors))
+}
+
+// CompletedWorkItems mocks base method
+func (m *MockAnalyzer) CompletedWorkItems() <-chan *contracts.CompletedResearchItem {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CompletedWorkItems")
+	ret0, _ := ret[0].(<-chan *contracts.CompletedResearchItem)
+	return ret0
+}
+
+// CompletedWorkItems indicates an expected call of CompletedWorkItems
+func (mr *MockAnalyzerMockRecorder) CompletedWorkItems() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompletedWorkItems", reflect.TypeOf((*MockAnalyzer)(nil).CompletedWorkItems))
+}
+
+// Done mocks base method
+func (m *MockAnalyzer) Done() <-chan struct{} {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Done")
+	ret0, _ := ret[0].(<-chan struct{})
+	return ret0
+}
+
+// Done indicates an expected call of Done
+func (mr *MockAnalyzerMockRecorder) Done() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Done", reflect.TypeOf((*MockAnalyzer)(nil).Done))
 }

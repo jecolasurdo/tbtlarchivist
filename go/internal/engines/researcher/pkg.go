@@ -64,13 +64,12 @@ func StartResearchAgent(ctx context.Context, pendingResearchQueue messagebus.Rec
 			return
 		}
 
-		completedWorkSource, analystErrorSource := analyzer.Run(ctx, pendingResearchItem)
-		utils.PanicIfNil(completedWorkSource, analystErrorSource)
+		analyzer.Run(ctx, pendingResearchItem)
 
 		completedWorkSrcOpen, analystErrorSrcOpen := true, true
 		for completedWorkSrcOpen || analystErrorSrcOpen {
 			select {
-			case completedWorkItem, open := <-completedWorkSource:
+			case completedWorkItem, open := <-analyzer.CompletedWorkItems():
 				if !open {
 					completedWorkSrcOpen = false
 					break
@@ -84,7 +83,7 @@ func StartResearchAgent(ctx context.Context, pendingResearchQueue messagebus.Rec
 				if err != nil {
 					errorSource <- err
 				}
-			case analystErr, open := <-analystErrorSource:
+			case analystErr, open := <-analyzer.Errors():
 				if !open {
 					analystErrorSrcOpen = false
 					break

@@ -50,9 +50,14 @@ func Test_AgentHappyPath(t *testing.T) {
 	// Analyst behavior/expectations
 	completedWorkSrc := make(chan *contracts.CompletedResearchItem)
 	analystErrSrc := make(chan error)
-	analyst.EXPECT().Run(gomock.Any(), gomock.Any()).Return(completedWorkSrc, analystErrSrc).Times(1)
+	doneSrc := make(chan struct{})
+	analyst.EXPECT().Run(gomock.Any(), gomock.Any()).Times(1)
+	analyst.EXPECT().CompletedWorkItems().Return(completedWorkSrc).AnyTimes()
+	analyst.EXPECT().Errors().Return(analystErrSrc).AnyTimes()
+	analyst.EXPECT().Done().Return(doneSrc).AnyTimes()
 	close(completedWorkSrc)
 	close(analystErrSrc)
+	close(doneSrc)
 
 	// completedQueue.Send behavior/expectations
 	completedQueue.EXPECT().Send(gomock.Any()).Return(nil).Times(0)

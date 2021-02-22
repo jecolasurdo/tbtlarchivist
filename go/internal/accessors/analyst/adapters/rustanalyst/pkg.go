@@ -15,6 +15,10 @@ import (
 // The Adapter spawns a child analyst-rust process, and marshals messages
 // between the caller and the child process.
 type Adapter struct {
+	errorSource         chan (error)
+	completedItemSource chan (*contracts.CompletedResearchItem)
+	done                chan (struct{})
+
 	CmdBuilder analyst.CommandBuilder
 
 	// PathResolver is a function that returns the path to the analyst process
@@ -43,7 +47,7 @@ func DefaultPathResolver() (string, error) {
 // parent context is cancelled. If the parent context reports that it is Done,
 // the child process is immediately killed (SIGKILL is sent to the child
 // process).
-func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingResearchItem) (<-chan *contracts.CompletedResearchItem, <-chan error) {
+func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingResearchItem) {
 	if a.CmdBuilder == nil {
 		a.CmdBuilder = new(analyst.ExecFacade)
 	}
@@ -52,15 +56,17 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 		a.PathResolver = DefaultPathResolver
 	}
 
-	completedItemSource := make(chan *contracts.CompletedResearchItem)
-	errorSource := make(chan error)
+	a.completedItemSource = make(chan *contracts.CompletedResearchItem)
+	a.errorSource = make(chan error)
+	a.done = make(chan struct{})
 	go func() {
-		defer close(completedItemSource)
-		defer close(errorSource)
+		defer close(a.completedItemSource)
+		defer close(a.errorSource)
+		defer close(a.done)
 
 		path, err := a.PathResolver()
 		if err != nil {
-			errorSource <- err
+			a.errorSource <- err
 			return
 		}
 
@@ -70,36 +76,36 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			errorSource <- err
+			a.errorSource <- err
 			return
 		}
 
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
-			errorSource <- err
+			a.errorSource <- err
 			return
 		}
 
 		err = cmd.Start()
 		if err != nil {
-			errorSource <- err
+			a.errorSource <- err
 			return
 		}
 
 		pendingBytes, err := proto.Marshal(pendingResearch)
 		if err != nil {
-			errorSource <- err
+			a.errorSource <- err
 			return
 		}
 
 		_, writeErr := stdin.Write(pendingBytes)
 		if writeErr != nil {
-			errorSource <- writeErr
+			a.errorSource <- writeErr
 		}
 
 		closeErr := stdin.Close()
 		if closeErr != nil {
-			errorSource <- closeErr
+			a.errorSource <- closeErr
 		}
 
 		if writeErr != nil || closeErr != nil {
@@ -113,26 +119,39 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 		for scanner.Scan() {
 			select {
 			case <-ctx.Done():
-				errorSource <- ctx.Err()
+				a.errorSource <- ctx.Err()
 				return
 			default:
 			}
 
 			if scanner.Err() != nil {
-				errorSource <- scanner.Err()
+				a.errorSource <- scanner.Err()
 			}
 			completedResearchItem := new(contracts.CompletedResearchItem)
 			err = proto.Unmarshal(scanner.Bytes(), completedResearchItem)
 			if err != nil {
-				errorSource <- err
+				a.errorSource <- err
 			}
-			completedItemSource <- completedResearchItem
+			a.completedItemSource <- completedResearchItem
 		}
 
-		errorSource <- cmd.Wait()
+		a.errorSource <- cmd.Wait()
 	}()
+}
 
-	return completedItemSource, errorSource
+// Errors provides access to errors that are produced after Run called.
+func (a *Adapter) Errors() <-chan (error) {
+	return a.errorSource
+}
+
+// CompletedWorkItems provides access to a stream of completed work items.
+func (a *Adapter) CompletedWorkItems() <-chan *contracts.CompletedResearchItem {
+	return a.completedItemSource
+}
+
+// Done blocks until the adapter is done running.
+func (a *Adapter) Done() <-chan (struct{}) {
+	return a.done
 }
 
 var _ analyst.Analyzer = (*Adapter)(nil)
