@@ -13,8 +13,20 @@ type CommandBuilder interface {
 // A Command is able to Start a command, Wait for it to complete, and
 // communicate with it bia stdin and stdout.
 type Command interface {
-	StdoutPipe() (io.ReadCloser, error)
-	StdinPipe() (io.WriteCloser, error)
+	StdoutPipe() (ReadCloser, error)
+	StdinPipe() (WriteCloser, error)
 	Start() error
 	Wait() error
+}
+
+// ReadCloser is an io.ReadCloser that has been reimplemented to ease mock
+// generation.
+type ReadCloser interface {
+	io.ReadCloser
+}
+
+// WriteCloser is an io.ReadCloser that has been reimplemented to ease mock
+// generation.
+type WriteCloser interface {
+	io.WriteCloser
 }

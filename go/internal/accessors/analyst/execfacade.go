@@ -2,7 +2,6 @@ package analyst
 
 import (
 	"context"
-	"io"
 	"os/exec"
 )
 
@@ -22,12 +21,12 @@ type ExecCmdFacade struct {
 }
 
 // StdoutPipe is a facade for exec.Cmd.StdoutPipe.
-func (c *ExecCmdFacade) StdoutPipe() (io.ReadCloser, error) {
+func (c *ExecCmdFacade) StdoutPipe() (ReadCloser, error) {
 	return c.cmd.StdoutPipe()
 }
 
 // StdinPipe is a facade for exec.Cmd.StdinPipe.
-func (c *ExecCmdFacade) StdinPipe() (io.WriteCloser, error) {
+func (c *ExecCmdFacade) StdinPipe() (WriteCloser, error) {
 	return c.cmd.StdinPipe()
 }
 

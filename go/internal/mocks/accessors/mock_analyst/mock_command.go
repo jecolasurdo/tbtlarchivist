@@ -8,7 +8,6 @@ import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
 	analyst "github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/analyst"
-	io "io"
 	reflect "reflect"
 )
 
@@ -78,10 +77,10 @@ func (m *MockCommand) EXPECT() *MockCommandMockRecorder {
 }
 
 // StdoutPipe mocks base method
-func (m *MockCommand) StdoutPipe() (io.ReadCloser, error) {
+func (m *MockCommand) StdoutPipe() (analyst.ReadCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StdoutPipe")
-	ret0, _ := ret[0].(io.ReadCloser)
+	ret0, _ := ret[0].(analyst.ReadCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -93,10 +92,10 @@ func (mr *MockCommandMockRecorder) StdoutPipe() *gomock.Call {
 }
 
 // StdinPipe mocks base method
-func (m *MockCommand) StdinPipe() (io.WriteCloser, error) {
+func (m *MockCommand) StdinPipe() (analyst.WriteCloser, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StdinPipe")
-	ret0, _ := ret[0].(io.WriteCloser)
+	ret0, _ := ret[0].(analyst.WriteCloser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -133,4 +132,108 @@ func (m *MockCommand) Wait() error {
 func (mr *MockCommandMockRecorder) Wait() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Wait", reflect.TypeOf((*MockCommand)(nil).Wait))
+}
+
+// MockReadCloser is a mock of ReadCloser interface
+type MockReadCloser struct {
+	ctrl     *gomock.Controller
+	recorder *MockReadCloserMockRecorder
+}
+
+// MockReadCloserMockRecorder is the mock recorder for MockReadCloser
+type MockReadCloserMockRecorder struct {
+	mock *MockReadCloser
+}
+
+// NewMockReadCloser creates a new mock instance
+func NewMockReadCloser(ctrl *gomock.Controller) *MockReadCloser {
+	mock := &MockReadCloser{ctrl: ctrl}
+	mock.recorder = &MockReadCloserMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockReadCloser) EXPECT() *MockReadCloserMockRecorder {
+	return m.recorder
+}
+
+// Read mocks base method
+func (m *MockReadCloser) Read(p []byte) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Read", p)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Read indicates an expected call of Read
+func (mr *MockReadCloserMockRecorder) Read(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockReadCloser)(nil).Read), p)
+}
+
+// Close mocks base method
+func (m *MockReadCloser) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close
+func (mr *MockReadCloserMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockReadCloser)(nil).Close))
+}
+
+// MockWriteCloser is a mock of WriteCloser interface
+type MockWriteCloser struct {
+	ctrl     *gomock.Controller
+	recorder *MockWriteCloserMockRecorder
+}
+
+// MockWriteCloserMockRecorder is the mock recorder for MockWriteCloser
+type MockWriteCloserMockRecorder struct {
+	mock *MockWriteCloser
+}
+
+// NewMockWriteCloser creates a new mock instance
+func NewMockWriteCloser(ctrl *gomock.Controller) *MockWriteCloser {
+	mock := &MockWriteCloser{ctrl: ctrl}
+	mock.recorder = &MockWriteCloserMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use
+func (m *MockWriteCloser) EXPECT() *MockWriteCloserMockRecorder {
+	return m.recorder
+}
+
+// Write mocks base method
+func (m *MockWriteCloser) Write(p []byte) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Write", p)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Write indicates an expected call of Write
+func (mr *MockWriteCloserMockRecorder) Write(p interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockWriteCloser)(nil).Write), p)
+}
+
+// Close mocks base method
+func (m *MockWriteCloser) Close() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Close")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Close indicates an expected call of Close
+func (mr *MockWriteCloserMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockWriteCloser)(nil).Close))
 }
