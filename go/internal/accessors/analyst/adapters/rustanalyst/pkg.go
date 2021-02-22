@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"os/exec"
 
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/analyst"
@@ -13,49 +12,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type CommandBuilder interface {
-	CommandContext(context.Context, string, ...string) Command
-}
-
-type Command interface {
-	StdoutPipe() (io.ReadCloser, error)
-	StdinPipe() (io.WriteCloser, error)
-	Start() error
-	Wait() error
-}
-
-type ExecFacade struct{}
-
-func (*ExecFacade) CommandContext(ctx context.Context, name string, arg ...string) Command {
-	return &ExecCmd{
-		cmd: exec.CommandContext(ctx, name, arg...),
-	}
-}
-
-type ExecCmdFacade struct {
-	cmd *exec.Cmd
-}
-
-func (c *ExecCmdFacade) StdoutPipe() (io.ReadCloser, error) {
-	return c.cmd.StdoutPipe()
-}
-
-func (c *ExecCmdFacade) StdinPipe() (io.WriteCloser, error) {
-	return c.cmd.StdinPipe()
-}
-
-func (c *ExecCmdFacade) Start() error {
-	return c.cmd.Start()
-}
-
-func (c *ExecCmdFacade) Wait() error {
-	return c.cmd.Wait()
-}
-
 // The Adapter spawns a child analyst-rust process, and marshals messages
 // between the caller and the child process.
 type Adapter struct {
-	CmdBuilder CommandBuilder
+	CmdBuilder analyst.CommandBuilder
 
 	// PathResolver is a function that returns the path to the analyst process
 	// to be spawned. If this value is nil, DefaultPathResolver is used.
@@ -85,7 +45,7 @@ func DefaultPathResolver() (string, error) {
 // process).
 func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingResearchItem) (<-chan *contracts.CompletedResearchItem, <-chan error) {
 	if a.CmdBuilder == nil {
-		a.CmdBuilder = new(ExecFacade)
+		a.CmdBuilder = new(analyst.ExecFacade)
 	}
 
 	if a.PathResolver == nil {
