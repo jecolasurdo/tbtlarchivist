@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/analyst"
@@ -12,9 +13,49 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+type ExecCommandBuilder interface {
+	CommandContext(context.Context, string, ...string) ExecCommand
+}
+
+type ExecCommand interface {
+	StdoutPipe() (io.ReadCloser, error)
+	StdinPipe() (io.WriteCloser, error)
+	Start() error
+	Wait() error
+}
+
+type CommandBuilder struct{}
+
+func (CommandBuilder) CommandContext(ctx context.Context, name string, arg ...string) ExecCommand {
+	return &Command{
+		cmd: exec.CommandContext(ctx, name, arg...),
+	}
+}
+
+type Command struct {
+	cmd *exec.Cmd
+}
+
+func (c *Command) StdoutPipe() (io.ReadCloser, error) {
+	return c.cmd.StdoutPipe()
+}
+
+func (c *Command) StdinPipe() (io.WriteCloser, error) {
+	return c.cmd.StdinPipe()
+}
+
+func (c *Command) Start() error {
+	return c.cmd.Start()
+}
+
+func (c *Command) Wait() error {
+	return c.cmd.Wait()
+}
+
 // The Adapter spawns a child analyst-rust process, and marshals messages
 // between the caller and the child process.
 type Adapter struct {
+	CommandBuilder ExecCommandBuilder
 
 	// PathResolver is a function that returns the path to the analyst process
 	// to be spawned. If this value is nil, DefaultPathResolver is used.
@@ -43,6 +84,10 @@ func DefaultPathResolver() (string, error) {
 // the child process is immediately killed (SIGKILL is sent to the child
 // process).
 func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingResearchItem) (<-chan *contracts.CompletedResearchItem, <-chan error) {
+	if a.CommandBuilder == nil {
+		a.CommandBuilder = new(CommandBuilder)
+	}
+
 	if a.PathResolver == nil {
 		a.PathResolver = DefaultPathResolver
 	}
@@ -59,7 +104,9 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 			return
 		}
 
-		cmd := exec.Command(path)
+		innerCtx, cancel := context.WithCancel(ctx)
+		cmd := a.CommandBuilder.CommandContext(innerCtx, path)
+		defer cancel()
 
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
@@ -96,7 +143,6 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 		}
 
 		if writeErr != nil || closeErr != nil {
-			errorSource <- cmd.Process.Kill()
 			return
 		}
 
@@ -108,7 +154,6 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 			select {
 			case <-ctx.Done():
 				errorSource <- ctx.Err()
-				errorSource <- cmd.Process.Kill()
 				return
 			default:
 			}
