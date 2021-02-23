@@ -116,11 +116,12 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 		frameScanner := new(utils.FrameScanner)
 		scanner.Split(frameScanner.ScanFrames)
 
+	loop:
 		for scanner.Scan() {
 			select {
 			case <-ctx.Done():
 				a.errorSource <- ctx.Err()
-				return
+				break loop
 			default:
 			}
 
@@ -132,7 +133,12 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 			if err != nil {
 				a.errorSource <- err
 			}
-			a.completedItemSource <- completedResearchItem
+
+			// Only return the item if it is not a zero value. As a quick and
+			// dirty test, we just verify that EpisodeInfo is not nil.
+			if completedResearchItem.EpisodeInfo != nil {
+				a.completedItemSource <- completedResearchItem
+			}
 		}
 
 		a.errorSource <- cmd.Wait()
