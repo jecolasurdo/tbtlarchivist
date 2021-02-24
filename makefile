@@ -58,7 +58,10 @@ generate-protobuf: ## generate concrete implementations of protocol buffer messa
 	# go install google.golang.org/protobuf/cmd/protoc-gen-go 
 	# cargo install protobuf-codegen
 	protoc --go_out=. protobuf/contracts.proto
-	protoc --rust_out=. protobuf/contracts.proto
+
+	rm -drf rust/analyst/contracts
+	mkdir rust/analyst/contracts
+	protoc --rust_out=rust/analyst/contracts protobuf/contracts.proto
 .PHONY: generate-protobuf
 
 generate-mocks: ## generate mocks for testing
