@@ -159,7 +159,7 @@ func (a *Adapter) CompletedWorkItems() <-chan *contracts.CompletedResearchItem {
 	return a.completedItemSource
 }
 
-// Done blocks until the adapter is done running.
+// Done returns a channel that blocks until the adapter is done running.
 func (a *Adapter) Done() <-chan (struct{}) {
 	return a.done
 }

@@ -2,8 +2,12 @@ syntax = "proto3";
 package contracts;
 
 import "google/protobuf/timestamp.proto";
-
 option go_package = "go/internal/contracts";
+
+
+import "rustproto.proto";
+option (rustproto.carllerche_bytes_for_bytes_all) = true;
+option (rustproto.carllerche_bytes_for_string_all) = true;
 
 message ClipInfo {
     google.protobuf.Timestamp initial_date_curated = 1;

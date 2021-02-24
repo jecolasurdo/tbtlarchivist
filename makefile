@@ -56,7 +56,9 @@ bootstrap-maria-db: ## apply db migrations
 
 generate-protobuf: ## generate concrete implementations of protocol buffer messages.
 	# go install google.golang.org/protobuf/cmd/protoc-gen-go 
+	# cargo install protobuf-codegen
 	protoc --go_out=. protobuf/contracts.proto
+	protoc --rust_out=. protobuf/contracts.proto
 .PHONY: generate-protobuf
 
 generate-mocks: ## generate mocks for testing
