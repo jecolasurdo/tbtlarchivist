@@ -1,10 +1,10 @@
 package rustanalyst
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"os/exec"
+	"time"
 
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/analyst"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
@@ -112,9 +112,9 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 			return
 		}
 
-		scanner := bufio.NewScanner(stdout)
 		frameScanner := new(utils.FrameScanner)
-		scanner.Split(frameScanner.ScanFrames)
+		backoff := utils.NewBackoff(ctx, 100*time.Millisecond, 10*time.Second)
+		scanner := utils.NewScanner(stdout, frameScanner.ScanFrames, backoff)
 
 	loop:
 		for scanner.Scan() {
@@ -139,6 +139,10 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 			if completedResearchItem.EpisodeInfo != nil {
 				a.completedItemSource <- completedResearchItem
 			}
+		}
+
+		if scanner.Err() != nil {
+			a.errorSource <- scanner.Err()
 		}
 
 		a.errorSource <- cmd.Wait()

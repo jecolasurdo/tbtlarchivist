@@ -60,6 +60,9 @@ func Test_AdapterRun(t *testing.T) {
 			if !open {
 				break
 			}
+			if err == nil {
+				break
+			}
 			log.Println("error", err)
 		case <-adapter.Done():
 			log.Println("Done")
