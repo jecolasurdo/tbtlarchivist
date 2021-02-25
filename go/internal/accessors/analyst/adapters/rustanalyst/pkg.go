@@ -134,11 +134,7 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 				a.errorSource <- err
 			}
 
-			// Only return the item if it is not a zero value. As a quick and
-			// dirty test, we just verify that EpisodeInfo is not nil.
-			if completedResearchItem.EpisodeInfo != nil {
-				a.completedItemSource <- completedResearchItem
-			}
+			a.completedItemSource <- completedResearchItem
 		}
 
 		if scanner.Err() != nil {

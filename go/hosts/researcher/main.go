@@ -28,6 +28,9 @@ func main() {
 	for {
 		select {
 		case err := <-researchAgent.Errors:
+			if err == nil {
+				break
+			}
 			log.Println(err)
 		case <-researchAgent.Done:
 			log.Println("Done")
