@@ -4,6 +4,9 @@ static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 // use analyzer::{analyze, read_wav};
 use anyhow::Result;
 use std::io::{self, Read};
+use contracts::PendingResearchItem;
+use protobuf::error::ProtobufResult;
+use protobuf::Message;
 
 // const FILE_NAME_EPISODE: &str = "/Users/Joe/Documents/code/tbtldrops/audio/episodes/episode.wav";
 // const FILE_NAME_DROP: &str = "/Users/Joe/Documents/code/tbtldrops/audio/drops/drop.wav";
@@ -25,8 +28,9 @@ fn main() -> Result<()> {
 
     // analyze(episode, drop, analyzer_options)?;
     
-    let mut buffer = String::new();
-    io::stdin().read_to_string(&mut buffer)?;
-    print!("hello {}", buffer);
+    let mut buffer = vec![];
+    io::stdin().read_to_end(&mut buffer)?;
+    let result : ProtobufResult<PendingResearchItem> = Message::parse_from_bytes(&buffer);
+    print!("hello {:?}", result.unwrap());
     Ok(())
 }

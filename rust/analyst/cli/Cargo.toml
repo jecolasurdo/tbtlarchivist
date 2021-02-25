@@ -7,4 +7,6 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.33"
 analyzer = { path = "../analyzer" }
+contracts = { path = "../contracts" }
 snmalloc-rs = "0.2"
+protobuf = "2.22.0"

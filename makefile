@@ -59,9 +59,10 @@ generate-protobuf: ## generate concrete implementations of protocol buffer messa
 	# cargo install protobuf-codegen
 	protoc --go_out=. protobuf/contracts.proto
 
-	rm -drf rust/analyst/contracts
-	mkdir rust/analyst/contracts
-	protoc --rust_out=rust/analyst/contracts protobuf/contracts.proto
+	rm -drf rust/analyst/contracts/src
+	mkdir rust/analyst/contracts/src
+	protoc --rust_out=rust/analyst/contracts/src protobuf/contracts.proto
+	mv rust/analyst/contracts/src/contracts.rs rust/analyst/contracts/src/lib.rs
 .PHONY: generate-protobuf
 
 generate-mocks: ## generate mocks for testing
