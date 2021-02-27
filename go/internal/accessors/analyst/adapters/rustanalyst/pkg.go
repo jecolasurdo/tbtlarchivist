@@ -114,26 +114,26 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 
 		backoff := utils.NewBackoff(ctx, 100*time.Millisecond, 10*time.Second)
 		scanner := utils.NewFrameScanner(stdout, backoff)
+		recordSource := scanner.Poll()
 
 	loop:
-		for scanner.Scan() {
+		for {
 			select {
 			case <-ctx.Done():
 				a.errorSource <- ctx.Err()
 				break loop
-			default:
+			case record, open := <-recordSource:
+				if !open {
+					break loop
+				}
+				completedResearchItem := new(contracts.CompletedResearchItem)
+				err = proto.Unmarshal(record, completedResearchItem)
+				if err != nil {
+					a.errorSource <- err
+				} else {
+					a.completedItemSource <- completedResearchItem
+				}
 			}
-
-			if scanner.Err() != nil {
-				a.errorSource <- scanner.Err()
-			}
-			completedResearchItem := new(contracts.CompletedResearchItem)
-			err = proto.Unmarshal(scanner.Bytes(), completedResearchItem)
-			if err != nil {
-				a.errorSource <- err
-			}
-
-			a.completedItemSource <- completedResearchItem
 		}
 
 		if scanner.Err() != nil {

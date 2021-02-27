@@ -4,7 +4,6 @@ package main
 // downstream analyst cli and an Adapter. The normal host doesn't call the
 // Adapter directly, as the Adapter is typically called via an Analyzer
 // accessor.
-// fs.frameSize = int(binary.BigEndian.Uint32(data[0:headerSize])
 import (
 	"context"
 	"log"
