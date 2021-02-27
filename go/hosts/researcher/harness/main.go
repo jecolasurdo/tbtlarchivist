@@ -1,5 +1,10 @@
 package main
 
+// This "harness" is used for manually experimenting with interop between a
+// downstream analyst cli and an Adapter. The normal host doesn't call the
+// Adapter directly, as the Adapter is typically called via an Analyzer
+// accessor.
+
 import (
 	"context"
 	"log"

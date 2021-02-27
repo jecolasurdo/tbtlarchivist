@@ -13,17 +13,20 @@ fn main() -> Result<()> {
     io::stdin().read_to_end(&mut buffer)?;
     let pending_research_item: PendingResearchItem = Message::parse_from_bytes(&buffer)?;
 
-    // construct an outbound message using the inbound message's lease_id
-    let mut completed_research_item= CompletedResearchItem::default();
-    completed_research_item.lease_id = pending_research_item.lease_id;
+    for n in 1..11 {
+        // construct an outbound message using the inbound message's lease_id
+        let mut completed_research_item= CompletedResearchItem::default();
+        completed_research_item.lease_id = format!("{}_{}",pending_research_item.lease_id, n);
 
-    // construct a message frame for the outbound message so the upstream service can parse it
-    let completed_research_item_bytes = completed_research_item.write_to_bytes()?;
-    let mut frame  = i32::try_from(completed_research_item_bytes.len())?.to_be_bytes().to_vec();
-    frame.extend(&completed_research_item_bytes);
+        // construct a message frame for the outbound message so the upstream service can parse it
+        let completed_research_item_bytes = completed_research_item.write_to_bytes()?;
+        let mut frame  = i32::try_from(completed_research_item_bytes.len())?.to_be_bytes().to_vec();
+        frame.extend(&completed_research_item_bytes);
 
-    // ship it
-    io::stdout().write(&frame)?;
+        // ship it
+        io::stdout().write(&frame)?;
+    }
+
 
     Ok(())
 }
