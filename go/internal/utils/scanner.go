@@ -26,6 +26,7 @@ type FrameScanner struct {
 	bufferStart      int
 	bufferEnd        int
 	currentFrameSize int
+	atEOF            bool
 }
 
 // NewFrameScanner inststantiates a new FrameScanner.
@@ -37,6 +38,7 @@ func NewFrameScanner(reader io.ReadCloser, backoff *Backoff) *FrameScanner {
 		state:       frameStateReadingHeader,
 		bufferStart: 0,
 		bufferEnd:   maxBufferSize,
+		atEOF:       false,
 	}
 }
 
@@ -47,12 +49,20 @@ func (fs *FrameScanner) Poll() <-chan []byte {
 	go func() {
 		defer close(recordSource)
 		for {
-			n, err := fs.reader.Read(fs.buffer[fs.bufferStart:fs.bufferEnd])
-			if err != nil {
-				fs.err = err
+			if !fs.atEOF {
+				n, err := fs.reader.Read(fs.buffer[fs.bufferStart:fs.bufferEnd])
+				if err != nil {
+					if err == io.EOF {
+						fs.atEOF = true
+					} else {
+						fs.err = err
+						return
+					}
+				}
+				fs.bufferStart += n
+			} else if fs.bufferStart == 0 {
 				return
 			}
-			fs.bufferStart += n
 			switch fs.state {
 			case frameStateReadingHeader:
 				if fs.bufferStart >= 4 {
