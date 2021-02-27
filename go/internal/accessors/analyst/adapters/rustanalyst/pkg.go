@@ -112,9 +112,8 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 			return
 		}
 
-		frameScanner := new(utils.FrameScanner)
 		backoff := utils.NewBackoff(ctx, 100*time.Millisecond, 10*time.Second)
-		scanner := utils.NewScanner(stdout, frameScanner.ScanFrames, backoff)
+		scanner := utils.NewFrameScanner(stdout, backoff)
 
 	loop:
 		for scanner.Scan() {
