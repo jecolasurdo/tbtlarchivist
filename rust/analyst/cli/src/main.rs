@@ -38,7 +38,7 @@ fn main() -> Result<()> {
 // const FILE_NAME_EPISODE: &str = "/Users/Joe/Documents/code/tbtldrops/audio/episodes/episode.wav";
 // const FILE_NAME_DROP: &str = "/Users/Joe/Documents/code/tbtldrops/audio/drops/drop.wav";
 
-// fn main() -> Result<()> {
+// fn main() -> Result<()>{
     // let episode = read_wav(FILE_NAME_EPISODE.to_owned())?;
     // println!("episode samples: {}", episode.len());
 
