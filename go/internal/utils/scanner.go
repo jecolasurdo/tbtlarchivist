@@ -30,7 +30,7 @@ type FrameScanner struct {
 }
 
 // NewFrameScanner inststantiates a new FrameScanner.
-func NewFrameScanner(reader io.ReadCloser, backoff *Backoff) *FrameScanner {
+func NewFrameScanner(reader io.Reader, backoff *Backoff) *FrameScanner {
 	return &FrameScanner{
 		buffer:      [maxBufferSize]byte{},
 		reader:      reader,
@@ -72,7 +72,9 @@ func (fs *FrameScanner) Poll() <-chan []byte {
 				}
 			case frameStateReadingBody:
 				if fs.bufferStart >= fs.currentFrameSize {
-					recordSource <- fs.buffer[0:fs.currentFrameSize]
+					record := make([]byte, fs.currentFrameSize)
+					copy(record, fs.buffer[0:fs.currentFrameSize])
+					recordSource <- record
 					fs.shiftBufferLeft(fs.currentFrameSize)
 					fs.state = frameStateReadingHeader
 				}
