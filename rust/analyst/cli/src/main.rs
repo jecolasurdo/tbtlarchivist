@@ -1,10 +1,10 @@
 #[global_allocator]
 static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 
-// use std::convert::TryFrom;
+use std::convert::TryFrom;
 // use anyhow::Result;
-use std::io::{self, Read };
-use contracts::{PendingResearchItem};
+use std::io::{self, Read, Write};
+use contracts::{PendingResearchItem, CompletedResearchItem};
 use protobuf::Message;
 use actix_web::client::Client;
 // use actix_web::http::StatusCode;
@@ -18,34 +18,36 @@ async fn main()  {
     
     let episode = pending_research_item.get_episode();
     if episode.get_media_type() != "mp3" {
-        println!("the rust analyzer currently only supports mp3s")
+        let error = construct_frame("the rust analyzer currently only supports mp3s".as_bytes().to_vec());
+        io::stderr().write(&error).unwrap();
     }
     
     let client = Client::default();
     let response = client.get(episode.get_media_uri()).send().await;
     
     response.and_then(|response| {
-        println!("Response: {:?}", response);
+        let notreallyanerror = construct_frame(format!("{:?}", response).as_bytes().to_vec());
+        io::stderr().write(&notreallyanerror).unwrap();
         Ok(())
-    }).unwrap()
+    }).unwrap();
 
 
     // if response.status() != StatusCode::OK {
     //     panic!("episode media URI did not return 200")
     // }
 
+    // construct a message frame for the outbound message so the upstream service can parse it
+    let completed_research_item = CompletedResearchItem::default();
+    let frame = construct_frame(completed_research_item.write_to_bytes().unwrap());
 
+    // ship it
+    io::stdout().write(&frame).unwrap();
+}
 
-
-    // // construct a message frame for the outbound message so the upstream service can parse it
-    // let completed_research_item_bytes = completed_research_item.write_to_bytes()?;
-    // let mut frame  = i32::try_from(completed_research_item_bytes.len())?.to_be_bytes().to_vec();
-    // frame.extend(&completed_research_item_bytes);
-
-    // // ship it
-    // io::stdout().write(&frame)?;
-
-
+fn construct_frame(b: Vec<u8>)-> Vec<u8> {
+    let mut frame  = i32::try_from(b.len()).unwrap().to_be_bytes().to_vec();
+    frame.extend(&b);
+    frame
 }
 
 ////////////////////////////////////////////////////////////////////////////////

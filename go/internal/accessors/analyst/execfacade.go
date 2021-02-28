@@ -30,6 +30,11 @@ func (c *ExecCmdFacade) StdinPipe() (WriteCloser, error) {
 	return c.cmd.StdinPipe()
 }
 
+// StderrPipe is a facade for exec.Cmd.StderrPipe.
+func (c *ExecCmdFacade) StderrPipe() (ReadCloser, error) {
+	return c.cmd.StderrPipe()
+}
+
 // Start is a facade for exec.Cmd.Start.
 func (c *ExecCmdFacade) Start() error {
 	return c.cmd.Start()

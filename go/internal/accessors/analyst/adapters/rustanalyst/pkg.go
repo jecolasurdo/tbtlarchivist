@@ -74,6 +74,12 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 		cmd := a.CmdBuilder.CommandContext(innerCtx, path)
 		defer cancel()
 
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			a.errorSource <- err
+			return
+		}
+
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			a.errorSource <- err
@@ -112,9 +118,13 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 			return
 		}
 
-		backoff := utils.NewBackoff(ctx, 100*time.Millisecond, 10*time.Second)
-		scanner := utils.NewFrameScanner(stdout, backoff)
-		recordSource := scanner.Poll()
+		stdoutBackoff := utils.NewLinearBackoff(ctx, 100*time.Millisecond, 10*time.Second)
+		stdoutScanner := utils.NewFrameScanner(stdout, stdoutBackoff)
+		recordSource := stdoutScanner.Poll()
+
+		stderrBackoff := utils.NewConstantBackoff(ctx, 1*time.Second, 24*365*time.Hour)
+		stderrScanner := utils.NewFrameScanner(stderr, stderrBackoff)
+		stderrSource := stderrScanner.Poll()
 
 	loop:
 		for {
@@ -133,11 +143,22 @@ func (a *Adapter) Run(ctx context.Context, pendingResearch *contracts.PendingRes
 				} else {
 					a.completedItemSource <- completedResearchItem
 				}
+			case err, open := <-stderrSource:
+				if !open {
+					break loop
+				}
+				if err != nil {
+					a.errorSource <- fmt.Errorf(string(err))
+				}
 			}
 		}
 
-		if scanner.Err() != nil {
-			a.errorSource <- scanner.Err()
+		if stdoutScanner.Err() != nil {
+			a.errorSource <- stdoutScanner.Err()
+		}
+
+		if stderrScanner.Err() != nil {
+			a.errorSource <- stderrScanner.Err()
 		}
 
 		a.errorSource <- cmd.Wait()

@@ -22,7 +22,7 @@ const (
 // message to follow.
 type FrameScanner struct {
 	reader            io.Reader
-	backoff           *Backoff
+	backoff           BackoffAPI
 	err               error
 	state             frameState
 	buffer            [maxBufferSize]byte
@@ -35,7 +35,7 @@ type FrameScanner struct {
 // NewFrameScanner instantiates a new FrameScanner that can poll the supplied
 // reader. Backoff is used to apply pacing, context cancellation, and bailout
 // behavior in case the reader is misbehaving. For more details, see Poll().
-func NewFrameScanner(reader io.Reader, backoff *Backoff) *FrameScanner {
+func NewFrameScanner(reader io.Reader, backoff BackoffAPI) *FrameScanner {
 	return &FrameScanner{
 		buffer:      [maxBufferSize]byte{},
 		reader:      reader,

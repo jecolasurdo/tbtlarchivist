@@ -15,6 +15,7 @@ type CommandBuilder interface {
 type Command interface {
 	StdoutPipe() (ReadCloser, error)
 	StdinPipe() (WriteCloser, error)
+	StderrPipe() (ReadCloser, error)
 	Start() error
 	Wait() error
 }

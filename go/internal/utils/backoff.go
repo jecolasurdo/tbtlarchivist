@@ -6,9 +6,14 @@ import (
 	"time"
 )
 
-// Backoff provides a means of linearly increasing a wait period after each
+type BackoffAPI interface {
+	Wait() error
+	Reset()
+}
+
+// LinearBackoff provides a means of linearly increasing a wait period after each
 // subsequent call to a Wait method.
-type Backoff struct {
+type LinearBackoff struct {
 	ctx               context.Context
 	maxCumulativeWait time.Duration
 	currentWait       time.Duration
@@ -16,12 +21,12 @@ type Backoff struct {
 	cumulativeWait    time.Duration
 }
 
-// NewBackoff initializes a backoff. increment defines the amount to increase
+// NewLinearBackoff initializes a backoff. increment defines the amount to increase
 // the wait duration after each call to Wait. maxCumulativeWait is the maximum
 // amount of total time that Backoff will wait across consecutive calls to
 // Wait before Wait will return an error.
-func NewBackoff(ctx context.Context, increment, maxCumulativeWait time.Duration) *Backoff {
-	return &Backoff{
+func NewLinearBackoff(ctx context.Context, increment, maxCumulativeWait time.Duration) *LinearBackoff {
+	return &LinearBackoff{
 		ctx:               ctx,
 		maxCumulativeWait: maxCumulativeWait,
 		increment:         increment,
@@ -40,27 +45,62 @@ func NewBackoff(ctx context.Context, increment, maxCumulativeWait time.Duration)
 // method is called first. Calling the Wait method after it has returned an
 // error but without first calling Reset is undefined, and may produce
 // undesirable results.
-func (b *Backoff) Wait() error {
-	if b.cumulativeWait > b.maxCumulativeWait {
-		return fmt.Errorf("Backoff: wait would exceeed maximum cumulative wait duration")
+func (lb *LinearBackoff) Wait() error {
+	if lb.cumulativeWait > lb.maxCumulativeWait {
+		return fmt.Errorf("LinearBackoff: wait would exceeed maximum cumulative wait duration")
 	}
 
 	// Initial wait is zero, we accumulate after waiting, not before.
 	select {
-	case <-b.ctx.Done():
-		return fmt.Errorf("Backoff: parent context done")
-	case <-time.After(b.currentWait):
+	case <-lb.ctx.Done():
+		return fmt.Errorf("LinearBackoff: parent context done")
+	case <-time.After(lb.currentWait):
 	}
 
-	b.currentWait += b.increment
-	b.cumulativeWait += b.currentWait
+	lb.currentWait += lb.increment
+	lb.cumulativeWait += lb.currentWait
 
 	return nil
 }
 
-// Reset returns Backoff to its initial state. Restoring the cumulative wait
+// Reset returns LinearBackoff to its initial state. Restoring the cumulative wait
 // time to zero, and the current wait period back to zero.
-func (b *Backoff) Reset() {
-	b.currentWait = 0
-	b.cumulativeWait = 0
+func (lb *LinearBackoff) Reset() {
+	lb.currentWait = 0
+	lb.cumulativeWait = 0
+}
+
+type ConstantBackoff struct {
+	ctx               context.Context
+	rate              time.Duration
+	maxCumulativeWait time.Duration
+	cumulativeWait    time.Duration
+}
+
+func NewConstantBackoff(ctx context.Context, rate, maxCumulativeWait time.Duration) *ConstantBackoff {
+	return &ConstantBackoff{
+		ctx:               ctx,
+		rate:              rate,
+		maxCumulativeWait: maxCumulativeWait,
+	}
+}
+
+func (cb *ConstantBackoff) Wait() error {
+	if cb.cumulativeWait > cb.maxCumulativeWait {
+		return fmt.Errorf("ConstantBackoff: wait would exceeed maximum cumulative wait duration")
+	}
+
+	select {
+	case <-cb.ctx.Done():
+		return fmt.Errorf("ConstantBackoff: parent context done")
+	case <-time.After(cb.rate):
+	}
+
+	cb.cumulativeWait += cb.rate
+
+	return nil
+}
+
+func (cb *ConstantBackoff) Reset() {
+	cb.cumulativeWait = 0
 }
