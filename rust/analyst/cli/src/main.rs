@@ -1,34 +1,51 @@
 #[global_allocator]
 static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 
-use std::convert::TryFrom;
-use anyhow::Result;
-use std::io::{self, Read, Write};
-use contracts::{CompletedResearchItem, PendingResearchItem};
+// use std::convert::TryFrom;
+// use anyhow::Result;
+use std::io::{self, Read };
+use contracts::{PendingResearchItem};
 use protobuf::Message;
+use actix_web::client::Client;
+// use actix_web::http::StatusCode;
 
-fn main() -> Result<()> {
+#[actix_web::main]
+async fn main()  {
     // try to receive a message from stdin
     let mut buffer = vec![];
-    io::stdin().read_to_end(&mut buffer)?;
-    let pending_research_item: PendingResearchItem = Message::parse_from_bytes(&buffer)?;
-
-    for n in 1..11 {
-        // construct an outbound message using the inbound message's lease_id
-        let mut completed_research_item= CompletedResearchItem::default();
-        completed_research_item.lease_id = format!("{}_{}",pending_research_item.lease_id, n);
-
-        // construct a message frame for the outbound message so the upstream service can parse it
-        let completed_research_item_bytes = completed_research_item.write_to_bytes()?;
-        let mut frame  = i32::try_from(completed_research_item_bytes.len())?.to_be_bytes().to_vec();
-        frame.extend(&completed_research_item_bytes);
-
-        // ship it
-        io::stdout().write(&frame)?;
+    io::stdin().read_to_end(&mut buffer).unwrap();
+    let pending_research_item: PendingResearchItem = Message::parse_from_bytes(&buffer).unwrap();
+    
+    let episode = pending_research_item.get_episode();
+    if episode.get_media_type() != "mp3" {
+        println!("the rust analyzer currently only supports mp3s")
     }
+    
+    let client = Client::default();
+    let response = client.get(episode.get_media_uri()).send().await;
+    
+    response.and_then(|response| {
+        println!("Response: {:?}", response);
+        Ok(())
+    }).unwrap()
 
 
-    Ok(())
+    // if response.status() != StatusCode::OK {
+    //     panic!("episode media URI did not return 200")
+    // }
+
+
+
+
+    // // construct a message frame for the outbound message so the upstream service can parse it
+    // let completed_research_item_bytes = completed_research_item.write_to_bytes()?;
+    // let mut frame  = i32::try_from(completed_research_item_bytes.len())?.to_be_bytes().to_vec();
+    // frame.extend(&completed_research_item_bytes);
+
+    // // ship it
+    // io::stdout().write(&frame)?;
+
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
