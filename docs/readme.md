@@ -1,5 +1,7 @@
 # TBTL Archivist
 
+![TBTL Archivist Project Status](./architecture_progress.svg)
+
 ![TBTL Archivist Processing Sequence Diagram](./sequence_diagram.svg)
 
 # Work Assignment Process
