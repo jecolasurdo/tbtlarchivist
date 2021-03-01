@@ -2,6 +2,10 @@
 
 ![TBTL Archivist Project Status](./architecture_progress.svg)
 
+![TBTL Archivist System Architecture](./architecture.svg)
+
+![TBTL Archivist Node Architecture](./node_architecture.svg)
+
 ![TBTL Archivist Processing Sequence Diagram](./sequence_diagram.svg)
 
 # Work Assignment Process
