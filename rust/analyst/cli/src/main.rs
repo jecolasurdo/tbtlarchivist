@@ -7,47 +7,79 @@ use std::io::{self, Read, Write};
 use contracts::{PendingResearchItem, CompletedResearchItem};
 use protobuf::Message;
 use actix_web::client::Client;
-// use actix_web::http::StatusCode;
+use actix_web::http::StatusCode;
 
 #[actix_web::main]
 async fn main()  {
+    frame_stderr_string(String::from("Starting..."));
+
+
     // try to receive a message from stdin
     let mut buffer = vec![];
     io::stdin().read_to_end(&mut buffer).unwrap();
-    let pending_research_item: PendingResearchItem = Message::parse_from_bytes(&buffer).unwrap();
+    let mut pending_research_item = PendingResearchItem::default();
+    match pending_research_item = Message::parse_from_bytes(&buffer) {
+        Ok(pri) => pri,
+        Err(err) => {
+            frame_stderr_string(format!("{:?}", err));
+            return ();
+        };
+    }
+
+    frame_stderr_string(String::from("Received pending research item. Checking media type..."));
     
     let episode = pending_research_item.get_episode();
     if episode.get_media_type() != "mp3" {
-        let error = construct_frame("the rust analyzer currently only supports mp3s".as_bytes().to_vec());
-        io::stderr().write(&error).unwrap();
+        frame_stderr_string(String::from("the rust analyzer currently only supports mp3s"));
     }
     
+    frame_stderr_string(String::from("Checked media type. Starting actix client and awaiting response..."));
+   
     let client = Client::default();
     let response = client.get(episode.get_media_uri()).send().await;
-    
-    response.and_then(|response| {
-        let notreallyanerror = construct_frame(format!("{:?}", response).as_bytes().to_vec());
-        io::stderr().write(&notreallyanerror).unwrap();
-        Ok(())
-    }).unwrap();
 
+    frame_stderr_string(String::from("Done awaiting response..."));
 
-    // if response.status() != StatusCode::OK {
-    //     panic!("episode media URI did not return 200")
-    // }
+    match response {
+        Ok(ref res) => {
+            frame_stderr_string(format!("{:?}", res));
+        },
+        Err(err) => {
+            frame_stderr_string(format!("{:?}", err));
+            return ();
+        }
+    };
+
+    if response.unwrap().status() != StatusCode::OK {
+        frame_stderr_string(String::from("episode media URI did not return 200"));
+        ()
+    }
 
     // construct a message frame for the outbound message so the upstream service can parse it
-    let completed_research_item = CompletedResearchItem::default();
-    let frame = construct_frame(completed_research_item.write_to_bytes().unwrap());
+    let mut completed_research_item = CompletedResearchItem::default();
+    completed_research_item.lease_id = pending_research_item.lease_id;
+    frame_stdout(completed_research_item.write_to_bytes().unwrap());
 
-    // ship it
-    io::stdout().write(&frame).unwrap();
 }
 
-fn construct_frame(b: Vec<u8>)-> Vec<u8> {
+fn frame_stderr_string(s: String) {
+    let f = frame_from_string(s);
+    io::stderr().write(&f).unwrap();
+}
+
+fn frame_stdout(b: Vec<u8>) {
+    let f = frame(b);
+    io::stdout().write(&f).unwrap();
+}
+
+fn frame(b: Vec<u8>)-> Vec<u8> {
     let mut frame  = i32::try_from(b.len()).unwrap().to_be_bytes().to_vec();
     frame.extend(&b);
     frame
+}
+
+fn frame_from_string(s: String) -> Vec<u8> {
+    return frame(s.as_bytes().to_vec())
 }
 
 ////////////////////////////////////////////////////////////////////////////////

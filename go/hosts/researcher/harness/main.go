@@ -25,6 +25,11 @@ func main() {
 
 	pendingResearchItem := &contracts.PendingResearchItem{
 		LeaseId: "test",
+		Episode: &contracts.EpisodeInfo{
+			MediaUri:  "",
+			MediaType: "mp3",
+		},
+		Clips: []*contracts.ClipInfo{},
 	}
 
 	adapter.Run(ctx, pendingResearchItem)
