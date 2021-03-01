@@ -1,0 +1,1 @@
+//! The accessor provides access to external resources.
