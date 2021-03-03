@@ -13,30 +13,29 @@ pub struct AnalysisManager<'a>{
 
 impl<'a> AnalysisManager<'a> {
     fn run(&'a self, pending_work_item: &'a PendingResearchItem) -> Result<CompletedResearchItem, AnalyzerError> {
-        match self.http_accessor.get(pending_work_item.get_episode().get_media_uri()) {
-            Ok(mp3_data) => {
-                match self.engine.mp3_to_raw(mp3_data) {
-                    Ok(raw) => {
-                        match self.engine.phash(raw) {
-                            Ok(episode_phash) => {
-                                for clip in pending_work_item.get_clips() {
-                                    todo!("ok, this is why rust has a more fluent way of handling errors... need to implement that")        
-                                }
-                            },
-                            Err(_) => {
-                                todo!()
-                            }
-                        }
-                    },
-                    Err(_) => {
-                        todo!()
-                    }
-                }
-            },
-            Err(_) => {
-                todo!()
-            }
+        let mut mp3_data =  self.http_accessor.get(pending_work_item.get_episode().get_media_uri())?; 
+        let episode_raw = self.engine.mp3_to_raw(mp3_data)?;
+        let episode_phash = self.engine.phash(episode_raw)?;
+        for clip in pending_work_item.get_clips() {
+            mp3_data = self.http_accessor.get(clip.get_media_uri())?;
+            let clip_raw = self.engine.mp3_to_raw(mp3_data)?;
+            let clip_phash = self.engine.phash(clip_raw)?;
+            let offsets = self.engine.find_offsets(clip_raw, episode_raw)?;
+            
+            // Not clear on whose responsibility it is to frame a completed work item and send it
+            // to stdout
+            //
+            // At the moment I feel like the most straight forward approach would be to have the
+            // manager return a crossbeam channel with results that the caller can poll and process
+            // however it wants.
+            //
+            // That does add some responsibility to the host, but I don't think the manager should
+            // care about stdout or serialization protocol.
+            //
+            // Need to ponder this a little.
+            todo!("push the offset to a channel that is being polled?")
         }
+        
     }
 
 }
