@@ -22,6 +22,17 @@ pub fn new(options: Settings) -> Engine {
 
 impl Analyzer for Engine {
     fn mp3_to_raw(&self, _: Vec<u8>) -> Result<Vec<i16>, EngineError> { 
+        // pub fn read_wav(filename: String) -> Result<Vec<i16>, std::io::Error> {
+        //     let mut file = File::open(filename)?;
+        //     let (_, bit_depth) = wav::read(&mut file)?;
+        //     match bit_depth {
+        //         wav::BitDepth::Sixteen(x) => Ok(x),
+        //         _ => Err(std::io::Error::new(
+        //             ErrorKind::Other,
+        //             "Unexpected bit depth. Only support 16bit",
+        //         )),
+        //     }
+        // }
         todo!() 
     }
 
