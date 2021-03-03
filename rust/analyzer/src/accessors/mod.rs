@@ -1,4 +1,4 @@
-//! The accessor provides access to external resources.
+//! Accessors provide access to external resources.
 
 use crate::errors::AnalyzerError;
 
@@ -13,3 +13,16 @@ pub trait FromHTTP {
     /// possible, that the resulting byte vector is a complete (not partial) response.
     fn get(&self, uri: &str) -> Result<Vec<u8>,AnalyzerError>;
 }
+
+
+// pub fn read_wav(filename: String) -> Result<Vec<i16>, std::io::Error> {
+//     let mut file = File::open(filename)?;
+//     let (_, bit_depth) = wav::read(&mut file)?;
+//     match bit_depth {
+//         wav::BitDepth::Sixteen(x) => Ok(x),
+//         _ => Err(std::io::Error::new(
+//             ErrorKind::Other,
+//             "Unexpected bit depth. Only support 16bit",
+//         )),
+//     }
+// }
