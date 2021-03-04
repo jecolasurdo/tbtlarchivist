@@ -1,9 +1,8 @@
-
-use crate::engines::EngineError;
 use crate::engines::Analyzer;
+use crate::engines::EngineError;
 
 pub struct Engine {
-    options: Settings
+    options: Settings,
 }
 
 pub struct Settings {
@@ -15,13 +14,11 @@ pub struct Settings {
 }
 
 pub fn new(options: Settings) -> Engine {
-    Engine{
-        options,
-    } 
+    Engine { options }
 }
 
 impl Analyzer for Engine {
-    fn mp3_to_raw(&self, _: Vec<u8>) -> Result<Vec<i16>, EngineError> { 
+    fn mp3_to_raw(&self, _: Vec<u8>) -> Result<Vec<i16>, EngineError> {
         // pub fn read_wav(filename: String) -> Result<Vec<i16>, std::io::Error> {
         //     let mut file = File::open(filename)?;
         //     let (_, bit_depth) = wav::read(&mut file)?;
@@ -33,14 +30,14 @@ impl Analyzer for Engine {
         //         )),
         //     }
         // }
-        todo!() 
+        todo!()
     }
 
-    fn phash(&self, _: Vec<i16>) -> Result<Vec<u8>, EngineError> { 
-        todo!() 
+    fn phash(&self, _: Vec<i16>) -> Result<Vec<u8>, EngineError> {
+        todo!()
     }
 
-    fn find_offsets(&self, candidate: Vec<i16>, target: Vec<i16>) -> Result<Vec<i64>, EngineError> { 
+    fn find_offsets(&self, candidate: Vec<i16>, target: Vec<i16>) -> Result<Vec<i64>, EngineError> {
         let windows = target.windows(candidate.len());
         let mut similarities: Vec<f64> = Vec::with_capacity(windows.len());
         let mut n = 0;
@@ -80,7 +77,6 @@ impl Analyzer for Engine {
         Ok(results)
     }
 }
-
 
 pub fn cosine_similarity(a: &[i16], b: &[i16]) -> f64 {
     sumdotproduct(a, b) / (a.sqrsum().sqrt() * b.sqrsum().sqrt())
