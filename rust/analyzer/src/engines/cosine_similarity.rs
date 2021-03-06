@@ -13,12 +13,13 @@ pub struct Settings {
     pub pass_two_threshold: f64,
 }
 
+#[allow(dead_code)]
 pub fn new(options: Settings) -> Engine {
     Engine { options }
 }
 
 impl Analyzer for Engine {
-    fn mp3_to_raw(&self, _: Vec<u8>) -> Result<Vec<i16>, EngineError> {
+    fn mp3_to_raw(&self, _: &[u8]) -> Result<Vec<i16>, EngineError> {
         // pub fn read_wav(filename: String) -> Result<Vec<i16>, std::io::Error> {
         //     let mut file = File::open(filename)?;
         //     let (_, bit_depth) = wav::read(&mut file)?;
@@ -33,7 +34,7 @@ impl Analyzer for Engine {
         todo!()
     }
 
-    fn phash(&self, _: &Vec<i16>) -> Result<Vec<u8>, EngineError> {
+    fn phash(&self, _: &[i16]) -> Result<Vec<u8>, EngineError> {
         todo!()
     }
 
