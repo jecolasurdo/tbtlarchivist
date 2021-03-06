@@ -292,6 +292,7 @@ dependencies = [
  "contracts",
  "crossbeam-channel",
  "crossbeam-utils",
+ "protobuf",
  "rayon",
  "thiserror",
  "wav",
