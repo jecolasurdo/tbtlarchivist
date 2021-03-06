@@ -14,11 +14,11 @@ pub trait Analyzer {
 
     /// Takes 16bit raw audio data and calculates its perceptual hash.  If the method is unable
     /// to proceed for any reason, it will return an `EngineError`.
-    fn phash(&self, raw: Vec<i16>) -> Result<Vec<u8>, EngineError>;
+    fn phash(&self, raw: &Vec<i16>) -> Result<Vec<u8>, EngineError>;
     /// Searches for any likely occurences of `candidate` within `target` and returns the position
     /// of each occurence as a vector of offsets. Any errors that result during the process of
     /// finding offsets will immediately return an `EngineError`.
-    fn find_offsets(&self, candidate: Vec<i16>, target: Vec<i16>) -> Result<Vec<i64>, EngineError>;
+    fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, EngineError>;
 }
 
 #[derive(Error, Debug)]

@@ -33,11 +33,11 @@ impl Analyzer for Engine {
         todo!()
     }
 
-    fn phash(&self, _: Vec<i16>) -> Result<Vec<u8>, EngineError> {
+    fn phash(&self, _: &Vec<i16>) -> Result<Vec<u8>, EngineError> {
         todo!()
     }
 
-    fn find_offsets(&self, candidate: Vec<i16>, target: Vec<i16>) -> Result<Vec<i64>, EngineError> {
+    fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, EngineError> {
         let windows = target.windows(candidate.len());
         let mut similarities: Vec<f64> = Vec::with_capacity(windows.len());
         let mut n = 0;
