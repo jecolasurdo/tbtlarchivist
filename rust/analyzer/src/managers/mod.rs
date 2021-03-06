@@ -11,6 +11,11 @@ use std::convert::TryInto;
 use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+const RAW_SAMPLE_RATE: usize = 44_100;
+
+// Basis of 1e9 represents a nanosecond duration resolution,
+const RAW_DURATION_BASIS: usize = 1_000_000_000;
+
 /// An `AnalysisManager` orchestrates the process conducing the analysis prescribed
 /// by a `PendingResearchItem`.
 pub struct AnalysisManager<A, U>
@@ -88,9 +93,9 @@ where
         cri.set_research_date(proto_now());
         cri.set_episode_info(pri.get_episode().clone());
         cri.set_clip_info(clip.clone());
-        cri.set_episode_duration(0);
+        cri.set_episode_duration(duration(episode_raw.len()));
         cri.set_episode_hash(episode_phash.to_vec());
-        cri.set_clip_duration(0);
+        cri.set_clip_duration(duration(clip_raw.len()));
         cri.set_clip_hash(clip_phash);
         cri.set_clip_offsets(offsets);
         cri.set_lease_id(pri.get_lease_id().to_string());
@@ -108,4 +113,9 @@ fn proto_now() -> Timestamp {
     t.set_seconds(n.as_secs().try_into().unwrap());
     t.set_nanos(n.subsec_nanos().try_into().unwrap());
     t
+}
+
+#[allow(clippy::as_conversions)]
+fn duration(samples: usize) -> i64 {
+    (samples / RAW_SAMPLE_RATE * RAW_DURATION_BASIS) as i64
 }
