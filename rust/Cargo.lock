@@ -289,6 +289,7 @@ dependencies = [
 name = "analyzer"
 version = "0.1.0"
 dependencies = [
+ "cancel",
  "contracts",
  "crossbeam-channel",
  "crossbeam-utils",
@@ -438,6 +439,12 @@ checksum = "90706ba19e97b90786e19dc0d5e2abd80008d99d4c0c5d1ad0b5e72cec7c494d"
 dependencies = [
  "bytes 1.0.1",
 ]
+
+[[package]]
+name = "cancel"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbd5b6d69314bcec67110afb639e5e06ecff04fc4bfd3796d47ee893b8615204"
 
 [[package]]
 name = "cc"

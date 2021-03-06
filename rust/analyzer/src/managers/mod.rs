@@ -3,6 +3,7 @@
 use crate::accessors::FromURI;
 use crate::engines::Analyzer;
 use crate::errors::AnalyzerError;
+use cancel::Token;
 use contracts::{ClipInfo, CompletedResearchItem, PendingResearchItem};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use protobuf::well_known_types::Timestamp;
@@ -26,11 +27,12 @@ where
 {
     pub fn run(
         &'static self,
+        ctx: &'static Token,
         pri: &'static PendingResearchItem,
     ) -> Receiver<Result<CompletedResearchItem, AnalyzerError>> {
         let (tx, rx) = unbounded();
         thread::spawn(move || {
-            if let Err(err) = self.process_episode(pri, tx) {
+            if let Err(err) = self.process_episode(ctx, pri, tx) {
                 tx.send(Err(err)).expect("run: unable to transmit error");
             }
         });
@@ -39,6 +41,7 @@ where
 
     pub(self) fn process_episode(
         &'static self,
+        ctx: &'static Token,
         pri: &'static PendingResearchItem,
         tx: Sender<Result<CompletedResearchItem, AnalyzerError>>,
     ) -> Result<(), AnalyzerError> {
@@ -46,9 +49,14 @@ where
         let episode_raw = self.analyzer.mp3_to_raw(mp3_data)?;
         let episode_phash = self.analyzer.phash(episode_raw)?;
         for clip in pri.get_clips() {
+            if ctx.is_canceled() {
+                break;
+            }
             if let Err(err) = self.process_clip(pri, episode_raw, episode_phash, *clip, tx) {
-                // errors at this level do not halt the entire process. Instead
-                // we just forward them to the caller.
+                // errors at this level do not halt the entire process. Instead we just forward
+                // them to the caller. The caller may decide to broadcast a cancellation if the
+                // error rates are out of hand, at which point this method would expect
+                // ctx.is_cancelled() to return true.
                 tx.send(Err(err))
                     .expect("process_episode: unable to transmit error");
             }
