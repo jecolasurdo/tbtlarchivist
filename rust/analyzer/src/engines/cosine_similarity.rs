@@ -1,5 +1,5 @@
 use crate::engines::Analyzer;
-use crate::engines::EngineError;
+use anyhow::Result;
 
 pub struct Engine {
     options: Settings,
@@ -19,7 +19,7 @@ pub fn new(options: Settings) -> Engine {
 }
 
 impl Analyzer for Engine {
-    fn mp3_to_raw(&self, _: &[u8]) -> Result<Vec<i16>, EngineError> {
+    fn mp3_to_raw(&self, _: &[u8]) -> Result<Vec<i16>> {
         // pub fn read_wav(filename: String) -> Result<Vec<i16>, std::io::Error> {
         //     let mut file = File::open(filename)?;
         //     let (_, bit_depth) = wav::read(&mut file)?;
@@ -34,11 +34,11 @@ impl Analyzer for Engine {
         todo!()
     }
 
-    fn phash(&self, _: &[i16]) -> Result<Vec<u8>, EngineError> {
+    fn phash(&self, _: &[i16]) -> Result<Vec<u8>> {
         todo!()
     }
 
-    fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, EngineError> {
+    fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>> {
         let windows = target.windows(candidate.len());
         let mut similarities: Vec<f64> = Vec::with_capacity(windows.len());
         let mut n = 0;

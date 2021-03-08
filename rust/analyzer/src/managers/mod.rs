@@ -2,7 +2,7 @@
 
 use crate::accessors::FromURI;
 use crate::engines::Analyzer;
-use crate::errors::AnalyzerError;
+use anyhow::Result;
 use cancel::Token;
 use contracts::{ClipInfo, CompletedResearchItem, PendingResearchItem};
 use crossbeam_channel::{unbounded, Receiver, Sender};
@@ -41,7 +41,7 @@ where
         &'static self,
         ctx: &'static Token,
         pri: &'static PendingResearchItem,
-    ) -> Receiver<Result<CompletedResearchItem, AnalyzerError>> {
+    ) -> Receiver<Result<CompletedResearchItem>> {
         let (tx, rx) = unbounded();
         thread::spawn(move || {
             if let Err(err) = self.process_episode(ctx, pri, &tx) {
@@ -55,8 +55,8 @@ where
         &'static self,
         ctx: &'static Token,
         pri: &'static PendingResearchItem,
-        tx: &Sender<Result<CompletedResearchItem, AnalyzerError>>,
-    ) -> Result<(), AnalyzerError> {
+        tx: &Sender<Result<CompletedResearchItem>>,
+    ) -> Result<()> {
         let mp3_data = self.uri_accessor.get(pri.get_episode().get_media_uri())?;
         let episode_raw = self.analyzer.mp3_to_raw(&mp3_data)?;
         let episode_phash = self.analyzer.phash(&episode_raw)?;
@@ -82,8 +82,8 @@ where
         episode_raw: &[i16],
         episode_phash: &[u8],
         clip: &'static ClipInfo,
-        tx: &Sender<Result<CompletedResearchItem, AnalyzerError>>,
-    ) -> Result<(), AnalyzerError> {
+        tx: &Sender<Result<CompletedResearchItem>>,
+    ) -> Result<()> {
         let mp3_data = self.uri_accessor.get(clip.get_media_uri())?;
         let clip_raw = self.analyzer.mp3_to_raw(&mp3_data)?;
         let clip_phash = self.analyzer.phash(&clip_raw)?;
