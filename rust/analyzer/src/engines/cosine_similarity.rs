@@ -21,12 +21,27 @@ pub fn new(options: Settings) -> Engine {
 
 impl Analyzer for Engine {
     fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>> {
+        // consider the following library (or similar?) for resampling so I
+        // don't have to reinvent the wheel.
+        // https://github.com/HEnquist/rubato
+
+        // also will need to convert from stereo to mono.  it is *probably*
+        // sufficient to do this by simple averaging since the primary use-case
+        // here is for podcasts which don't generally have too much phasing
+        // going on, but that's just a guess to get me out of having to write a
+        // more complex stereo-mono converter.  This was an interesting
+        // anecdote on the topic:
+        // https://dsp.stackexchange.com/questions/2484/converting-from-stereo-to-mono-by-averaging
+
+        // I'm not really sure if I should reduce to mono before or after
+        // sampling rate corrections. I'll have to ponder that a little.
+
         let mut decoder = Decoder::new(mp3_bytes);
         loop {
             match decoder.next_frame() {
                 Ok(Frame {
                     data,
-                    _sample_rate,
+                    sample_rate: _,
                     channels,
                     ..
                 }) => {
