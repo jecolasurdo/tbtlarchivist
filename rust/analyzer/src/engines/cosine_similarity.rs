@@ -1,5 +1,6 @@
 use crate::engines::Analyzer;
 use anyhow::Result;
+use minimp3::{Decoder, Error as MP3Error, Frame};
 
 pub struct Engine {
     options: Settings,
@@ -19,7 +20,23 @@ pub fn new(options: Settings) -> Engine {
 }
 
 impl Analyzer for Engine {
-    fn mp3_to_raw(&self, _: &[u8]) -> Result<Vec<i16>> {
+    fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>> {
+        let mut decoder = Decoder::new(mp3_bytes);
+        loop {
+            match decoder.next_frame() {
+                Ok(Frame {
+                    data,
+                    _sample_rate,
+                    channels,
+                    ..
+                }) => {
+                    println!("Decoded {} samples", data.len() / channels)
+                }
+                Err(MP3Error::Eof) => break,
+                Err(e) => panic!("{:?}", e),
+            }
+        }
+
         // pub fn read_wav(filename: String) -> Result<Vec<i16>, std::io::Error> {
         //     let mut file = File::open(filename)?;
         //     let (_, bit_depth) = wav::read(&mut file)?;
