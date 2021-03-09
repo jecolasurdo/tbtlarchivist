@@ -1,6 +1,8 @@
 use crate::engines::Analyzer;
 use anyhow::Result;
 use minimp3::{Decoder, Error as MP3Error, Frame};
+use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
+use std::rc::Rc;
 
 pub struct Engine {
     options: Settings,
@@ -19,14 +21,14 @@ pub fn new(options: Settings) -> Engine {
     Engine { options }
 }
 
-const SAMPLE_RATE: i32 = 22_050;
+const TARGET_SAMPLE_RATE: f64 = 22_050.0;
 
 impl Analyzer for Engine {
     /// Converts an mp3 to a 16bit mono raw audio vector.  The primary use case for this system is
     /// for podcasts, which are generally monaraul, so as a simple way of "converting" from stereo
     /// to mono this method just ignores the right track and returns audio from the left track.
-    /// Each mp3 frame is decoded, has the right channel stripped, is resampled to `SAMPLE_RATE`,
-    /// and is then stitched with the following frame.
+    /// Each mp3 frame is decoded, has the right channel stripped, is resampled to
+    /// `TARGET_SAMPLE_RATE`, and is then stitched with the following frame.
     fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>> {
         let mut decoder = Decoder::new(mp3_bytes);
         loop {
@@ -37,7 +39,28 @@ impl Analyzer for Engine {
                     channels,
                     ..
                 }) => {
-                    let mono_data = to_monaural(&data, channels);
+                    let params = InterpolationParameters {
+                        sinc_len: 256,
+                        f_cutoff: 0.95,
+                        interpolation: InterpolationType::Nearest,
+                        oversampling_factor: 160,
+                        window: WindowFunction::BlackmanHarris2,
+                    };
+                    let mono_data = vec![to_monaural(&data, channels)?; 1];
+                    
+                    let mut resampler = SincFixedIn::<f64>::new(
+                        f64::from(sample_rate) / TARGET_SAMPLE_RATE,
+                        params,
+                        mono_data.len(),
+                        1,
+                    );
+                    
+                    // Need to work through the following.  There are a few examples in the rubato
+                    // codebase.  Will probably need to check those out.
+                    // See: https://github.com/HEnquist/rubato/tree/master/examples`
+                    todo!("resampler wants an Vec<f64>, but the raw audio is a Vec<i16>.")
+
+                    let resampled_frame = resampler.process(&mono_data)?;
                 }
                 Err(MP3Error::Eof) => break,
                 Err(e) => return Err(e.into()),
