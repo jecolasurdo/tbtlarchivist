@@ -19,36 +19,28 @@ pub fn new(options: Settings) -> Engine {
     Engine { options }
 }
 
+const SAMPLE_RATE: i32 = 22_050;
+
 impl Analyzer for Engine {
+    /// Converts an mp3 to a 16bit mono raw audio vector.  The primary use case for this system is
+    /// for podcasts, which are generally monaraul, so as a simple way of "converting" from stereo
+    /// to mono this method just ignores the right track and returns audio from the left track.
+    /// Each mp3 frame is decoded, has the right channel stripped, is resampled to `SAMPLE_RATE`,
+    /// and is then stitched with the following frame.
     fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>> {
-        // consider the following library (or similar?) for resampling so I
-        // don't have to reinvent the wheel.
-        // https://github.com/HEnquist/rubato
-
-        // also will need to convert from stereo to mono.  it is *probably*
-        // sufficient to do this by simple averaging since the primary use-case
-        // here is for podcasts which don't generally have too much phasing
-        // going on, but that's just a guess to get me out of having to write a
-        // more complex stereo-mono converter.  This was an interesting
-        // anecdote on the topic:
-        // https://dsp.stackexchange.com/questions/2484/converting-from-stereo-to-mono-by-averaging
-
-        // I'm not really sure if I should reduce to mono before or after
-        // sampling rate corrections. I'll have to ponder that a little.
-
         let mut decoder = Decoder::new(mp3_bytes);
         loop {
             match decoder.next_frame() {
                 Ok(Frame {
                     data,
-                    sample_rate: _,
+                    sample_rate,
                     channels,
                     ..
                 }) => {
-                    println!("Decoded {} samples", data.len() / channels)
+                    let mono_data = to_monaural(&data, channels);
                 }
                 Err(MP3Error::Eof) => break,
-                Err(e) => panic!("{:?}", e),
+                Err(e) => return Err(e.into()),
             }
         }
 
@@ -109,6 +101,25 @@ impl Analyzer for Engine {
 
         Ok(results)
     }
+}
+
+pub fn to_monaural(data: &[i16], channels: usize) -> Result<Vec<i16>> {
+    if !(1..=2).contains(&channels) {
+        todo!("this needs to be returned as a proper error");
+        panic!("unsupported number of channels encountered");
+    }
+    let mut mono: Vec<i16>;
+    if channels == 2 {
+        mono = Vec::with_capacity(data.len() / 2);
+        let mut i = 0;
+        while i < data.len() {
+            mono.push(data[i]);
+            i += 2;
+        }
+    } else {
+        mono = data.to_vec();
+    }
+    Ok(mono)
 }
 
 pub fn cosine_similarity(a: &[i16], b: &[i16]) -> f64 {
