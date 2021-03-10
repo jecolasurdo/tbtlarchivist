@@ -4,7 +4,7 @@
 pub mod cosine_similarity;
 
 /// An `Analyzer` represents something that is able to manipulate and analyze audio data.
-pub trait Analyzer<E: std::error::Error> {
+pub trait Analyzer<E> {
     /// Takes a byte vector representation of a raw mp3 file, and converts it to raw 16-bit mono
     /// audio data.
     fn mp3_to_raw(&self, mp3: &[u8]) -> Result<Vec<i16>, E>;
