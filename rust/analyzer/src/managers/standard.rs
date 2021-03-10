@@ -1,15 +1,15 @@
 //! standard contains the typical concrete Runner implementation.
 
-use crate::accessors::FromURI;
-use crate::engines::Analyzer;
-use crate::managers::Runner;
+use crate::{accessors::FromURI, engines::Analyzer, managers::Runner};
 use cancel::Token;
 use contracts::{ClipInfo, CompletedResearchItem, PendingResearchItem};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use protobuf::well_known_types::Timestamp;
-use std::convert::TryInto;
-use std::thread;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    convert::TryInto,
+    thread,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 const RAW_SAMPLE_RATE: usize = 44_100;
 
