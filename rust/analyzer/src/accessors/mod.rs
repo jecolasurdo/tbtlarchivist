@@ -3,7 +3,7 @@
 pub mod http;
 
 /// `FromURI` represents something that is able to return an object from a URI.
-pub trait FromURI<'a, E: std::error::Error> {
+pub trait FromURI<'a, E> {
     /// Returns the object as a byte vector.  If the method cannot succeed for
     /// for any reason an `AccessorError` must be returned.  It is not
     /// necessarily this method's responsibility to validate the returned object.

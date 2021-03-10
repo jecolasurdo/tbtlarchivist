@@ -1,3 +1,4 @@
+use crate::accessors::FromURI;
 use std::io::Read;
 use thiserror::Error;
 
@@ -5,13 +6,13 @@ pub struct Accessor {}
 
 const HEADER_CONTENT_LENGTH: &str = "Content-Length";
 
-impl<'a> Accessor {
+impl<'a> FromURI<'a, AccessorError> for Accessor {
     /// Returns the response body of a destinaction http URI. If the request fails, or if the
     /// response does not return 200 for any reason, an error is returned. This method does not
     /// validate the response body, but will ensure that the full body is returned (else an error
     /// will be returned).
     #[allow(dead_code)]
-    fn get(uri: &'a str) -> Result<Vec<u8>, AccessorError> {
+    fn get(&'a self, uri: &'a str) -> Result<Vec<u8>, AccessorError> {
         let response = ureq::get(uri).call()?;
         if response.status() != 200 {
             return Err(AccessorError::Non200Response {
@@ -46,6 +47,4 @@ pub enum AccessorError {
 
     #[error("No Content-Length header in response")]
     NoContentLength,
-    // #[error("{0}")]
-    // General(String),
 }
