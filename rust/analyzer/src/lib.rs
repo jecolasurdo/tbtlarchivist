@@ -20,6 +20,6 @@
     clippy::missing_const_for_fn
 )]
 
-pub(crate) mod accessors;
-pub(crate) mod engines;
+pub mod accessors;
+pub mod engines;
 pub mod managers;

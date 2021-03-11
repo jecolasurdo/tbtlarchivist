@@ -5,6 +5,7 @@ use cancel::Token;
 use contracts::{ClipInfo, CompletedResearchItem, PendingResearchItem};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use protobuf::well_known_types::Timestamp;
+use std::marker::PhantomData;
 use std::{
     convert::TryInto,
     thread,
@@ -16,6 +17,20 @@ const RAW_SAMPLE_RATE: usize = 44_100;
 // Basis of 1e9 represents a nanosecond duration resolution,
 const RAW_DURATION_BASIS: usize = 1_000_000_000;
 
+/// Returns a new `AnalysisManager`.
+pub fn new<A, U, E>(analyzer_engine: A, uri_accessor: U) -> AnalysisManager<A, U, E>
+where
+    A: Analyzer<E> + Sync,
+    U: FromURI<'static, E> + Sync,
+    E: Sync,
+{
+    AnalysisManager {
+        analyzer_engine,
+        uri_accessor,
+        _phantom: PhantomData,
+    }
+}
+
 /// An `AnalysisManager` orchestrates the process conducing the analysis prescribed
 /// by a `PendingResearchItem`.
 pub struct AnalysisManager<A, U, E>
@@ -24,9 +39,9 @@ where
     U: FromURI<'static, E> + Sync,
     E: Sync,
 {
-    analyzer: A,
+    analyzer_engine: A,
     uri_accessor: U,
-    _phantom: std::marker::PhantomData<E>,
+    _phantom: PhantomData<E>,
 }
 
 impl<A, U, E> Runner<A, U, E> for AnalysisManager<A, U, E>
@@ -68,8 +83,8 @@ where
         tx: &Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
         let mp3_data = self.uri_accessor.get(pri.get_episode().get_media_uri())?;
-        let episode_raw = self.analyzer.mp3_to_raw(&mp3_data)?;
-        let episode_phash = self.analyzer.phash(&episode_raw)?;
+        let episode_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
+        let episode_phash = self.analyzer_engine.phash(&episode_raw)?;
         for clip in pri.get_clips() {
             if ctx.is_canceled() {
                 break;
@@ -95,9 +110,9 @@ where
         tx: &Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
         let mp3_data = self.uri_accessor.get(clip.get_media_uri())?;
-        let clip_raw = self.analyzer.mp3_to_raw(&mp3_data)?;
-        let clip_phash = self.analyzer.phash(&clip_raw)?;
-        let offsets = self.analyzer.find_offsets(&clip_raw, episode_raw)?;
+        let clip_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
+        let clip_phash = self.analyzer_engine.phash(&clip_raw)?;
+        let offsets = self.analyzer_engine.find_offsets(&clip_raw, episode_raw)?;
 
         let mut cri = CompletedResearchItem::new();
         cri.set_research_date(proto_now());
