@@ -22,13 +22,13 @@ pub fn new(options: Settings) -> Engine {
 
 const TARGET_SAMPLE_RATE: f64 = 22_050.0;
 
-impl Analyzer<EngineError> for Engine {
+impl Analyzer<Error> for Engine {
     /// Decodes an mp3 file to a 16bit mono raw audio vector.  The primary use case for this system
     /// is for podcasts, which are generally monaraul, so, as a simple way of "converting" from
     /// stereo to mono, this method just ignores one of the channels.  Each mp3 frame is decoded,
     /// has one channel stripped, is resampled to `TARGET_SAMPLE_RATE`, and is then stitched with
     /// the subsequent frame.
-    fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>, EngineError> {
+    fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>, Error> {
         let mut decoder = Decoder::new(mp3_bytes);
         let mut raw_data = vec![];
         loop {
@@ -57,17 +57,17 @@ impl Analyzer<EngineError> for Engine {
                     raw_data.append(&mut resampled_data[0]);
                 }
                 Err(MP3Error::Eof) => break,
-                Err(e) => return Err(EngineError::MiniMp3(e)),
+                Err(e) => return Err(Error(Box::new(ErrorKind::MiniMp3(e)))),
             }
         }
         Ok(raw_data.iter().map(|v| scale_to_i16(*v)).collect())
     }
 
-    fn phash(&self, _: &[i16]) -> Result<Vec<u8>, EngineError> {
+    fn phash(&self, _: &[i16]) -> Result<Vec<u8>, Error> {
         todo!()
     }
 
-    fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, EngineError> {
+    fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
         let windows = target.windows(candidate.len());
         let mut similarities: Vec<f64> = Vec::with_capacity(windows.len());
         let mut n = 0;
@@ -108,8 +108,19 @@ impl Analyzer<EngineError> for Engine {
     }
 }
 
+pub struct Error(Box<ErrorKind>);
+
+impl<E> From<E> for Error
+where
+    ErrorKind: From<E>,
+{
+    fn from(err: E) -> Self {
+        Error(Box::new(ErrorKind::from(err)))
+    }
+}
+
 #[derive(Error, Debug)]
-pub enum EngineError {
+pub enum ErrorKind {
     #[error("minimp3 error")]
     MiniMp3(#[from] minimp3::Error),
 
@@ -126,7 +137,7 @@ pub fn scale_from_i16(v: i16) -> f64 {
     f64::from(v) / f64::from(i16::MAX)
 }
 
-pub fn to_monaural(data: &[i16], channels: usize) -> Result<Vec<f64>, EngineError> {
+pub fn to_monaural(data: &[i16], channels: usize) -> Result<Vec<f64>, Error> {
     if !(1..=2).contains(&channels) {
         todo!("this needs to be returned as a proper error");
     }
