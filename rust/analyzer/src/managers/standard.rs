@@ -2,9 +2,10 @@
 
 use crate::{accessors::FromURI, engines::Analyzer, managers::Runner};
 use cancel::Token;
-use contracts::{ClipInfo, CompletedResearchItem, PendingResearchItem};
+use contracts::{CompletedResearchItem, PendingResearchItem};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use protobuf::well_known_types::Timestamp;
+use std::error::Error;
 use std::marker::PhantomData;
 use std::{
     convert::TryInto,
@@ -20,9 +21,9 @@ const RAW_DURATION_BASIS: usize = 1_000_000_000;
 /// Returns a new `AnalysisManager`.
 pub fn new<A, U, E>(analyzer_engine: A, uri_accessor: U) -> AnalysisManager<A, U, E>
 where
-    A: Analyzer<E> + Sync,
-    U: FromURI<'static, E> + Sync,
-    E: Sync,
+    A: Analyzer<E> + Send + Sync,
+    U: FromURI<'static, E> + Send + Sync,
+    E: Error + Send + Sync,
 {
     AnalysisManager {
         analyzer_engine,
@@ -35,20 +36,20 @@ where
 /// by a `PendingResearchItem`.
 pub struct AnalysisManager<A, U, E>
 where
-    A: Analyzer<E> + Sync,
-    U: FromURI<'static, E> + Sync,
-    E: Sync,
+    A: Analyzer<E> + Send + Sync,
+    U: FromURI<'static, E> + Send + Sync,
+    E: Error + Send + Sync,
 {
     analyzer_engine: A,
     uri_accessor: U,
     _phantom: PhantomData<E>,
 }
 
-impl<A, U, E> Runner<A, U, E> for AnalysisManager<A, U, E>
+impl<A, U, E> Runner<'static, A, U, E> for AnalysisManager<A, U, E>
 where
-    A: Analyzer<E> + Sync,
-    U: FromURI<'static, E> + Sync,
-    E: Send + Sync,
+    A: Analyzer<E> + Send + Sync,
+    U: FromURI<'static, E> + Send + Sync,
+    E: Error + Send + Sync,
 {
     /// Starts the analysis process, returning a channel on which completed
     /// research and/or errors are transmitted. This channel must be polled
@@ -62,7 +63,7 @@ where
     ) -> Receiver<Result<CompletedResearchItem, E>> {
         let (tx, rx) = unbounded();
         thread::spawn(move || {
-            if let Err(err) = self.process_episode(ctx, pri, &tx) {
+            if let Err(err) = self.process_episode(ctx, pri, tx.clone()) {
                 tx.send(Err(err)).expect("run: unable to transmit error");
             }
         });
@@ -72,15 +73,15 @@ where
 
 impl<A, U, E> AnalysisManager<A, U, E>
 where
-    A: Analyzer<E> + Sync,
-    U: FromURI<'static, E> + Sync,
-    E: Sync,
+    A: Analyzer<E> + Send + Sync,
+    U: FromURI<'static, E> + Send + Sync,
+    E: Error + Send + Sync,
 {
     pub(self) fn process_episode(
         &'static self,
         ctx: &'static Token,
-        pri: &'static PendingResearchItem,
-        tx: &Sender<Result<CompletedResearchItem, E>>,
+        pri: &'static contracts::PendingResearchItem,
+        tx: Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
         let mp3_data = self.uri_accessor.get(pri.get_episode().get_media_uri())?;
         let episode_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
@@ -89,11 +90,13 @@ where
             if ctx.is_canceled() {
                 break;
             }
-            if let Err(err) = self.process_clip(pri, &episode_raw, &episode_phash, clip, tx) {
-                // errors at this level do not halt the entire process. Instead we just forward
-                // them to the caller. The caller may decide to broadcast a cancellation if the
-                // error rates are out of hand, at which point this method would expect
-                // ctx.is_cancelled() to return true.
+            if let Err(err) = self.process_clip(pri, &episode_raw, &episode_phash, clip, tx.clone())
+            {
+                // errors at this level do not halt the entire process. Instead
+                // we just forward them to the caller. The caller may decide to
+                // broadcast a cancellation if the error rates are out of hand,
+                // at which point this method would expect ctx.is_cancelled()
+                // to return true.
                 tx.send(Err(err))
                     .expect("process_episode: unable to transmit error");
             }
@@ -106,8 +109,8 @@ where
         pri: &'static PendingResearchItem,
         episode_raw: &[i16],
         episode_phash: &[u8],
-        clip: &'static ClipInfo,
-        tx: &Sender<Result<CompletedResearchItem, E>>,
+        clip: &'static contracts::ClipInfo,
+        tx: Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
         let mp3_data = self.uri_accessor.get(clip.get_media_uri())?;
         let clip_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
