@@ -75,7 +75,7 @@ where
 
         thread::scope(|s| {
             s.spawn(|_| {
-                if let Err(err) = self.process_episode(ctx, pri, tx.clone()) {
+                if let Err(err) = self.process_episode(ctx, pri, &tx) {
                     tx.send(Err(err)).expect("run: Unable to transmit error.");
                 }
             });
@@ -88,7 +88,7 @@ where
         &self,
         ctx: &Token,
         pri: &contracts::PendingResearchItem,
-        tx: Sender<Result<CompletedResearchItem, E>>,
+        tx: &Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
         let mp3_data = self
             .uri_accessor
@@ -99,8 +99,7 @@ where
             if ctx.is_canceled() {
                 break;
             }
-            if let Err(err) = self.process_clip(pri, &episode_raw, &episode_phash, clip, tx.clone())
-            {
+            if let Err(err) = self.process_clip(pri, &episode_raw, &episode_phash, clip, tx) {
                 // errors at this level do not halt the entire process. Instead
                 // we just forward them to the caller. The caller may decide to
                 // broadcast a cancellation if the error rates are out of hand,
@@ -119,7 +118,7 @@ where
         episode_raw: &[i16],
         episode_phash: &[u8],
         clip: &contracts::ClipInfo,
-        tx: Sender<Result<CompletedResearchItem, E>>,
+        tx: &Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
         let mp3_data = self.uri_accessor.get(clip.get_media_uri().to_string())?;
         let clip_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
