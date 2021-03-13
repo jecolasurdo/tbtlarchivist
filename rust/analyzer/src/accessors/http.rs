@@ -6,14 +6,14 @@ pub struct Accessor {}
 
 const HEADER_CONTENT_LENGTH: &str = "Content-Length";
 
-impl<'a> FromURI<'a, Error> for Accessor {
+impl FromURI<Error> for Accessor {
     /// Returns the response body of a destinaction http URI. If the request fails, or if the
     /// response does not return 200 for any reason, an error is returned. This method does not
     /// validate the response body, but will ensure that the full body is returned (else an error
     /// will be returned).
     #[allow(dead_code)]
-    fn get(&'a self, uri: &'a str) -> Result<Vec<u8>, Error> {
-        let response = ureq::get(uri).call()?;
+    fn get(&self, uri: String) -> Result<Vec<u8>, Error> {
+        let response = ureq::get(&uri).call()?;
         if response.status() != 200 {
             return Err(Error(Box::new(ErrorKind::Non200Response {
                 status: response.status(),

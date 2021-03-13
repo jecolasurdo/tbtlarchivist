@@ -4,12 +4,12 @@ use crate::{accessors::FromURI, engines::Analyzer};
 use cancel::Token;
 use contracts::{CompletedResearchItem, PendingResearchItem};
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_utils::thread;
 use protobuf::well_known_types::Timestamp;
 use std::error::Error;
 use std::marker::PhantomData;
 use std::{
     convert::TryInto,
-    thread,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -22,7 +22,7 @@ const RAW_DURATION_BASIS: usize = 1_000_000_000;
 pub fn new<A, U, AE, UE, E>(analyzer_engine: A, uri_accessor: U) -> AnalysisManager<A, U, AE, UE, E>
 where
     A: Analyzer<AE> + Send + Sync,
-    U: FromURI<'static, UE> + Send + Sync,
+    U: FromURI<UE> + Send + Sync,
     AE: Error + Send + Sync,
     UE: Error + Send + Sync,
     E: From<AE> + From<UE> + Send + Sync,
@@ -41,7 +41,7 @@ where
 pub struct AnalysisManager<A, U, AE, UE, E>
 where
     A: Analyzer<AE> + Send + Sync,
-    U: FromURI<'static, UE> + Send + Sync,
+    U: FromURI<UE> + Send + Sync,
     AE: Error + Send + Sync,
     UE: Error + Send + Sync,
     E: From<AE> + From<UE> + Send + Sync,
@@ -56,7 +56,7 @@ where
 impl<A, U, AE, UE, E> AnalysisManager<A, U, AE, UE, E>
 where
     A: Analyzer<AE> + Send + Sync,
-    U: FromURI<'static, UE> + Send + Sync,
+    U: FromURI<UE> + Send + Sync,
     AE: Error + Send + Sync,
     UE: Error + Send + Sync,
     E: From<AE> + From<UE> + Send + Sync,
@@ -67,26 +67,32 @@ where
     /// running analysis, a cancellation should be broadcast via the `ctx`
     /// object.
     pub fn run(
-        &'static self,
-        ctx: &'static Token,
-        pri: &'static PendingResearchItem,
+        &self,
+        ctx: &Token,
+        pri: &PendingResearchItem,
     ) -> Receiver<Result<CompletedResearchItem, E>> {
         let (tx, rx) = unbounded();
-        thread::spawn(move || {
-            if let Err(err) = self.process_episode(ctx, pri, tx.clone()) {
-                tx.send(Err(err)).expect("run: unable to transmit error");
-            }
-        });
+
+        thread::scope(|s| {
+            s.spawn(|_| {
+                if let Err(err) = self.process_episode(ctx, pri, tx.clone()) {
+                    tx.send(Err(err)).expect("run: unable to transmit error");
+                }
+            });
+        })
+        .unwrap();
         rx
     }
 
     fn process_episode(
-        &'static self,
-        ctx: &'static Token,
-        pri: &'static contracts::PendingResearchItem,
+        &self,
+        ctx: &Token,
+        pri: &contracts::PendingResearchItem,
         tx: Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
-        let mp3_data = self.uri_accessor.get(pri.get_episode().get_media_uri())?;
+        let mp3_data = self
+            .uri_accessor
+            .get(pri.get_episode().get_media_uri().to_string())?;
         let episode_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
         let episode_phash = self.analyzer_engine.phash(&episode_raw)?;
         for clip in pri.get_clips() {
@@ -108,14 +114,14 @@ where
     }
 
     fn process_clip(
-        &'static self,
-        pri: &'static PendingResearchItem,
+        &self,
+        pri: &PendingResearchItem,
         episode_raw: &[i16],
         episode_phash: &[u8],
-        clip: &'static contracts::ClipInfo,
+        clip: &contracts::ClipInfo,
         tx: Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
-        let mp3_data = self.uri_accessor.get(clip.get_media_uri())?;
+        let mp3_data = self.uri_accessor.get(clip.get_media_uri().to_string())?;
         let clip_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
         let clip_phash = self.analyzer_engine.phash(&clip_raw)?;
         let offsets = self.analyzer_engine.find_offsets(&clip_raw, episode_raw)?;

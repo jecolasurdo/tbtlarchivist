@@ -27,7 +27,7 @@ fn main() -> Result<()> {
     let ctx = cancel::Token::new();
     let pri = contracts::PendingResearchItem::default();
 
-    let rx = mgr.run(&ctx, &pri);
+    let _rx = mgr.run(&ctx, &pri);
 
     Ok(())
 }

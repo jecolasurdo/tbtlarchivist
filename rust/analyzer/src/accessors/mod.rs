@@ -5,7 +5,7 @@ use std::error::Error;
 pub mod http;
 
 /// `FromURI` represents something that is able to return an object from a URI.
-pub trait FromURI<'a, E>
+pub trait FromURI<E>
 where
     E: Error + Send + Sync,
 {
@@ -14,5 +14,5 @@ where
     /// necessarily this method's responsibility to validate the returned object.
     /// Consumers of objects that implement this trait should consider whether or
     /// not they need to validate the  resulting byte vector.
-    fn get(&'a self, uri: &'a str) -> Result<Vec<u8>, E>;
+    fn get(&self, uri: String) -> Result<Vec<u8>, E>;
 }
