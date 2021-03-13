@@ -76,11 +76,11 @@ where
         thread::scope(|s| {
             s.spawn(|_| {
                 if let Err(err) = self.process_episode(ctx, pri, tx.clone()) {
-                    tx.send(Err(err)).expect("run: unable to transmit error");
+                    tx.send(Err(err)).expect("run: Unable to transmit error.");
                 }
             });
         })
-        .unwrap();
+        .expect("run: An unrecoverable error occured.");
         rx
     }
 
@@ -107,7 +107,7 @@ where
                 // at which point this method would expect ctx.is_cancelled()
                 // to return true.
                 tx.send(Err(err))
-                    .expect("process_episode: unable to transmit error");
+                    .expect("process_episode: Unable to transmit error.");
             }
         }
         Ok(())
@@ -139,7 +139,7 @@ where
         cri.set_revoke_lease(false);
 
         tx.send(Ok(cri))
-            .expect("process_clip: unable to transmit completed work item");
+            .expect("process_clip: Unable to transmit completed-work-item.");
         Ok(())
     }
 }
