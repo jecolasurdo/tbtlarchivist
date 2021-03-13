@@ -27,7 +27,14 @@ fn main() -> Result<()> {
     let ctx = cancel::Token::new();
     let pri = contracts::PendingResearchItem::default();
 
-    let _rx = mgr.run(&ctx, &pri);
+    let rx = mgr.run(&ctx, &pri);
+
+    while !ctx.is_canceled() {
+        match rx.recv() {
+            Ok(cri) => println!("{:?}", cri),
+            Err(e) => println!("{:?}", e),
+        }
+    }
 
     Ok(())
 }
