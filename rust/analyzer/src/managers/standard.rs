@@ -40,11 +40,11 @@ where
 /// by a `PendingResearchItem`.
 pub struct AnalysisManager<A, U, AE, UE, E>
 where
-    A: Analyzer<AE>,
-    U: FromURI<UE>,
-    AE: Error,
-    UE: Error,
-    E: From<AE> + From<UE>,
+    A: Analyzer<AE> + Send + Sync,
+    U: FromURI<UE> + Send + Sync,
+    AE: Error + Send + Sync,
+    UE: Error + Send + Sync,
+    E: From<AE> + From<UE> + Send + Sync,
 {
     analyzer_engine: A,
     uri_accessor: U,
