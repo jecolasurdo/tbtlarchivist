@@ -1,6 +1,6 @@
-//! standard contains the typical concrete Runner implementation.
+//! contains the typical concrete Runner implementation.
 
-use crate::{accessors::FromURI, engines::Analyzer, managers::Runner};
+use crate::{accessors::FromURI, engines::Analyzer};
 use cancel::Token;
 use contracts::{CompletedResearchItem, PendingResearchItem};
 use crossbeam_channel::{unbounded, Receiver, Sender};
@@ -19,44 +19,54 @@ const RAW_SAMPLE_RATE: usize = 44_100;
 const RAW_DURATION_BASIS: usize = 1_000_000_000;
 
 /// Returns a new `AnalysisManager`.
-pub fn new<A, U, E>(analyzer_engine: A, uri_accessor: U) -> AnalysisManager<A, U, E>
+pub fn new<A, U, AE, UE, E>(analyzer_engine: A, uri_accessor: U) -> AnalysisManager<A, U, AE, UE, E>
 where
-    A: Analyzer<E> + Send + Sync,
-    U: FromURI<'static, E> + Send + Sync,
-    E: Error + Send + Sync,
+    A: Analyzer<AE> + Send + Sync,
+    U: FromURI<'static, UE> + Send + Sync,
+    AE: Error + Send + Sync,
+    UE: Error + Send + Sync,
+    E: From<AE> + From<UE> + Send + Sync,
 {
     AnalysisManager {
         analyzer_engine,
         uri_accessor,
-        _phantom: PhantomData,
+        _phantom_ae: PhantomData,
+        _phantom_ue: PhantomData,
+        _phantom_e: PhantomData,
     }
 }
 
 /// An `AnalysisManager` orchestrates the process conducing the analysis prescribed
 /// by a `PendingResearchItem`.
-pub struct AnalysisManager<A, U, E>
+pub struct AnalysisManager<A, U, AE, UE, E>
 where
-    A: Analyzer<E> + Send + Sync,
-    U: FromURI<'static, E> + Send + Sync,
-    E: Error + Send + Sync,
+    A: Analyzer<AE> + Send + Sync,
+    U: FromURI<'static, UE> + Send + Sync,
+    AE: Error + Send + Sync,
+    UE: Error + Send + Sync,
+    E: From<AE> + From<UE> + Send + Sync,
 {
     analyzer_engine: A,
     uri_accessor: U,
-    _phantom: PhantomData<E>,
+    _phantom_ae: PhantomData<AE>,
+    _phantom_ue: PhantomData<UE>,
+    _phantom_e: PhantomData<E>,
 }
 
-impl<A, U, E> Runner<'static, A, U, E> for AnalysisManager<A, U, E>
+impl<A, U, AE, UE, E> AnalysisManager<A, U, AE, UE, E>
 where
-    A: Analyzer<E> + Send + Sync,
-    U: FromURI<'static, E> + Send + Sync,
-    E: Error + Send + Sync,
+    A: Analyzer<AE> + Send + Sync,
+    U: FromURI<'static, UE> + Send + Sync,
+    AE: Error + Send + Sync,
+    UE: Error + Send + Sync,
+    E: From<AE> + From<UE> + Send + Sync,
 {
     /// Starts the analysis process, returning a channel on which completed
     /// research and/or errors are transmitted. This channel must be polled
     /// until it is closed. To cleanly interupt and halt the operation of a
     /// running analysis, a cancellation should be broadcast via the `ctx`
     /// object.
-    fn run(
+    pub fn run(
         &'static self,
         ctx: &'static Token,
         pri: &'static PendingResearchItem,
@@ -69,15 +79,8 @@ where
         });
         rx
     }
-}
 
-impl<A, U, E> AnalysisManager<A, U, E>
-where
-    A: Analyzer<E> + Send + Sync,
-    U: FromURI<'static, E> + Send + Sync,
-    E: Error + Send + Sync,
-{
-    pub(self) fn process_episode(
+    fn process_episode(
         &'static self,
         ctx: &'static Token,
         pri: &'static contracts::PendingResearchItem,
@@ -104,7 +107,7 @@ where
         Ok(())
     }
 
-    pub(self) fn process_clip(
+    fn process_clip(
         &'static self,
         pri: &'static PendingResearchItem,
         episode_raw: &[i16],
