@@ -5,6 +5,8 @@ use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
 use thiserror::Error;
 
+const TARGET_SAMPLE_RATE: f64 = 22_050.0;
+
 /// Provides business logic associated with cosine similarity analysis of audio samples.
 pub struct Engine {
     options: Settings,
@@ -37,8 +39,6 @@ pub struct Settings {
 pub fn new(options: Settings) -> Engine {
     Engine { options }
 }
-
-const TARGET_SAMPLE_RATE: f64 = 22_050.0;
 
 impl Analyzer<Error> for Engine {
     /// Decodes an mp3 file to a 16bit mono raw audio vector.  The primary use case for this system
@@ -85,7 +85,7 @@ impl Analyzer<Error> for Engine {
     }
 
     fn phash(&self, _: &[i16]) -> Result<Vec<u8>, Error> {
-        todo!()
+        Ok(vec![])
     }
 
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
