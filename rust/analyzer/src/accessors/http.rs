@@ -1,7 +1,10 @@
+//! Access to resources via http.
+
 use crate::accessors::FromURI;
 use std::io::Read;
 use thiserror::Error;
 
+/// Provides access to an item via http.
 pub struct Accessor {}
 
 const HEADER_CONTENT_LENGTH: &str = "Content-Length";
@@ -35,6 +38,7 @@ impl FromURI<Error> for Accessor {
     }
 }
 
+/// A boxed error resulting from a problem accessing a resource.
 #[derive(Error, Debug)]
 #[error(transparent)]
 pub struct Error(Box<ErrorKind>);
@@ -44,10 +48,12 @@ where
     ErrorKind: From<E>,
 {
     fn from(err: E) -> Self {
-        Error(Box::new(ErrorKind::from(err)))
+        Self(Box::new(ErrorKind::from(err)))
     }
 }
 
+/// Accessor error variants.
+#[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum ErrorKind {
     #[error("Ureq crate error")]

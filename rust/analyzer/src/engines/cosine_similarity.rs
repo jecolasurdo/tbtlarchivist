@@ -1,21 +1,39 @@
+//! Provides business logic associated with cosine similarity analysis of audio samples.
+
 use crate::engines::Analyzer;
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
 use thiserror::Error;
 
+/// Provides business logic associated with cosine similarity analysis of audio samples.
 pub struct Engine {
     options: Settings,
 }
 
+/// Parameters that tune the behavior of an analysis.
 pub struct Settings {
+    /// Defines how many windows to evaluate.When making the first pass through
+    /// the target audio.
+    /// 0 => effectively produces no results
+    /// 1 -> evaluates every window
+    /// n -> evaluates every nth window
     pub pass_one_sample_density: usize,
+    /// The number of contiguous samples compared between the candidate and
+    /// target for each window in the initial "rough" pass.
     pub pass_one_sample_size: usize,
+    /// The minimum cosine similarity value that must be met or exceeded to be
+    /// considered a potential match.
     pub pass_one_threshold: f64,
+    /// The number of contiguous samples compared between the candidate and
+    /// target for each window in the second pass.
     pub pass_two_sample_size: usize,
+    /// The minimum cosine similarity value that must be met or exceeded to be
+    /// considered a match.
     pub pass_two_threshold: f64,
 }
 
 #[allow(dead_code)]
+/// Constructs a new `Engine`
 pub fn new(options: Settings) -> Engine {
     Engine { options }
 }
@@ -111,6 +129,7 @@ impl Analyzer<Error> for Engine {
     }
 }
 
+/// A boxed error resulting from a problem running an engine.
 #[derive(Error, Debug)]
 #[error(transparent)]
 pub struct Error(Box<ErrorKind>);
@@ -120,10 +139,12 @@ where
     ErrorKind: From<E>,
 {
     fn from(err: E) -> Self {
-        Error(Box::new(ErrorKind::from(err)))
+        Self(Box::new(ErrorKind::from(err)))
     }
 }
 
+/// Error variants associated with running an engine.
+#[allow(missing_docs)]
 #[derive(Error, Debug)]
 pub enum ErrorKind {
     #[error("minimp3 error")]
@@ -131,20 +152,23 @@ pub enum ErrorKind {
 
     #[error("resampler crate error: {0}")]
     Resampler(String),
+
+    #[error("Inbound audio must have 1 or 2 channles, but contains {channels}.")]
+    InvalidChannelCount { channels: usize },
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-pub fn scale_to_i16(v: f64) -> i16 {
+fn scale_to_i16(v: f64) -> i16 {
     f64::round(v * f64::from(i16::MAX)) as i16
 }
 
-pub fn scale_from_i16(v: i16) -> f64 {
+fn scale_from_i16(v: i16) -> f64 {
     f64::from(v) / f64::from(i16::MAX)
 }
 
-pub fn to_monaural(data: &[i16], channels: usize) -> Result<Vec<f64>, Error> {
+fn to_monaural(data: &[i16], channels: usize) -> Result<Vec<f64>, Error> {
     if !(1..=2).contains(&channels) {
-        todo!("this needs to be returned as a proper error");
+        return Err(Error(Box::new(ErrorKind::InvalidChannelCount { channels })));
     }
     let mut mono: Vec<i16>;
     if channels == 2 {
@@ -160,7 +184,7 @@ pub fn to_monaural(data: &[i16], channels: usize) -> Result<Vec<f64>, Error> {
     Ok(mono.iter().map(|d| scale_from_i16(*d)).collect())
 }
 
-pub fn cosine_similarity(a: &[i16], b: &[i16]) -> f64 {
+fn cosine_similarity(a: &[i16], b: &[i16]) -> f64 {
     sumdotproduct(a, b) / (a.sqrsum().sqrt() * b.sqrsum().sqrt())
 }
 
