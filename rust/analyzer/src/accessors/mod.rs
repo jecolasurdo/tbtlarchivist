@@ -2,6 +2,7 @@
 
 use std::error::Error;
 
+pub mod file;
 pub mod http;
 
 /// `FromURI` represents something that is able to return an object from a URI.
