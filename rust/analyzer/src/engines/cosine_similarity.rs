@@ -57,11 +57,6 @@ impl Analyzer<Error> for Engine {
                     channels,
                     ..
                 }) => {
-                    // One thing that occurs to me is that we really only need to allocate
-                    // a new resampler if/when the size of the frame changes or the frame's
-                    // sample rate has changed,
-                    // Look into https://github.com/bheisler/criterion.rs
-                    todo!("the performance of this is really suspect.");
                     let params = InterpolationParameters {
                         sinc_len: 256,
                         f_cutoff: 0.95,
