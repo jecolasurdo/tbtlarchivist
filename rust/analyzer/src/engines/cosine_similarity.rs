@@ -90,10 +90,11 @@ impl Analyzer<Error> for Engine {
 
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
         let windows = target.windows(candidate.len());
-        let mut similarities: Vec<f64> = Vec::with_capacity(windows.len());
         let mut n = 0;
         let mut possibilities = Vec::new();
+        let mut offset_index = -1;
         for window in windows {
+            offset_index += 1;
             n += 1;
             if n != self.options.pass_one_sample_density {
                 continue;
@@ -105,24 +106,19 @@ impl Analyzer<Error> for Engine {
                 &candidate[..self.options.pass_one_sample_size],
             );
             if cs >= self.options.pass_one_threshold {
-                possibilities.push(window);
+                possibilities.push((offset_index, window));
             }
-            similarities.push(cs);
         }
 
-        let results = vec![];
-        for w in possibilities {
+        let mut results = vec![];
+        for (offset_index, window) in &possibilities {
             let cs = cosine_similarity(
-                &w[..self.options.pass_two_sample_size],
+                &window[..self.options.pass_two_sample_size],
                 &candidate[..self.options.pass_two_sample_size],
             );
             if cs >= self.options.pass_two_threshold {
-                // The POC only stored a vector of the final scores, but didn't store the position
-                // of those scores. Will need to store that info in a map of some sort so the
-                // offsets can be returned.
-                todo!("should append result here")
+                results.push(*offset_index);
             }
-            similarities.push(cs);
         }
 
         Ok(results)
