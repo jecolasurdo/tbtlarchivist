@@ -5,8 +5,9 @@ use std::fs::File;
 use std::io::Read;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let sample_path =
-        String::from("/Users/Joe/Documents/code/tbtlarchivist/rust/audio/drops/drop.mp3");
+    let sample_path = String::from(
+        "/Users/Joe/Documents/code/tbtlarchivist/rust/analyzer/benches/drop_5000_samples.mp3",
+    );
     let mut file = File::open(sample_path).unwrap();
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
