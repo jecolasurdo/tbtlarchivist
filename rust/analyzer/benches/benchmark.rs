@@ -1,15 +1,26 @@
+use analyzer::engines::cosine_similarity::{self, Settings};
+use analyzer::engines::Analyzer;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-
-fn fibonacci(n: u64) -> u64 {
-    match n {
-        0 => 1,
-        1 => 1,
-        n => fibonacci(n - 1) + fibonacci(n - 2),
-    }
-}
+use std::fs::File;
+use std::io::Read;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("fib 20", |b| b.iter(|| fibonacci(black_box(20))));
+    let sample_path =
+        String::from("/Users/Joe/Documents/code/tbtlarchivist/rust/audio/drops/drop.mp3");
+    let mut file = File::open(sample_path).unwrap();
+    let mut data = Vec::new();
+    file.read_to_end(&mut data).unwrap();
+    let engine_settings = Settings {
+        pass_one_sample_density: 1,
+        pass_one_sample_size: 9,
+        pass_one_threshold: 0.991,
+        pass_two_sample_size: 50,
+        pass_two_threshold: 0.99,
+    };
+    let engine = cosine_similarity::new(engine_settings);
+    c.bench_function("mp3_to_raw", |b| {
+        b.iter(|| engine.mp3_to_raw(black_box(&data)))
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
