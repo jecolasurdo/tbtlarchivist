@@ -50,6 +50,9 @@ impl Analyzer<Error> for Engine {
     fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>, Error> {
         let mut decoder = Decoder::new(mp3_bytes);
         let mut raw_data = vec![];
+        let mut current_sample_rate: i32 = 0;
+        let mut current_frame_size: usize = 0;
+        let mut resampler = build_resampler(current_sample_rate, current_frame_size);
         loop {
             match decoder.next_frame() {
                 Ok(Frame {
@@ -59,7 +62,13 @@ impl Analyzer<Error> for Engine {
                     ..
                 }) => {
                     let mono_data = vec![to_monaural(&data, channels)?; 1];
-                    let mut resampler = build_resampler(sample_rate, mono_data[0].len());
+                    if current_frame_size != mono_data[0].len()
+                        || current_sample_rate != sample_rate
+                    {
+                        current_frame_size = mono_data[0].len();
+                        current_sample_rate = sample_rate;
+                        resampler = build_resampler(current_sample_rate, current_frame_size);
+                    }
                     let mut resampled_data = match resampler.process(&mono_data) {
                         Ok(d) => d,
                         Err(e) => return Err(Error(Box::new(ErrorKind::Resampler(e.to_string())))),
