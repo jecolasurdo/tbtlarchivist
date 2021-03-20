@@ -50,9 +50,8 @@ impl Analyzer<Error> for Engine {
     fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>, Error> {
         let mut decoder = Decoder::new(mp3_bytes);
         let mut raw_data = vec![];
+        let mut frames_buffer = vec![];
         let mut current_sample_rate: i32 = 0;
-        let mut current_frame_size: usize = 0;
-        let mut resampler = build_resampler(current_sample_rate, current_frame_size);
         loop {
             match decoder.next_frame() {
                 Ok(Frame {
@@ -61,24 +60,46 @@ impl Analyzer<Error> for Engine {
                     channels,
                     ..
                 }) => {
-                    let mono_data = vec![to_monaural(&data, channels)?; 1];
-                    if current_frame_size != mono_data[0].len()
-                        || current_sample_rate != sample_rate
-                    {
-                        current_frame_size = mono_data[0].len();
+                    let mut mono_data = to_monaural(&data, channels)?;
+                    if sample_rate == current_sample_rate {
+                        frames_buffer.append(&mut mono_data);
+                    } else {
+                        let mut resampler =
+                            build_resampler(current_sample_rate, frames_buffer.len());
+                        let mut frames_buffer_copy = vec![];
+                        copy_slice(&mut frames_buffer_copy, &frames_buffer);
+                        let fb = vec![frames_buffer_copy; 1];
+                        let mut resampled_data = match resampler.process(&fb) {
+                            Ok(d) => d,
+                            Err(e) => {
+                                return Err(Error(Box::new(ErrorKind::Resampler(e.to_string()))))
+                            }
+                        };
+                        raw_data.append(&mut resampled_data[0]);
+                        frames_buffer.clear();
+
                         current_sample_rate = sample_rate;
-                        resampler = build_resampler(current_sample_rate, current_frame_size);
                     }
-                    let mut resampled_data = match resampler.process(&mono_data) {
-                        Ok(d) => d,
-                        Err(e) => return Err(Error(Box::new(ErrorKind::Resampler(e.to_string())))),
-                    };
-                    raw_data.append(&mut resampled_data[0]);
                 }
-                Err(MP3Error::Eof) => break,
+                Err(MP3Error::Eof) => {
+                    if !frames_buffer.is_empty() {
+                        let mut resampler =
+                            build_resampler(current_sample_rate, frames_buffer.len());
+                        let fb = vec![frames_buffer; 1];
+                        let mut resampled_data = match resampler.process(&fb) {
+                            Ok(d) => d,
+                            Err(e) => {
+                                return Err(Error(Box::new(ErrorKind::Resampler(e.to_string()))))
+                            }
+                        };
+                        raw_data.append(&mut resampled_data[0]);
+                    }
+                    break;
+                }
                 Err(e) => return Err(Error(Box::new(ErrorKind::MiniMp3(e)))),
             }
         }
+
         Ok(raw_data.iter().map(|v| scale_to_i16(*v)).collect())
     }
 
@@ -136,6 +157,15 @@ fn build_resampler(sample_rate: i32, chunk_size: usize) -> rubato::SincFixedIn<f
         chunk_size,
         1,
     )
+}
+
+fn copy_slice<T>(dst: &mut [T], src: &[T])
+where
+    T: Copy,
+{
+    for (d, s) in dst.iter_mut().zip(src.iter()) {
+        *d = *s;
+    }
 }
 
 /// A boxed error resulting from a problem running an engine.
