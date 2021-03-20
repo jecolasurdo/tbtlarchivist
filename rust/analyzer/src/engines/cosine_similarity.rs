@@ -5,7 +5,7 @@ use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
 use thiserror::Error;
 
-const TARGET_SAMPLE_RATE: f64 = 22_050.0;
+const TARGET_SAMPLE_RATE: i32 = 22_050;
 
 /// Provides business logic associated with cosine similarity analysis of audio samples.
 pub struct Engine {
@@ -144,14 +144,14 @@ impl Analyzer<Error> for Engine {
     }
 }
 
-fn build_resampler(sample_rate: i32, chunk_size: usize) -> rubato::SincFixedIn<f64> {
+fn build_resampler(sample_rate: i32, chunk_size: usize) -> impl rubato::Resampler<f64> {
     SincFixedIn::<f64>::new(
-        f64::from(sample_rate) / TARGET_SAMPLE_RATE,
+        f64::from(sample_rate) / f64::from(TARGET_SAMPLE_RATE),
         InterpolationParameters {
-            sinc_len: 256,
+            sinc_len: 128,
             f_cutoff: 0.95,
             interpolation: InterpolationType::Nearest,
-            oversampling_factor: 160,
+            oversampling_factor: 80,
             window: WindowFunction::BlackmanHarris2,
         },
         chunk_size,
