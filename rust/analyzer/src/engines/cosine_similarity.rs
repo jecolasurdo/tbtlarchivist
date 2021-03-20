@@ -64,35 +64,14 @@ impl Analyzer<Error> for Engine {
                     if sample_rate == current_sample_rate {
                         frames_buffer.append(&mut mono_data);
                     } else {
-                        let mut resampler =
-                            build_resampler(current_sample_rate, frames_buffer.len());
-                        let mut frames_buffer_copy = vec![];
-                        copy_slice(&mut frames_buffer_copy, &frames_buffer);
-                        let fb = vec![frames_buffer_copy; 1];
-                        let mut resampled_data = match resampler.process(&fb) {
-                            Ok(d) => d,
-                            Err(e) => {
-                                return Err(Error(Box::new(ErrorKind::Resampler(e.to_string()))))
-                            }
-                        };
-                        raw_data.append(&mut resampled_data[0]);
+                        flush_buffer(current_sample_rate, &frames_buffer, &mut raw_data)?;
                         frames_buffer.clear();
-
                         current_sample_rate = sample_rate;
                     }
                 }
                 Err(MP3Error::Eof) => {
                     if !frames_buffer.is_empty() {
-                        let mut resampler =
-                            build_resampler(current_sample_rate, frames_buffer.len());
-                        let fb = vec![frames_buffer; 1];
-                        let mut resampled_data = match resampler.process(&fb) {
-                            Ok(d) => d,
-                            Err(e) => {
-                                return Err(Error(Box::new(ErrorKind::Resampler(e.to_string()))))
-                            }
-                        };
-                        raw_data.append(&mut resampled_data[0]);
+                        flush_buffer(current_sample_rate, &frames_buffer, &mut raw_data)?;
                     }
                     break;
                 }
@@ -144,6 +123,19 @@ impl Analyzer<Error> for Engine {
     }
 }
 
+fn flush_buffer(current_sample_rate: i32, src: &[f64], dst: &mut Vec<f64>) -> Result<(), Error> {
+    let mut resampler = build_resampler(current_sample_rate, src.len());
+    let mut cp = vec![];
+    copy_slice(&mut cp, src);
+    let fb = vec![cp; 1];
+    let mut resampled_data = match resampler.process(&fb) {
+        Ok(d) => d,
+        Err(e) => return Err(Error(Box::new(ErrorKind::Resampler(e.to_string())))),
+    };
+    dst.append(&mut resampled_data[0]);
+    Ok(())
+}
+
 fn build_resampler(sample_rate: i32, chunk_size: usize) -> impl rubato::Resampler<f64> {
     SincFixedIn::<f64>::new(
         f64::from(sample_rate) / f64::from(TARGET_SAMPLE_RATE),
@@ -166,34 +158,6 @@ where
     for (d, s) in dst.iter_mut().zip(src.iter()) {
         *d = *s;
     }
-}
-
-/// A boxed error resulting from a problem running an engine.
-#[derive(Error, Debug)]
-#[error(transparent)]
-pub struct Error(Box<ErrorKind>);
-
-impl<E> From<E> for Error
-where
-    ErrorKind: From<E>,
-{
-    fn from(err: E) -> Self {
-        Self(Box::new(ErrorKind::from(err)))
-    }
-}
-
-/// Error variants associated with running an engine.
-#[allow(missing_docs)]
-#[derive(Error, Debug)]
-pub enum ErrorKind {
-    #[error("minimp3 error")]
-    MiniMp3(#[from] minimp3::Error),
-
-    #[error("resampler crate error: {0}")]
-    Resampler(String),
-
-    #[error("Inbound audio must have 1 or 2 channles, but contains {channels}.")]
-    InvalidChannelCount { channels: usize },
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
@@ -249,9 +213,39 @@ impl SliceExt<i16> for &[i16] {
     }
 }
 
+/// A boxed error resulting from a problem running an engine.
+#[derive(Error, Debug)]
+#[error(transparent)]
+pub struct Error(Box<ErrorKind>);
+
+impl<E> From<E> for Error
+where
+    ErrorKind: From<E>,
+{
+    fn from(err: E) -> Self {
+        Self(Box::new(ErrorKind::from(err)))
+    }
+}
+
+/// Error variants associated with running an engine.
+#[allow(missing_docs)]
+#[derive(Error, Debug)]
+pub enum ErrorKind {
+    #[error("minimp3 error")]
+    MiniMp3(#[from] minimp3::Error),
+
+    #[error("resampler crate error: {0}")]
+    Resampler(String),
+
+    #[error("Inbound audio must have 1 or 2 channles, but contains {channels}.")]
+    InvalidChannelCount { channels: usize },
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
+    use std::io::Read;
 
     #[test]
     fn cosine_sim_happy_path() {
@@ -259,5 +253,26 @@ mod tests {
         let b: [i16; 8] = [2, 1, 1, 0, 1, 1, 1, 1];
         let cs = cosine_similarity(&a, &b);
         assert_eq!(cs, 0.821_583_836_257_749_1)
+    }
+    #[test]
+    fn mp3_to_raw_happy_path() {
+        let sample_path = String::from(
+            "/Users/Joe/Documents/code/tbtlarchivist/rust/analyzer/benches/drop_5000_samples.mp3",
+        );
+        let mut file = File::open(sample_path).unwrap();
+        let mut data = Vec::new();
+        file.read_to_end(&mut data).unwrap();
+
+        // values in engine_settings are irrevent to this test
+        let engine_settings = Settings {
+            pass_one_sample_density: 1,
+            pass_one_sample_size: 9,
+            pass_one_threshold: 0.991,
+            pass_two_sample_size: 50,
+            pass_two_threshold: 0.99,
+        };
+        let engine = new(engine_settings);
+        let result = engine.mp3_to_raw(&data).expect("should not panic");
+        assert_eq!(1, result.len());
     }
 }
