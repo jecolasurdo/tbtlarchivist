@@ -51,7 +51,7 @@ impl Analyzer<Error> for Engine {
         let mut decoder = Decoder::new(mp3_bytes);
         let mut raw_data = vec![];
         let mut frames_buffer = vec![];
-        let mut current_sample_rate: i32 = 0;
+        let mut current_sample_rate: i32 = -1;
         loop {
             match decoder.next_frame() {
                 Ok(Frame {
@@ -61,17 +61,17 @@ impl Analyzer<Error> for Engine {
                     ..
                 }) => {
                     let mut mono_data = to_monaural(&data, channels)?;
-                    if sample_rate == current_sample_rate {
+                    if current_sample_rate == -1 || sample_rate == current_sample_rate {
                         frames_buffer.append(&mut mono_data);
                     } else {
-                        flush_buffer(current_sample_rate, &frames_buffer, &mut raw_data)?;
+                        raw_data.append(&mut resample(current_sample_rate, &frames_buffer)?);
                         frames_buffer.clear();
-                        current_sample_rate = sample_rate;
                     }
+                    current_sample_rate = sample_rate;
                 }
                 Err(MP3Error::Eof) => {
                     if !frames_buffer.is_empty() {
-                        flush_buffer(current_sample_rate, &frames_buffer, &mut raw_data)?;
+                        raw_data.append(&mut resample(current_sample_rate, &frames_buffer)?);
                     }
                     break;
                 }
@@ -123,17 +123,15 @@ impl Analyzer<Error> for Engine {
     }
 }
 
-fn flush_buffer(current_sample_rate: i32, src: &[f64], dst: &mut Vec<f64>) -> Result<(), Error> {
-    let mut resampler = build_resampler(current_sample_rate, src.len());
-    let mut cp = vec![];
-    copy_slice(&mut cp, src);
+fn resample(current_sample_rate: i32, buffer: &[f64]) -> Result<Vec<f64>, Error> {
+    let mut resampler = build_resampler(current_sample_rate, buffer.len());
+    let mut cp = vec![0.0; buffer.len()];
+    copy_slice(&mut cp, buffer);
     let fb = vec![cp; 1];
-    let mut resampled_data = match resampler.process(&fb) {
-        Ok(d) => d,
-        Err(e) => return Err(Error(Box::new(ErrorKind::Resampler(e.to_string())))),
-    };
-    dst.append(&mut resampled_data[0]);
-    Ok(())
+    match resampler.process(&fb) {
+        Ok(d) => Ok(d[0].to_vec()),
+        Err(e) => Err(Error(Box::new(ErrorKind::Resampler(e.to_string())))),
+    }
 }
 
 fn build_resampler(sample_rate: i32, chunk_size: usize) -> impl rubato::Resampler<f64> {
@@ -273,6 +271,14 @@ mod tests {
         };
         let engine = new(engine_settings);
         let result = engine.mp3_to_raw(&data).expect("should not panic");
-        assert_eq!(1, result.len());
+        // The drop_5000_samples mp3 was encoded from a 44100hz wav, and
+        // should have a duration of ~113ms. The target sample rate is currently
+        // set at 22050hz. Since the sample rate decreases, but the duration
+        // should be the same, I would expect the number of resulting samples
+        // to be ~2500, Since mp3 is lossy and because of resampling interpolation
+        // error, it makes sense that the resulting sample count will not be
+        // exactly 2500. However, what we're getting is almost exactly 10x
+        // larger at 25,214 samples. Curious.
+        assert_eq!(2_500, result.len());
     }
 }

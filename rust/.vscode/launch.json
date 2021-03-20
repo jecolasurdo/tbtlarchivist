@@ -40,6 +40,25 @@
             },
             "args": [],
             "cwd": "${workspaceFolder}"
-        }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug selected unit test",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                ],
+                "filter": {
+                    "name": "analyzer",
+                    "kind": "lib"
+                }
+            },
+            "args": [
+                "${selectedText}"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
     ]
 }

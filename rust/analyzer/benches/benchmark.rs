@@ -22,7 +22,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     };
     let engine = cosine_similarity::new(engine_settings);
     c.bench_function("mp3_to_raw", |b| {
-        b.iter(|| engine.mp3_to_raw(black_box(&data)).unwrap())
+        b.iter(|| engine.mp3_to_raw(black_box(&data)))
     });
 }
 
