@@ -46,6 +46,7 @@ impl Analyzer<Error> for Engine {
     /// stereo to mono, this method just ignores one of the channels.  Each mp3 frame is decoded,
     /// has one channel stripped, is resampled to `TARGET_SAMPLE_RATE`, and is then stitched with
     /// the subsequent frame.
+    #[inline]
     fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>, Error> {
         let mut decoder = Decoder::new(mp3_bytes);
         let mut raw_data = vec![];
@@ -57,20 +58,8 @@ impl Analyzer<Error> for Engine {
                     channels,
                     ..
                 }) => {
-                    let params = InterpolationParameters {
-                        sinc_len: 256,
-                        f_cutoff: 0.95,
-                        interpolation: InterpolationType::Nearest,
-                        oversampling_factor: 160,
-                        window: WindowFunction::BlackmanHarris2,
-                    };
                     let mono_data = vec![to_monaural(&data, channels)?; 1];
-                    let mut resampler = SincFixedIn::<f64>::new(
-                        f64::from(sample_rate) / TARGET_SAMPLE_RATE,
-                        params,
-                        mono_data[0].len(),
-                        1,
-                    );
+                    let mut resampler = build_resampler(sample_rate, mono_data[0].len());
                     let mut resampled_data = match resampler.process(&mono_data) {
                         Ok(d) => d,
                         Err(e) => return Err(Error(Box::new(ErrorKind::Resampler(e.to_string())))),
@@ -123,6 +112,21 @@ impl Analyzer<Error> for Engine {
 
         Ok(results)
     }
+}
+
+fn build_resampler(sample_rate: i32, chunk_size: usize) -> rubato::SincFixedIn<f64> {
+    SincFixedIn::<f64>::new(
+        f64::from(sample_rate) / TARGET_SAMPLE_RATE,
+        InterpolationParameters {
+            sinc_len: 256,
+            f_cutoff: 0.95,
+            interpolation: InterpolationType::Nearest,
+            oversampling_factor: 160,
+            window: WindowFunction::BlackmanHarris2,
+        },
+        chunk_size,
+        1,
+    )
 }
 
 /// A boxed error resulting from a problem running an engine.

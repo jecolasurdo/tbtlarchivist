@@ -11,6 +11,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     let mut file = File::open(sample_path).unwrap();
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
+
+    // values in engine_settings are irrevent to benchmark
     let engine_settings = Settings {
         pass_one_sample_density: 1,
         pass_one_sample_size: 9,
