@@ -2,7 +2,8 @@
 
 use crate::engines::Analyzer;
 use minimp3::{Decoder, Error as MP3Error, Frame};
-use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
+use rubato::{FftFixedIn, Resampler};
+use std::convert::TryInto;
 use thiserror::Error;
 
 const TARGET_SAMPLE_RATE: i32 = 22_050;
@@ -135,16 +136,11 @@ fn resample(current_sample_rate: i32, buffer: &[f64]) -> Result<Vec<f64>, Error>
 }
 
 fn build_resampler(sample_rate: i32, chunk_size: usize) -> impl rubato::Resampler<f64> {
-    SincFixedIn::<f64>::new(
-        f64::from(sample_rate) / f64::from(TARGET_SAMPLE_RATE),
-        InterpolationParameters {
-            sinc_len: 128,
-            f_cutoff: 0.95,
-            interpolation: InterpolationType::Nearest,
-            oversampling_factor: 80,
-            window: WindowFunction::BlackmanHarris2,
-        },
+    FftFixedIn::<f64>::new(
+        sample_rate.try_into().unwrap(),
+        TARGET_SAMPLE_RATE.try_into().unwrap(),
         chunk_size,
+        100,
         1,
     )
 }
@@ -271,14 +267,6 @@ mod tests {
         };
         let engine = new(engine_settings);
         let result = engine.mp3_to_raw(&data).expect("should not panic");
-        // The drop_5000_samples mp3 was encoded from a 44100hz wav, and
-        // should have a duration of ~113ms. The target sample rate is currently
-        // set at 22050hz. Since the sample rate decreases, but the duration
-        // should be the same, I would expect the number of resulting samples
-        // to be ~2500, Since mp3 is lossy and because of resampling interpolation
-        // error, it makes sense that the resulting sample count will not be
-        // exactly 2500. However, what we're getting is almost exactly 10x
-        // larger at 25,214 samples. Curious.
-        assert_eq!(2_500, result.len());
+        assert_eq!(6300, result.len());
     }
 }
