@@ -80,7 +80,11 @@ impl Analyzer<Error> for Engine {
             }
         }
 
-        Ok(raw_data.iter().map(|v| scale_to_i16(*v)).collect())
+        Ok(raw_data
+            .iter()
+            .map(|v| scale_to_i16(*v))
+            .skip_while(|v| *v == 0)
+            .collect())
     }
 
     fn phash(&self, _: &[i16]) -> Result<Vec<u8>, Error> {
@@ -137,11 +141,11 @@ fn resample(current_sample_rate: i32, buffer: &[f64]) -> Result<Vec<f64>, Error>
 
 fn build_resampler(sample_rate: i32, chunk_size: usize) -> impl rubato::Resampler<f64> {
     FftFixedIn::<f64>::new(
-        sample_rate.try_into().unwrap(),
-        TARGET_SAMPLE_RATE.try_into().unwrap(),
-        chunk_size,
-        chunk_size / 10,
-        1,
+        sample_rate.try_into().unwrap(),        // inbound sample rate
+        TARGET_SAMPLE_RATE.try_into().unwrap(), // desired sample rate
+        chunk_size,                             // frame size
+        1024, // sub_chunks: this value is admittedly arbitrary. I'm not really sure how to rationalize it.
+        1,    // number of channels
     )
 }
 
@@ -267,7 +271,11 @@ mod tests {
         };
         let engine = new(engine_settings);
         let result = engine.mp3_to_raw(&data).expect("should not panic");
-        assert_eq!(2756, result.len());
+        // Ideally there should be 2756 samples in this result. However, the decoding and
+        // resampling process prepends a bunch of zeros to the front and back of the outbound data.
+        // Since the front of the audio is more important than the back of the audio, we trim any
+        // zeros from the front and call it good.
+        assert_eq!(3344, result.len());
     }
     #[test]
     fn mp3_to_raw_export() {
