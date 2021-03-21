@@ -140,7 +140,7 @@ fn build_resampler(sample_rate: i32, chunk_size: usize) -> impl rubato::Resample
         sample_rate.try_into().unwrap(),
         TARGET_SAMPLE_RATE.try_into().unwrap(),
         chunk_size,
-        100,
+        chunk_size / 10,
         1,
     )
 }
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn mp3_to_raw_happy_path() {
         let sample_path = String::from(
-            "/Users/Joe/Documents/code/tbtlarchivist/rust/analyzer/benches/drop_5000_samples.mp3",
+            "/Users/Joe/Documents/code/tbtlarchivist/rust/analyzer/benches/125ms_constant_192kbps_joint_stereo.mp3",
         );
         let mut file = File::open(sample_path).unwrap();
         let mut data = Vec::new();
@@ -267,6 +267,41 @@ mod tests {
         };
         let engine = new(engine_settings);
         let result = engine.mp3_to_raw(&data).expect("should not panic");
-        assert_eq!(6300, result.len());
+        assert_eq!(2756, result.len());
+    }
+    #[test]
+    fn mp3_to_raw_export() {
+        let sample_path = String::from(
+            "/Users/Joe/Documents/code/tbtlarchivist/rust/analyzer/benches/125ms_constant_192kbps_joint_stereo.mp3",
+        );
+        let mut file = File::open(sample_path).unwrap();
+        let mut data = Vec::new();
+        file.read_to_end(&mut data).unwrap();
+
+        // values in engine_settings are irrevent to this test
+        let engine_settings = Settings {
+            pass_one_sample_density: 1,
+            pass_one_sample_size: 9,
+            pass_one_threshold: 0.991,
+            pass_two_sample_size: 50,
+            pass_two_threshold: 0.99,
+        };
+        let engine = new(engine_settings);
+        let raw = engine.mp3_to_raw(&data).expect("should not panic");
+
+        let spec = hound::WavSpec {
+            channels: 1,
+            sample_rate: 22050,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let mut writer = hound::WavWriter::create(
+            "/Users/Joe/Documents/code/tbtlarchivist/rust/analyzer/benches/mp3_to_raw_export.wav",
+            spec,
+        )
+        .unwrap();
+        for s in raw {
+            writer.write_sample(s).unwrap();
+        }
     }
 }
