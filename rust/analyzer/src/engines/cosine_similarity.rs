@@ -15,12 +15,6 @@ pub struct Engine {
 
 /// Parameters that tune the behavior of an analysis.
 pub struct Settings {
-    /// Defines how many windows to evaluate.When making the first pass through
-    /// the target audio.
-    /// 0 => effectively produces no results
-    /// 1 -> evaluates every window
-    /// n -> evaluates every nth window
-    pub pass_one_sample_density: usize,
     /// The number of contiguous samples compared between the candidate and
     /// target for each window in the initial "rough" pass.
     pub pass_one_sample_size: usize,
@@ -93,17 +87,10 @@ impl Analyzer<Error> for Engine {
 
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
         let windows = target.windows(candidate.len());
-        let mut n = 0;
         let mut possibilities = Vec::new();
         let mut offset_index = -1;
         for window in windows {
             offset_index += 1;
-            n += 1;
-            if n != self.options.pass_one_sample_density {
-                continue;
-            }
-            n = 0;
-
             let cs = cosine_similarity(
                 &window[..self.options.pass_one_sample_size],
                 &candidate[..self.options.pass_one_sample_size],
@@ -263,7 +250,6 @@ mod tests {
 
         // values in engine_settings are irrevent to this test
         let engine_settings = Settings {
-            pass_one_sample_density: 1,
             pass_one_sample_size: 9,
             pass_one_threshold: 0.991,
             pass_two_sample_size: 50,
@@ -288,7 +274,6 @@ mod tests {
 
         // values in engine_settings are irrevent to this test
         let engine_settings = Settings {
-            pass_one_sample_density: 1,
             pass_one_sample_size: 9,
             pass_one_threshold: 0.991,
             pass_two_sample_size: 50,
