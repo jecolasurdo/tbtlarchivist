@@ -62,8 +62,8 @@ impl Analyzer<Error> for Engine {
                     channels,
                     ..
                 }) => {
-                    let mut mono_data = to_monaural(&data, channels)?;
                     if current_sample_rate == -1 || sample_rate == current_sample_rate {
+                        let mut mono_data = to_monaural(&data, channels)?;
                         frames_buffer.append(&mut mono_data);
                     } else {
                         raw_data.append(&mut resample(current_sample_rate, &frames_buffer)?);
@@ -92,10 +92,11 @@ impl Analyzer<Error> for Engine {
         Ok(vec![])
     }
 
+    #[allow(clippy::as_conversions)]
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
         let windows = target.windows(candidate.len());
         let mut possibilities = Vec::new();
-        let mut offset_index = -1;
+        let mut offset_index: i64 = -1;
         for window in windows {
             offset_index += 1;
             let cs = cosine_similarity(
@@ -108,13 +109,23 @@ impl Analyzer<Error> for Engine {
         }
 
         let mut results = vec![];
+        let mut local_max_cs = f64::MIN;
+        let mut local_max_index: i64 = 0;
         for (offset_index, window) in &possibilities {
             let cs = cosine_similarity(
                 &window[..self.options.pass_two_sample_size],
                 &candidate[..self.options.pass_two_sample_size],
             );
-            if cs >= self.options.pass_two_threshold {
-                results.push(*offset_index);
+            if cs >= self.options.pass_two_threshold && cs > local_max_cs {
+                println!("{}:{}", *offset_index, cs);
+                if *offset_index > (local_max_index + candidate.len() as i64) {
+                    println!("{}:{} (pushed)", *offset_index, cs);
+                    results.push(*offset_index);
+                    local_max_cs = f64::MIN;
+                } else {
+                    local_max_cs = cs;
+                }
+                local_max_index = *offset_index;
             }
         }
 
@@ -233,6 +244,7 @@ pub enum ErrorKind {
     InvalidChannelCount { channels: usize },
 }
 
+#[allow(clippy::needless_range_loop)]
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -270,6 +282,37 @@ mod tests {
         // zeros from the front and call it good.
         assert_eq!(3344, result.len());
     }
+    #[test]
+    fn find_offsets_happy_path() {
+        // cases:
+        //  - single candidate present (not at head) returns candidate (happy path)
+        //  - candidate not present returns nothing
+        //  - candidate at head returns candidate
+        //  - overlapping candidates returns first instance
+        //  - multiple non-overlapping candidates returns all
+        //  - candidate shorter than pass_one_sample_size returns error
+        //  - candidate shorter than pass_two_sample_size returns error
+
+        let engine_settings = Settings {
+            pass_one_sample_size: 9,
+            pass_one_threshold: 0.5,
+            pass_two_sample_size: 50,
+            pass_two_threshold: 0.7,
+        };
+        let engine = new(engine_settings);
+        let candidate = vec![1; 100];
+        let mut target = vec![0; 1024 * 10];
+        for i in 200..300 {
+            target[i] = 1;
+        }
+
+        let offsets = engine
+            .find_offsets(&candidate, &target)
+            .expect("should not panic");
+        let expected_offsets = vec![200];
+        assert_eq!(offsets, expected_offsets);
+    }
+    #[ignore]
     #[test]
     fn mp3_to_raw_export() {
         let sample_path = String::from(
