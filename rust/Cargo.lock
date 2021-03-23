@@ -130,6 +130,7 @@ dependencies = [
  "anyhow",
  "cancel",
  "contracts",
+ "hound",
  "protobuf",
  "snmalloc-rs",
 ]

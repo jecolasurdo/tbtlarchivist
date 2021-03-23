@@ -45,7 +45,16 @@ impl Analyzer<Error> for Engine {
     fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>, Error> {
         let mut decoder = Decoder::new(mp3_bytes);
         let mut raw_data = vec![];
+        let mut frames_buffer = vec![];
+        let mut current_sample_rate: i32 = -1;
         loop {
+            // Resampling can leave undesireable artifacts at the frame
+            // boundaries in the final audio data. Such artifacts can degrade
+            // the effectiveness of the find_offsets process. To minimize frame
+            // boundary artifacts, we append frame data to a buffer until the
+            // sample rate for the next frame will differ from the buffer's
+            // current sample rate.  The buffer is resampled and flushed only
+            // when a sample rate change is detected (and when EOF is reached).
             match decoder.next_frame() {
                 Ok(Frame {
                     data,
@@ -53,29 +62,21 @@ impl Analyzer<Error> for Engine {
                     channels,
                     ..
                 }) => {
-                    // Two resampling approaches were considered. One was to
-                    // maintain a buffer of all frames that have the same
-                    // sample rate, and resample the buffer either when the
-                    // sample rate changes or when the end of the file is
-                    // reached. The other approach is to resample every frame
-                    // regardless of the previous frame's sample-rate, The
-                    // concern for the latter implementation is that resampling
-                    // a large number of smaller frames might introduce
-                    // artifacts at the frame boundaries, while processing the
-                    // frames in bulk would avoid the potential for those
-                    // artifacts. Benchmark comparisons between the two
-                    // approaches showed that the prior "bulk resampling"
-                    // approach was twice as fast for short ~125ms audio, but
-                    // twice as slow for longer ~60 minute audio. Until the
-                    // presence of these artifacts is verified and determined
-                    // to be problematic, I am favoring the latter
-                    // frame-by-frame approach, as the performance gains of
-                    // large-file processing outweigh the losses in small file
-                    // processing.
-                    let mono_data = to_monaural(&data, channels)?;
-                    raw_data.append(&mut resample(sample_rate, &mono_data)?);
+                    let mut mono_data = to_monaural(&data, channels)?;
+                    if current_sample_rate == -1 || sample_rate == current_sample_rate {
+                        frames_buffer.append(&mut mono_data);
+                    } else {
+                        raw_data.append(&mut resample(current_sample_rate, &frames_buffer)?);
+                        frames_buffer.clear();
+                    }
+                    current_sample_rate = sample_rate;
                 }
-                Err(MP3Error::Eof) => break,
+                Err(MP3Error::Eof) => {
+                    if !frames_buffer.is_empty() {
+                        raw_data.append(&mut resample(current_sample_rate, &frames_buffer)?);
+                    }
+                    break;
+                }
                 Err(e) => return Err(Error(Box::new(ErrorKind::MiniMp3(e)))),
             }
         }
@@ -121,7 +122,6 @@ impl Analyzer<Error> for Engine {
     }
 }
 
-#[inline]
 fn resample(current_sample_rate: i32, buffer: &[f64]) -> Result<Vec<f64>, Error> {
     let mut resampler = build_resampler(current_sample_rate, buffer.len());
     let mut cp = vec![0.0; buffer.len()];
@@ -133,7 +133,6 @@ fn resample(current_sample_rate: i32, buffer: &[f64]) -> Result<Vec<f64>, Error>
     }
 }
 
-#[inline]
 fn build_resampler(sample_rate: i32, chunk_size: usize) -> impl rubato::Resampler<f64> {
     FftFixedIn::<f64>::new(
         sample_rate.try_into().unwrap(),        // inbound sample rate
@@ -162,7 +161,6 @@ fn scale_from_i16(v: i16) -> f64 {
     f64::from(v) / f64::from(i16::MAX)
 }
 
-#[inline]
 fn to_monaural(data: &[i16], channels: usize) -> Result<Vec<f64>, Error> {
     if !(1..=2).contains(&channels) {
         return Err(Error(Box::new(ErrorKind::InvalidChannelCount { channels })));

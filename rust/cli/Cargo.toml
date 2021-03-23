@@ -11,3 +11,4 @@ contracts = { path = "../contracts" }
 snmalloc-rs = "0.2"
 protobuf = "2.22.0"
 cancel = "0.1.0"
+hound = "3.4.0"
