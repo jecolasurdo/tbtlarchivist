@@ -110,8 +110,8 @@ impl Analyzer<Error> for Engine {
         }
 
         let mut results = vec![];
-        let mut cs_local = f64::MIN;
-        let mut i_local = i64::neg(candidate.len() as i64);
+        let mut cs_peak = f64::MIN;
+        let mut i_peak = i64::neg(candidate.len() as i64);
         for (i_window, window) in &possibilities {
             // calculate score for current window
             let cs_window = cosine_similarity(
@@ -126,17 +126,17 @@ impl Analyzer<Error> for Engine {
 
             // check to see if the current window index is outside the bounds
             // of a local peak.
-            if *i_window > i_local + (candidate.len() as i64) {
+            if *i_window > i_peak + (candidate.len() as i64) {
                 // If we're here, we're ouside the bounds of a local peak
                 // and are identifying a new local peak.
                 // If a previous peak exists, push it to the result list.
-                if cs_local > f64::MIN {
-                    results.push(i_local);
+                if cs_peak > f64::MIN {
+                    results.push(i_peak);
                 }
                 // Set the local peak value and index to that of the current
                 // window.
-                cs_local = cs_window;
-                i_local = *i_window;
+                cs_peak = cs_window;
+                i_peak = *i_window;
 
                 // move to the next window.
                 continue;
@@ -145,11 +145,15 @@ impl Analyzer<Error> for Engine {
             // If we're here, we're within the bounds of a local peak.
             // Check to see if the current window value exceeds the current
             // peak.
-            if cs_window > cs_local {
+            if cs_window > cs_peak {
                 // Update the local peak value and index value.
-                cs_local = cs_window;
-                i_local = *i_window;
+                cs_peak = cs_window;
+                i_peak = *i_window;
             }
+        }
+        // flush the last identified peak.
+        if cs_peak > f64::MIN {
+            results.push(i_peak);
         }
 
         Ok(results)
@@ -316,22 +320,22 @@ mod tests {
         //  - candidate shorter than pass_one_sample_size returns error
         //  - candidate shorter than pass_two_sample_size returns error
         let engine_settings = Settings {
-            pass_one_sample_size: 9,
+            pass_one_sample_size: 5,
             pass_one_threshold: 0.5,
-            pass_two_sample_size: 50,
+            pass_two_sample_size: 5,
             pass_two_threshold: 0.7,
         };
         let engine = new(engine_settings);
-        let candidate = vec![1; 100];
+        let candidate = vec![1; 10];
         let mut target = vec![0; 1024 * 10];
-        for i in 200..300 {
+        for i in 20..30 {
             target[i] = 1;
         }
 
         let offsets = engine
             .find_offsets(&candidate, &target)
             .expect("should not panic");
-        let expected_offsets = vec![200];
+        let expected_offsets = vec![20];
         assert_eq!(offsets, expected_offsets);
     }
     #[ignore]
