@@ -4,6 +4,7 @@ use crate::engines::Analyzer;
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{FftFixedIn, Resampler};
 use std::convert::TryInto;
+use std::ops::Neg;
 use thiserror::Error;
 
 const TARGET_SAMPLE_RATE: i32 = 22_050;
@@ -109,23 +110,45 @@ impl Analyzer<Error> for Engine {
         }
 
         let mut results = vec![];
-        let mut local_max_cs = f64::MIN;
-        let mut local_max_index: i64 = 0;
-        for (offset_index, window) in &possibilities {
-            let cs = cosine_similarity(
+        let mut cs_local = f64::MIN;
+        let mut i_local = i64::neg(candidate.len() as i64);
+        for (i_window, window) in &possibilities {
+            // calculate score for current window
+            let cs_window = cosine_similarity(
                 &window[..self.options.pass_two_sample_size],
                 &candidate[..self.options.pass_two_sample_size],
             );
-            if cs >= self.options.pass_two_threshold && cs > local_max_cs {
-                println!("{}:{}", *offset_index, cs);
-                if *offset_index > (local_max_index + candidate.len() as i64) {
-                    println!("{}:{} (pushed)", *offset_index, cs);
-                    results.push(*offset_index);
-                    local_max_cs = f64::MIN;
-                } else {
-                    local_max_cs = cs;
+            // if the current window's score doesn't meet the general threshold
+            // continue to the next window.
+            if cs_window < self.options.pass_two_threshold {
+                continue;
+            }
+
+            // check to see if the current window index is outside the bounds
+            // of a local peak.
+            if *i_window > i_local + (candidate.len() as i64) {
+                // If we're here, we're ouside the bounds of a local peak
+                // and are identifying a new local peak.
+                // If a previous peak exists, push it to the result list.
+                if cs_local > f64::MIN {
+                    results.push(i_local);
                 }
-                local_max_index = *offset_index;
+                // Set the local peak value and index to that of the current
+                // window.
+                cs_local = cs_window;
+                i_local = *i_window;
+
+                // move to the next window.
+                continue;
+            }
+
+            // If we're here, we're within the bounds of a local peak.
+            // Check to see if the current window value exceeds the current
+            // peak.
+            if cs_window > cs_local {
+                // Update the local peak value and index value.
+                cs_local = cs_window;
+                i_local = *i_window;
             }
         }
 
@@ -292,7 +315,6 @@ mod tests {
         //  - multiple non-overlapping candidates returns all
         //  - candidate shorter than pass_one_sample_size returns error
         //  - candidate shorter than pass_two_sample_size returns error
-
         let engine_settings = Settings {
             pass_one_sample_size: 9,
             pass_one_threshold: 0.5,
