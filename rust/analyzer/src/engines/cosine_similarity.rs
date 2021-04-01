@@ -310,8 +310,6 @@ mod tests {
         assert_eq!(3344, result.len());
     }
     // cases:
-    //  - candidate at head returns candidate
-    //  - overlapping candidates returns first instance
     //  - multiple non-overlapping candidates returns all
     //  - candidate shorter than pass_one_sample_size returns error
     //  - candidate shorter than pass_two_sample_size returns error
@@ -331,6 +329,35 @@ mod tests {
                 target: || -> Vec<i16> {
                     let mut t = vec![0; 1024 * 10];
                     for i in 20..30 {
+                        t[i] = 1;
+                    }
+                    t
+                },
+                candidate: || -> Vec<i16> { vec![1; 10] },
+                exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![20]) },
+            },
+            TestCase {
+                //  candidate at head returns candidate
+                name: String::from("single candidate 2"),
+                target: || -> Vec<i16> {
+                    let mut t = vec![0; 1024 * 10];
+                    for i in 0..10 {
+                        t[i] = 1;
+                    }
+                    t
+                },
+                candidate: || -> Vec<i16> { vec![1; 10] },
+                exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![0]) },
+            },
+            TestCase {
+                // overlapping candidates returns the first instance
+                name: String::from("overlapping candidates"),
+                target: || -> Vec<i16> {
+                    let mut t = vec![0; 1024 * 10];
+                    for i in 20..30 {
+                        t[i] = 1;
+                    }
+                    for i in 25..35 {
                         t[i] = 1;
                     }
                     t
