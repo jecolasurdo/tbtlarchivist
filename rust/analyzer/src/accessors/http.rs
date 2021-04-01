@@ -1,6 +1,6 @@
 //! Access to resources via http.
 
-use crate::accessors::FromURI;
+use crate::accessors::FromUri;
 use std::io::Read;
 use thiserror::Error;
 
@@ -9,7 +9,7 @@ pub struct Accessor {}
 
 const HEADER_CONTENT_LENGTH: &str = "Content-Length";
 
-impl FromURI<Error> for Accessor {
+impl FromUri<Error> for Accessor {
     /// Returns the response body of a destinaction http URI. If the request fails, or if the
     /// response does not return 200 for any reason, an error is returned. This method does not
     /// validate the response body, but will ensure that the full body is returned (else an error

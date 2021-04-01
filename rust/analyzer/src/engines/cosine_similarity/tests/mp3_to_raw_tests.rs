@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 
 #[test]
-fn mp3_to_raw_happy_path() {
+fn happy_path() {
     let sample_path = String::from(
             "/Users/Joe/Documents/code/tbtlarchivist/rust/analyzer/benches/125ms_constant_192kbps_joint_stereo.mp3",
         );
@@ -29,10 +29,9 @@ fn mp3_to_raw_happy_path() {
 
 #[ignore]
 #[test]
-fn mp3_to_raw_export() {
+fn export() {
     let sample_path = String::from(
             "/Users/Joe/Documents/code/tbtlarchivist/rust/analyzer/benches/125ms_constant_192kbps_joint_stereo.mp3",
-            // "/Users/Joe/Documents/code/tbtlarchivist/rust/audio/episodes/episode.mp3",
         );
     let mut file = File::open(sample_path).unwrap();
     let mut data = Vec::new();
@@ -56,7 +55,6 @@ fn mp3_to_raw_export() {
     };
     let mut writer = hound::WavWriter::create(
         "/Users/Joe/Documents/code/tbtlarchivist/rust/analyzer/benches/mp3_to_raw_export.wav",
-        // "/Users/Joe/Documents/code/tbtlarchivist/rust/audio/episodes/episode_resampled_in_bulk.wav",
         spec,
     )
     .unwrap();

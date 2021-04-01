@@ -1,6 +1,6 @@
 //! contains the typical concrete Runner implementation.
 
-use crate::{accessors::FromURI, engines::Analyzer};
+use crate::{accessors::FromUri, engines::Analyzer};
 use cancel::Token;
 use contracts::{CompletedResearchItem, PendingResearchItem};
 use crossbeam_channel::{unbounded, Receiver, Sender};
@@ -22,7 +22,7 @@ const RAW_DURATION_BASIS: usize = 1_000_000_000;
 pub fn new<A, U, AE, UE, E>(analyzer_engine: A, uri_accessor: U) -> AnalysisManager<A, U, AE, UE, E>
 where
     A: Analyzer<AE> + Send + Sync,
-    U: FromURI<UE> + Send + Sync,
+    U: FromUri<UE> + Send + Sync,
     AE: Error + Send + Sync,
     UE: Error + Send + Sync,
     E: From<AE> + From<UE> + Send + Sync,
@@ -41,7 +41,7 @@ where
 pub struct AnalysisManager<A, U, AE, UE, E>
 where
     A: Analyzer<AE> + Send + Sync,
-    U: FromURI<UE> + Send + Sync,
+    U: FromUri<UE> + Send + Sync,
     AE: Error + Send + Sync,
     UE: Error + Send + Sync,
     E: From<AE> + From<UE> + Send + Sync,
@@ -56,7 +56,7 @@ where
 impl<A, U, AE, UE, E> AnalysisManager<A, U, AE, UE, E>
 where
     A: Analyzer<AE> + Send + Sync,
-    U: FromURI<UE> + Send + Sync,
+    U: FromUri<UE> + Send + Sync,
     AE: Error + Send + Sync,
     UE: Error + Send + Sync,
     E: From<AE> + From<UE> + Send + Sync,

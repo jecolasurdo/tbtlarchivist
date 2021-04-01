@@ -1,6 +1,6 @@
 //! Access to resources on the local filesystem.
 
-use crate::accessors::FromURI;
+use crate::accessors::FromUri;
 use std::fs::File;
 use std::io::Read;
 use thiserror::Error;
@@ -8,7 +8,7 @@ use thiserror::Error;
 /// Provides access to an item on the local filesystem.
 pub struct Accessor {}
 
-impl FromURI<Error> for Accessor {
+impl FromUri<Error> for Accessor {
     #[allow(dead_code)]
     fn get(&self, uri: String) -> Result<Vec<u8>, Error> {
         let mut file = File::open(uri)?;

@@ -1,7 +1,7 @@
 use crate::engines::cosine_similarity::cosine_similarity;
 
 #[test]
-fn cosine_sim() {
+fn happy_path() {
     let a: [i16; 8] = [2, 0, 1, 1, 0, 2, 1, 1];
     let b: [i16; 8] = [2, 1, 1, 0, 1, 1, 1, 1];
     let cs = cosine_similarity(&a, &b);

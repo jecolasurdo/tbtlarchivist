@@ -13,10 +13,31 @@ struct TestCase {
     exp_result: fn() -> Result<Vec<i64>, Error>,
 }
 
+#[allow(clippy::needless_pass_by_value)]
+fn run_test_case(test_case: TestCase) {
+    let engine_settings = Settings {
+        pass_one_sample_size: 5,
+        pass_one_threshold: 0.5,
+        pass_two_sample_size: 5,
+        pass_two_threshold: 0.7,
+    };
+    let engine = new(engine_settings);
+    let target = (test_case.target)();
+    let candidate = (test_case.candidate)();
+    let exp_result = (test_case.exp_result)();
+
+    let act_result = engine.find_offsets(&candidate, &target);
+
+    match exp_result {
+        Err(_) => assert_eq!(act_result.is_err(), true, "expected error but no error",),
+        Ok(v) => assert_eq!(act_result.unwrap(), v),
+    }
+}
+
+/// candidate at head returns candidate
 #[test]
 fn single_candidate() {
-    //  candidate at head returns candidate
-    run(TestCase {
+    run_test_case(TestCase {
         target: || -> Vec<i16> {
             let mut t = vec![0; 1024 * 10];
             for i in 0..10 {
@@ -29,10 +50,10 @@ fn single_candidate() {
     })
 }
 
+/// overlapping candidates attempts to return each.
 #[test]
 fn overlapping_candidates() {
-    // overlapping candidates attempts to return each.
-    run(TestCase {
+    run_test_case(TestCase {
         target: || -> Vec<i16> {
             let mut t = vec![0; 1024 * 10];
             for i in 20..30 {
@@ -48,10 +69,10 @@ fn overlapping_candidates() {
     })
 }
 
+/// immediately adjascent candidates returns each.
 #[test]
 fn adjascent_candidates() {
-    // immediately adjascent candidates returns each.
-    run(TestCase {
+    run_test_case(TestCase {
         target: || -> Vec<i16> {
             let mut t = vec![0; 1024 * 10];
             for i in 20..30 {
@@ -70,10 +91,10 @@ fn adjascent_candidates() {
     })
 }
 
+/// multiple non-overlapping candidates returns all
 #[test]
 fn multiple_candidates() {
-    run(TestCase {
-        // multiple non-overlapping candidates returns all
+    run_test_case(TestCase {
         target: || -> Vec<i16> {
             let mut t = vec![0; 1024 * 10];
             for i in 20..30 {
@@ -92,10 +113,10 @@ fn multiple_candidates() {
     })
 }
 
+/// candidate at tail returns candidate
 #[test]
 fn tail_candidate() {
-    run(TestCase {
-        // candidate at tail returns candidate
+    run_test_case(TestCase {
         target: || -> Vec<i16> {
             let mut t = vec![0; 100];
             for i in 89..99 {
@@ -108,33 +129,12 @@ fn tail_candidate() {
     })
 }
 
+/// candidate not present returns nothing
 #[test]
 fn candidate_not_present() {
-    run(TestCase {
-        // candidate not present returns nothing
+    run_test_case(TestCase {
         target: || -> Vec<i16> { vec![0; 1024 * 10] },
         candidate: || -> Vec<i16> { vec![1; 10] },
         exp_result: || -> Result<Vec<i64>, Error> { Ok(vec![]) },
     })
-}
-
-#[allow(clippy::needless_pass_by_value)]
-fn run(test_case: TestCase) {
-    let engine_settings = Settings {
-        pass_one_sample_size: 5,
-        pass_one_threshold: 0.5,
-        pass_two_sample_size: 5,
-        pass_two_threshold: 0.7,
-    };
-    let engine = new(engine_settings);
-    let target = (test_case.target)();
-    let candidate = (test_case.candidate)();
-    let exp_result = (test_case.exp_result)();
-
-    let act_result = engine.find_offsets(&candidate, &target);
-
-    match exp_result {
-        Err(_) => assert_eq!(act_result.is_err(), true, "expected error but no error",),
-        Ok(v) => assert_eq!(act_result.unwrap(), v),
-    }
 }

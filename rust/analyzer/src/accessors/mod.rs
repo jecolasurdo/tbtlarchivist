@@ -5,8 +5,8 @@ use std::error::Error;
 pub mod file;
 pub mod http;
 
-/// `FromURI` represents something that is able to return an object from a URI.
-pub trait FromURI<E>
+/// `FromUri` represents something that is able to return an object from a URI.
+pub trait FromUri<E>
 where
     E: Error + Send + Sync,
 {
