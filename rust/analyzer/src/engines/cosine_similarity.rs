@@ -309,34 +309,60 @@ mod tests {
         // zeros from the front and call it good.
         assert_eq!(3344, result.len());
     }
+    // cases:
+    //  - candidate not present returns nothing
+    //  - candidate at head returns candidate
+    //  - overlapping candidates returns first instance
+    //  - multiple non-overlapping candidates returns all
+    //  - candidate shorter than pass_one_sample_size returns error
+    //  - candidate shorter than pass_two_sample_size returns error
     #[test]
-    fn find_offsets_happy_path() {
-        // cases:
-        //  - single candidate present (not at head) returns candidate (happy path)
-        //  - candidate not present returns nothing
-        //  - candidate at head returns candidate
-        //  - overlapping candidates returns first instance
-        //  - multiple non-overlapping candidates returns all
-        //  - candidate shorter than pass_one_sample_size returns error
-        //  - candidate shorter than pass_two_sample_size returns error
-        let engine_settings = Settings {
-            pass_one_sample_size: 5,
-            pass_one_threshold: 0.5,
-            pass_two_sample_size: 5,
-            pass_two_threshold: 0.7,
-        };
-        let engine = new(engine_settings);
-        let candidate = vec![1; 10];
-        let mut target = vec![0; 1024 * 10];
-        for i in 20..30 {
-            target[i] = 1;
+    fn find_offsets_tests() {
+        struct TestCase {
+            name: String,
+            target: fn() -> Vec<i16>,
+            candidate: fn() -> Vec<i16>,
+            exp_result: fn() -> Result<Vec<i64>, super::Error>,
         }
 
-        let offsets = engine
-            .find_offsets(&candidate, &target)
-            .expect("should not panic");
-        let expected_offsets = vec![20];
-        assert_eq!(offsets, expected_offsets);
+        let test_cases = vec![TestCase {
+            //  single candidate present (not at head) returns candidate
+            name: String::from("single candidate 1"),
+            target: || -> Vec<i16> {
+                let mut t = vec![0; 1024 * 10];
+                for i in 20..30 {
+                    t[i] = 1;
+                }
+                t
+            },
+            candidate: || -> Vec<i16> { vec![1; 10] },
+            exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![20]) },
+        }];
+
+        for test_case in test_cases {
+            let engine_settings = Settings {
+                pass_one_sample_size: 5,
+                pass_one_threshold: 0.5,
+                pass_two_sample_size: 5,
+                pass_two_threshold: 0.7,
+            };
+            let engine = new(engine_settings);
+            let target = (test_case.target)();
+            let candidate = (test_case.candidate)();
+            let exp_result = (test_case.exp_result)();
+
+            let act_result = engine.find_offsets(&candidate, &target);
+
+            match exp_result {
+                Err(_) => assert_eq!(
+                    act_result.is_err(),
+                    true,
+                    "{}: expected error but no error",
+                    test_case.name
+                ),
+                Ok(v) => assert_eq!(act_result.unwrap(), v, "{}", test_case.name),
+            }
+        }
     }
     #[ignore]
     #[test]
