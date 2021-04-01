@@ -272,6 +272,7 @@ pub enum ErrorKind {
 }
 
 #[allow(clippy::needless_range_loop)]
+#[allow(clippy::too_many_lines)]
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -310,11 +311,10 @@ mod tests {
         assert_eq!(3344, result.len());
     }
     // cases:
-    //  - multiple non-overlapping candidates returns all
     //  - candidate shorter than pass_one_sample_size returns error
     //  - candidate shorter than pass_two_sample_size returns error
     #[test]
-    fn find_offsets_tests() {
+    fn find_offsets() {
         struct TestCase {
             name: String,
             target: fn() -> Vec<i16>,
@@ -350,7 +350,7 @@ mod tests {
                 exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![0]) },
             },
             TestCase {
-                // overlapping candidates returns the first instance
+                // overlapping candidates attempts to return each.
                 name: String::from("overlapping candidates"),
                 target: || -> Vec<i16> {
                     let mut t = vec![0; 1024 * 10];
@@ -363,7 +363,58 @@ mod tests {
                     t
                 },
                 candidate: || -> Vec<i16> { vec![1; 10] },
-                exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![20]) },
+                exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![20, 31]) },
+            },
+            TestCase {
+                // immediately adjascent candidates returns each.
+                name: String::from("immediately adjascent candidates"),
+                target: || -> Vec<i16> {
+                    let mut t = vec![0; 1024 * 10];
+                    for i in 20..30 {
+                        t[i] = 1;
+                    }
+                    for i in 31..41 {
+                        t[i] = 1;
+                    }
+                    for i in 42..52 {
+                        t[i] = 1;
+                    }
+                    t
+                },
+                candidate: || -> Vec<i16> { vec![1; 10] },
+                exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![20, 31, 42]) },
+            },
+            TestCase {
+                // multiple non-overlapping candidates returns all
+                name: String::from("multiple candidates"),
+                target: || -> Vec<i16> {
+                    let mut t = vec![0; 1024 * 10];
+                    for i in 20..30 {
+                        t[i] = 1;
+                    }
+                    for i in 40..50 {
+                        t[i] = 1;
+                    }
+                    for i in 60..70 {
+                        t[i] = 1;
+                    }
+                    t
+                },
+                candidate: || -> Vec<i16> { vec![1; 10] },
+                exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![20, 40, 60]) },
+            },
+            TestCase {
+                // candidate at tail returns candidate
+                name: String::from("tail candidate"),
+                target: || -> Vec<i16> {
+                    let mut t = vec![0; 100];
+                    for i in 89..99 {
+                        t[i] = 1;
+                    }
+                    t
+                },
+                candidate: || -> Vec<i16> { vec![1; 10] },
+                exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![89]) },
             },
             TestCase {
                 // candidate not present returns nothing
