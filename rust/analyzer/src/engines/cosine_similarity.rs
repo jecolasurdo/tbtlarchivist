@@ -310,7 +310,6 @@ mod tests {
         assert_eq!(3344, result.len());
     }
     // cases:
-    //  - candidate not present returns nothing
     //  - candidate at head returns candidate
     //  - overlapping candidates returns first instance
     //  - multiple non-overlapping candidates returns all
@@ -325,19 +324,28 @@ mod tests {
             exp_result: fn() -> Result<Vec<i64>, super::Error>,
         }
 
-        let test_cases = vec![TestCase {
-            //  single candidate present (not at head) returns candidate
-            name: String::from("single candidate 1"),
-            target: || -> Vec<i16> {
-                let mut t = vec![0; 1024 * 10];
-                for i in 20..30 {
-                    t[i] = 1;
-                }
-                t
+        let test_cases = vec![
+            TestCase {
+                //  single candidate present (not at head) returns candidate
+                name: String::from("single candidate 1"),
+                target: || -> Vec<i16> {
+                    let mut t = vec![0; 1024 * 10];
+                    for i in 20..30 {
+                        t[i] = 1;
+                    }
+                    t
+                },
+                candidate: || -> Vec<i16> { vec![1; 10] },
+                exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![20]) },
             },
-            candidate: || -> Vec<i16> { vec![1; 10] },
-            exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![20]) },
-        }];
+            TestCase {
+                // candidate not present returns nothing
+                name: String::from("candidate not present"),
+                target: || -> Vec<i16> { vec![0; 1024 * 10] },
+                candidate: || -> Vec<i16> { vec![1; 10] },
+                exp_result: || -> Result<Vec<i64>, super::Error> { Ok(vec![]) },
+            },
+        ];
 
         for test_case in test_cases {
             let engine_settings = Settings {
@@ -357,10 +365,10 @@ mod tests {
                 Err(_) => assert_eq!(
                     act_result.is_err(),
                     true,
-                    "{}: expected error but no error",
+                    "test_case '{}' expected error but no error",
                     test_case.name
                 ),
-                Ok(v) => assert_eq!(act_result.unwrap(), v, "{}", test_case.name),
+                Ok(v) => assert_eq!(act_result.unwrap(), v, "test case: '{}'", test_case.name),
             }
         }
     }
