@@ -1,3 +1,5 @@
+use conv::prelude::*;
+
 pub fn copy_slice<T>(dst: &mut [T], src: &[T])
 where
     T: Copy,
@@ -18,6 +20,10 @@ pub fn scale_from_i16(v: i16) -> f64 {
 
 pub fn cosine_similarity(a: &[i16], b: &[i16]) -> f64 {
     sumdotproduct(a, b) / (a.sqrsum().sqrt() * b.sqrsum().sqrt())
+}
+
+pub fn rms(raw: &[i16]) -> f64 {
+    (raw.sqrsum() / raw.len().value_as::<f64>().unwrap()).sqrt()
 }
 
 fn sumdotproduct(a: &[i16], b: &[i16]) -> f64 {

@@ -12,7 +12,7 @@ fn main() -> Result<()> {
         pass_one_sample_size: 50,
         pass_one_threshold: 0.60,
         pass_two_sample_size: 500,
-        pass_two_threshold: 0.8,
+        pass_two_threshold: 0.9,
     };
     let analyzer_engine = cosine_similarity::new(engine_settings);
     let uri_accessor = file::Accessor {};

@@ -6,9 +6,10 @@ mod tests;
 mod internals;
 
 use crate::engines::cosine_similarity::internals::{
-    copy_slice, cosine_similarity, scale_from_i16, scale_to_i16,
+    copy_slice, cosine_similarity, rms, scale_from_i16, scale_to_i16,
 };
 use crate::engines::Analyzer;
+use conv::prelude::*;
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{FftFixedIn, Resampler};
 use std::convert::TryInto;
@@ -16,7 +17,7 @@ use std::ops::Neg;
 use thiserror::Error;
 
 const TARGET_SAMPLE_RATE: i32 = 22_050;
-const CANDIDATE_SAMPLE_SKIP: usize = 10_000;
+const RMS_WINDOW_SIZE: usize = 2756; // 2756 samples is approx. 125ms at 22khz.
 
 /// Provides business logic associated with cosine similarity analysis of audio samples.
 pub struct Engine {
@@ -104,6 +105,7 @@ impl Analyzer<Error> for Engine {
 
     #[allow(clippy::as_conversions)]
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
+        let candidate_anchor_offset = find_anchor_sample_index(candidate, RMS_WINDOW_SIZE);
         let windows = target.windows(candidate.len());
         let mut possibilities = Vec::new();
         let mut offset_index: i64 = -1;
@@ -111,8 +113,8 @@ impl Analyzer<Error> for Engine {
             offset_index += 1;
             let cs = cosine_similarity(
                 &window[..self.options.pass_one_sample_size],
-                &candidate[CANDIDATE_SAMPLE_SKIP
-                    ..CANDIDATE_SAMPLE_SKIP + self.options.pass_one_sample_size],
+                &candidate[candidate_anchor_offset
+                    ..candidate_anchor_offset + self.options.pass_one_sample_size],
             );
             if cs >= self.options.pass_one_threshold {
                 possibilities.push((offset_index, window));
@@ -126,8 +128,8 @@ impl Analyzer<Error> for Engine {
             // calculate score for current window
             let cs_window = cosine_similarity(
                 &window[..self.options.pass_two_sample_size],
-                &candidate[CANDIDATE_SAMPLE_SKIP
-                    ..CANDIDATE_SAMPLE_SKIP + self.options.pass_two_sample_size],
+                &candidate[candidate_anchor_offset
+                    ..candidate_anchor_offset + self.options.pass_two_sample_size],
             );
             // if the current window's score doesn't meet the general threshold
             // continue to the next window.
@@ -142,7 +144,7 @@ impl Analyzer<Error> for Engine {
                 // and are identifying a new local peak.
                 // If a previous peak exists, push it to the result list.
                 if cs_peak > f64::MIN {
-                    results.push(i_peak);
+                    results.push(i_peak - candidate_anchor_offset.value_as::<i64>().unwrap());
                 }
                 // Set the local peak value and index to that of the current
                 // window.
@@ -164,11 +166,26 @@ impl Analyzer<Error> for Engine {
         }
         // flush the last identified peak.
         if cs_peak > f64::MIN {
-            results.push(i_peak);
+            results.push(i_peak - candidate_anchor_offset.value_as::<i64>().unwrap());
         }
 
         Ok(results)
     }
+}
+
+/// Identifies the sample index that denotes an "intersting" position within
+/// the raw audio.
+fn find_anchor_sample_index(raw: &[i16], window_size: usize) -> usize {
+    let mut max_i = 0;
+    let mut max_rms = 0.0;
+    for i in 0..raw.len() - window_size {
+        let r = rms(&raw[i..i + window_size]);
+        if r > max_rms {
+            max_rms = r;
+            max_i = i;
+        }
+    }
+    max_i
 }
 
 fn resample(current_sample_rate: i32, buffer: &[f64]) -> Result<Vec<f64>, Error> {
