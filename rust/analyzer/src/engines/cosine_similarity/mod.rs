@@ -3,6 +3,11 @@
 #[cfg(test)]
 mod tests;
 
+mod internals;
+
+use crate::engines::cosine_similarity::internals::{
+    copy_slice, cosine_similarity, scale_from_i16, scale_to_i16,
+};
 use crate::engines::Analyzer;
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{FftFixedIn, Resampler};
@@ -11,6 +16,7 @@ use std::ops::Neg;
 use thiserror::Error;
 
 const TARGET_SAMPLE_RATE: i32 = 22_050;
+const CANDIDATE_SAMPLE_SKIP: usize = 10_000;
 
 /// Provides business logic associated with cosine similarity analysis of audio samples.
 pub struct Engine {
@@ -105,7 +111,8 @@ impl Analyzer<Error> for Engine {
             offset_index += 1;
             let cs = cosine_similarity(
                 &window[..self.options.pass_one_sample_size],
-                &candidate[..self.options.pass_one_sample_size],
+                &candidate[CANDIDATE_SAMPLE_SKIP
+                    ..CANDIDATE_SAMPLE_SKIP + self.options.pass_one_sample_size],
             );
             if cs >= self.options.pass_one_threshold {
                 possibilities.push((offset_index, window));
@@ -119,7 +126,8 @@ impl Analyzer<Error> for Engine {
             // calculate score for current window
             let cs_window = cosine_similarity(
                 &window[..self.options.pass_two_sample_size],
-                &candidate[..self.options.pass_two_sample_size],
+                &candidate[CANDIDATE_SAMPLE_SKIP
+                    ..CANDIDATE_SAMPLE_SKIP + self.options.pass_two_sample_size],
             );
             // if the current window's score doesn't meet the general threshold
             // continue to the next window.
@@ -164,7 +172,13 @@ impl Analyzer<Error> for Engine {
 }
 
 fn resample(current_sample_rate: i32, buffer: &[f64]) -> Result<Vec<f64>, Error> {
-    let mut resampler = build_resampler(current_sample_rate, buffer.len());
+    let mut resampler = FftFixedIn::<f64>::new(
+        current_sample_rate.try_into().unwrap(), // inbound sample rate
+        TARGET_SAMPLE_RATE.try_into().unwrap(),  // desired sample rate
+        buffer.len(),                            // frame size
+        1024, // sub_chunks: this value is admittedly arbitrary. I'm not really sure how to rationalize it.
+        1,    // number of channels
+    );
     let mut cp = vec![0.0; buffer.len()];
     copy_slice(&mut cp, buffer);
     let fb = vec![cp; 1];
@@ -172,34 +186,6 @@ fn resample(current_sample_rate: i32, buffer: &[f64]) -> Result<Vec<f64>, Error>
         Ok(d) => Ok(d[0].to_vec()),
         Err(e) => Err(Error(Box::new(ErrorKind::Resampler(e.to_string())))),
     }
-}
-
-fn build_resampler(sample_rate: i32, chunk_size: usize) -> impl rubato::Resampler<f64> {
-    FftFixedIn::<f64>::new(
-        sample_rate.try_into().unwrap(),        // inbound sample rate
-        TARGET_SAMPLE_RATE.try_into().unwrap(), // desired sample rate
-        chunk_size,                             // frame size
-        1024, // sub_chunks: this value is admittedly arbitrary. I'm not really sure how to rationalize it.
-        1,    // number of channels
-    )
-}
-
-fn copy_slice<T>(dst: &mut [T], src: &[T])
-where
-    T: Copy,
-{
-    for (d, s) in dst.iter_mut().zip(src.iter()) {
-        *d = *s;
-    }
-}
-
-#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-fn scale_to_i16(v: f64) -> i16 {
-    f64::round(v * f64::from(i16::MAX)) as i16
-}
-
-fn scale_from_i16(v: i16) -> f64 {
-    f64::from(v) / f64::from(i16::MAX)
 }
 
 fn to_monaural(data: &[i16], channels: usize) -> Result<Vec<f64>, Error> {
@@ -218,32 +204,6 @@ fn to_monaural(data: &[i16], channels: usize) -> Result<Vec<f64>, Error> {
         mono = data.to_vec();
     }
     Ok(mono.iter().map(|d| scale_from_i16(*d)).collect())
-}
-
-fn cosine_similarity(a: &[i16], b: &[i16]) -> f64 {
-    sumdotproduct(a, b) / (a.sqrsum().sqrt() * b.sqrsum().sqrt())
-}
-
-fn sumdotproduct(a: &[i16], b: &[i16]) -> f64 {
-    let mut sum = 0.0;
-    for i in 0..a.len() {
-        sum += f64::from(a[i]) * f64::from(b[i]);
-    }
-    sum
-}
-
-trait SliceExt<T> {
-    fn sqrsum(self) -> f64;
-}
-
-impl SliceExt<i16> for &[i16] {
-    fn sqrsum(self) -> f64 {
-        let mut v = 0.0;
-        for n in self {
-            v += f64::from(*n) * f64::from(*n);
-        }
-        v
-    }
 }
 
 /// A boxed error resulting from a problem running an engine.

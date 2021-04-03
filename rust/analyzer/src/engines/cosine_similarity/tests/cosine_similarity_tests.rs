@@ -1,4 +1,4 @@
-use crate::engines::cosine_similarity::cosine_similarity;
+use crate::engines::cosine_similarity::internals::cosine_similarity;
 
 #[test]
 fn happy_path() {

@@ -13,7 +13,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-const RAW_SAMPLE_RATE: usize = 44_100;
+const RAW_SAMPLE_RATE: usize = 22_050;
 
 // Basis of 1e9 represents a nanosecond duration resolution,
 const RAW_DURATION_BASIS: usize = 1_000_000_000;

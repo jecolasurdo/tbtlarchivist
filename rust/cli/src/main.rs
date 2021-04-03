@@ -9,10 +9,10 @@ use protobuf::RepeatedField;
 
 fn main() -> Result<()> {
     let engine_settings = Settings {
-        pass_one_sample_size: 9,
-        pass_one_threshold: 0.991,
-        pass_two_sample_size: 50,
-        pass_two_threshold: 0.99,
+        pass_one_sample_size: 50,
+        pass_one_threshold: 0.60,
+        pass_two_sample_size: 500,
+        pass_two_threshold: 0.8,
     };
     let analyzer_engine = cosine_similarity::new(engine_settings);
     let uri_accessor = file::Accessor {};
@@ -43,8 +43,11 @@ fn main() -> Result<()> {
 
     while !ctx.is_canceled() {
         match rx.recv() {
-            Ok(cri) => println!("{:?}", cri),
-            Err(e) => println!("{:?}", e),
+            Ok(cri) => println!("{:?}", cri.unwrap().clip_offsets),
+            Err(e) => {
+                println!("{:?}", e);
+                ctx.cancel();
+            }
         }
     }
 
