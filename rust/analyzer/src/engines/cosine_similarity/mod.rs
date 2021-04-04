@@ -99,7 +99,9 @@ impl Analyzer<Error> for Engine {
             .collect())
     }
 
-    fn phash(&self, _: &[i16]) -> Result<Vec<u8>, Error> {
+    fn fingerprint(&self, _: &[i16]) -> Result<Vec<u8>, Error> {
+        // convert raw to 1 dimensional image
+        // calculate fingerprint for image
         Ok(vec![])
     }
 

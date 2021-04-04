@@ -14,7 +14,7 @@ where
     /// audio data.
     fn mp3_to_raw(&self, mp3: &[u8]) -> Result<Vec<i16>, E>;
     /// Takes 16bit raw audio data and calculates its perceptual hash.
-    fn phash(&self, raw: &[i16]) -> Result<Vec<u8>, E>;
+    fn fingerprint(&self, raw: &[i16]) -> Result<Vec<u8>, E>;
     /// Searches for any likely occurences of `candidate` within `target` and returns the position
     /// of each occurence as a vector of offsets.
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, E>;

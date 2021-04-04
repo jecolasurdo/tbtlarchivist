@@ -94,12 +94,12 @@ where
             .uri_accessor
             .get(pri.get_episode().get_media_uri().to_string())?;
         let episode_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
-        let episode_phash = self.analyzer_engine.phash(&episode_raw)?;
+        let episode_fingerprint = self.analyzer_engine.fingerprint(&episode_raw)?;
         for clip in pri.get_clips() {
             if ctx.is_canceled() {
                 break;
             }
-            if let Err(err) = self.process_clip(pri, &episode_raw, &episode_phash, clip, tx) {
+            if let Err(err) = self.process_clip(pri, &episode_raw, &episode_fingerprint, clip, tx) {
                 // errors at this level do not halt the entire process. Instead
                 // we just forward them to the caller. The caller may decide to
                 // broadcast a cancellation if the error rates are out of hand,
@@ -116,13 +116,13 @@ where
         &self,
         pri: &PendingResearchItem,
         episode_raw: &[i16],
-        episode_phash: &[u8],
+        episode_fingerprint: &[u8],
         clip: &contracts::ClipInfo,
         tx: &Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
         let mp3_data = self.uri_accessor.get(clip.get_media_uri().to_string())?;
         let clip_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
-        let clip_phash = self.analyzer_engine.phash(&clip_raw)?;
+        let clip_fingerprint = self.analyzer_engine.fingerprint(&clip_raw)?;
         let offsets = self.analyzer_engine.find_offsets(&clip_raw, episode_raw)?;
 
         let mut cri = CompletedResearchItem::new();
@@ -130,9 +130,9 @@ where
         cri.set_episode_info(pri.get_episode().clone());
         cri.set_clip_info(clip.clone());
         cri.set_episode_duration(duration(episode_raw.len()));
-        cri.set_episode_hash(episode_phash.to_vec());
+        cri.set_episode_hash(episode_fingerprint.to_vec());
         cri.set_clip_duration(duration(clip_raw.len()));
-        cri.set_clip_hash(clip_phash);
+        cri.set_clip_hash(clip_fingerprint);
         cri.set_clip_offsets(offsets);
         cri.set_lease_id(pri.get_lease_id().to_string());
         cri.set_revoke_lease(false);
