@@ -18,6 +18,12 @@ pub fn scale_from_i16(v: i16) -> f64 {
     f64::from(v) / f64::from(i16::MAX)
 }
 
+pub fn i16_to_u32(x: i16) -> u32 {
+    (x.value_as::<i64>().unwrap() + i16::MAX.value_as::<i64>().unwrap())
+        .value_as::<u32>()
+        .unwrap()
+}
+
 pub fn cosine_similarity(a: &[i16], b: &[i16]) -> f64 {
     sumdotproduct(a, b) / (a.sqrsum().sqrt() * b.sqrsum().sqrt())
 }
