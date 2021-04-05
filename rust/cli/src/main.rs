@@ -43,9 +43,9 @@ fn main() -> Result<()> {
 
     while !ctx.is_canceled() {
         match rx.recv() {
-            Ok(cri) => println!("{:?}", cri.unwrap().clip_offsets),
+            Ok(cri) => println!("{:?}", cri.unwrap()),
             Err(e) => {
-                println!("{:?}", e);
+                println!("Error: {:?}", e);
                 ctx.cancel();
             }
         }

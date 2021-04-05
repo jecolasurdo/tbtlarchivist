@@ -116,7 +116,7 @@ where
         &self,
         pri: &PendingResearchItem,
         episode_raw: &[i16],
-        episode_fingerprint: &[u8],
+        episode_fingerprint: &str,
         clip: &contracts::ClipInfo,
         tx: &Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
@@ -130,7 +130,7 @@ where
         cri.set_episode_info(pri.get_episode().clone());
         cri.set_clip_info(clip.clone());
         cri.set_episode_duration(duration(episode_raw.len()));
-        cri.set_episode_hash(episode_fingerprint.to_vec());
+        cri.set_episode_hash(episode_fingerprint.to_owned());
         cri.set_clip_duration(duration(clip_raw.len()));
         cri.set_clip_hash(clip_fingerprint);
         cri.set_clip_offsets(offsets);

@@ -4,10 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/702
 #![allow(unknown_lints)]
 #![allow(clippy::all)]
-
 #![allow(unused_attributes)]
-#![rustfmt::skip]
-
 #![allow(box_pointers)]
 #![allow(dead_code)]
 #![allow(missing_docs)]
@@ -23,7 +20,7 @@
 /// of protobuf runtime.
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_22_0;
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 pub struct ClipInfo {
     // message fields
     pub initial_date_curated: ::protobuf::SingularPtrField<::protobuf::well_known_types::Timestamp>,
@@ -52,9 +49,10 @@ impl ClipInfo {
 
     // .google.protobuf.Timestamp initial_date_curated = 1;
 
-
     pub fn get_initial_date_curated(&self) -> &::protobuf::well_known_types::Timestamp {
-        self.initial_date_curated.as_ref().unwrap_or_else(|| <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance())
+        self.initial_date_curated.as_ref().unwrap_or_else(|| {
+            <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance()
+        })
     }
     pub fn clear_initial_date_curated(&mut self) {
         self.initial_date_curated.clear();
@@ -80,14 +78,17 @@ impl ClipInfo {
 
     // Take field
     pub fn take_initial_date_curated(&mut self) -> ::protobuf::well_known_types::Timestamp {
-        self.initial_date_curated.take().unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
+        self.initial_date_curated
+            .take()
+            .unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
     }
 
     // .google.protobuf.Timestamp last_date_curated = 2;
 
-
     pub fn get_last_date_curated(&self) -> &::protobuf::well_known_types::Timestamp {
-        self.last_date_curated.as_ref().unwrap_or_else(|| <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance())
+        self.last_date_curated.as_ref().unwrap_or_else(|| {
+            <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance()
+        })
     }
     pub fn clear_last_date_curated(&mut self) {
         self.last_date_curated.clear();
@@ -113,11 +114,12 @@ impl ClipInfo {
 
     // Take field
     pub fn take_last_date_curated(&mut self) -> ::protobuf::well_known_types::Timestamp {
-        self.last_date_curated.take().unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
+        self.last_date_curated
+            .take()
+            .unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
     }
 
     // string curator_information = 3;
-
 
     pub fn get_curator_information(&self) -> &str {
         &self.curator_information
@@ -144,7 +146,6 @@ impl ClipInfo {
 
     // string title = 4;
 
-
     pub fn get_title(&self) -> &str {
         &self.title
     }
@@ -169,7 +170,6 @@ impl ClipInfo {
     }
 
     // string description = 5;
-
 
     pub fn get_description(&self) -> &str {
         &self.description
@@ -196,7 +196,6 @@ impl ClipInfo {
 
     // string media_uri = 6;
 
-
     pub fn get_media_uri(&self) -> &str {
         &self.media_uri
     }
@@ -221,7 +220,6 @@ impl ClipInfo {
     }
 
     // string media_type = 7;
-
 
     pub fn get_media_type(&self) -> &str {
         &self.media_type
@@ -248,7 +246,6 @@ impl ClipInfo {
 
     // int32 priority = 8;
 
-
     pub fn get_priority(&self) -> i32 {
         self.priority
     }
@@ -268,50 +265,88 @@ impl ::protobuf::Message for ClipInfo {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.last_date_curated {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
-    fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+    fn merge_from(
+        &mut self,
+        is: &mut ::protobuf::CodedInputStream<'_>,
+    ) -> ::protobuf::ProtobufResult<()> {
         while !is.eof()? {
             let (field_number, wire_type) = is.read_tag_unpack()?;
             match field_number {
                 1 => {
-                    ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.initial_date_curated)?;
-                },
+                    ::protobuf::rt::read_singular_message_into(
+                        wire_type,
+                        is,
+                        &mut self.initial_date_curated,
+                    )?;
+                }
                 2 => {
-                    ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.last_date_curated)?;
-                },
+                    ::protobuf::rt::read_singular_message_into(
+                        wire_type,
+                        is,
+                        &mut self.last_date_curated,
+                    )?;
+                }
                 3 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.curator_information)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.curator_information,
+                    )?;
+                }
                 4 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.title)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.title,
+                    )?;
+                }
                 5 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.description)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.description,
+                    )?;
+                }
                 6 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.media_uri)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.media_uri,
+                    )?;
+                }
                 7 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.media_type)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.media_type,
+                    )?;
+                }
                 8 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
-                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
+                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(
+                            wire_type,
+                        ));
                     }
                     let tmp = is.read_int32()?;
                     self.priority = tmp;
-                },
+                }
                 _ => {
-                    ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                    ::protobuf::rt::read_unknown_or_skip_group(
+                        field_number,
+                        wire_type,
+                        is,
+                        self.mut_unknown_fields(),
+                    )?;
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -345,14 +380,21 @@ impl ::protobuf::Message for ClipInfo {
             my_size += ::protobuf::rt::string_size(7, &self.media_type);
         }
         if self.priority != 0 {
-            my_size += ::protobuf::rt::value_size(8, self.priority, ::protobuf::wire_format::WireTypeVarint);
+            my_size += ::protobuf::rt::value_size(
+                8,
+                self.priority,
+                ::protobuf::wire_format::WireTypeVarint,
+            );
         }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
     }
 
-    fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+    fn write_to_with_cached_sizes(
+        &self,
+        os: &mut ::protobuf::CodedOutputStream<'_>,
+    ) -> ::protobuf::ProtobufResult<()> {
         if let Some(ref v) = self.initial_date_curated.as_ref() {
             os.write_tag(1, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
@@ -416,53 +458,82 @@ impl ::protobuf::Message for ClipInfo {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>>(
-                "initial_date_curated",
-                |m: &ClipInfo| { &m.initial_date_curated },
-                |m: &mut ClipInfo| { &mut m.initial_date_curated },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>>(
-                "last_date_curated",
-                |m: &ClipInfo| { &m.last_date_curated },
-                |m: &mut ClipInfo| { &mut m.last_date_curated },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(
+                ::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>,
+                >(
+                    "initial_date_curated",
+                    |m: &ClipInfo| &m.initial_date_curated,
+                    |m: &mut ClipInfo| &mut m.initial_date_curated,
+                ),
+            );
+            fields.push(
+                ::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>,
+                >(
+                    "last_date_curated",
+                    |m: &ClipInfo| &m.last_date_curated,
+                    |m: &mut ClipInfo| &mut m.last_date_curated,
+                ),
+            );
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "curator_information",
-                |m: &ClipInfo| { &m.curator_information },
-                |m: &mut ClipInfo| { &mut m.curator_information },
+                |m: &ClipInfo| &m.curator_information,
+                |m: &mut ClipInfo| &mut m.curator_information,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "title",
-                |m: &ClipInfo| { &m.title },
-                |m: &mut ClipInfo| { &mut m.title },
+                |m: &ClipInfo| &m.title,
+                |m: &mut ClipInfo| &mut m.title,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "description",
-                |m: &ClipInfo| { &m.description },
-                |m: &mut ClipInfo| { &mut m.description },
+                |m: &ClipInfo| &m.description,
+                |m: &mut ClipInfo| &mut m.description,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "media_uri",
-                |m: &ClipInfo| { &m.media_uri },
-                |m: &mut ClipInfo| { &mut m.media_uri },
+                |m: &ClipInfo| &m.media_uri,
+                |m: &mut ClipInfo| &mut m.media_uri,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "media_type",
-                |m: &ClipInfo| { &m.media_type },
-                |m: &mut ClipInfo| { &mut m.media_type },
+                |m: &ClipInfo| &m.media_type,
+                |m: &mut ClipInfo| &mut m.media_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "priority",
-                |m: &ClipInfo| { &m.priority },
-                |m: &mut ClipInfo| { &mut m.priority },
+                |m: &ClipInfo| &m.priority,
+                |m: &mut ClipInfo| &mut m.priority,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<ClipInfo>(
                 "ClipInfo",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -499,7 +570,7 @@ impl ::protobuf::reflect::ProtobufValue for ClipInfo {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 pub struct EpisodeInfo {
     // message fields
     pub initial_date_curated: ::protobuf::SingularPtrField<::protobuf::well_known_types::Timestamp>,
@@ -529,9 +600,10 @@ impl EpisodeInfo {
 
     // .google.protobuf.Timestamp initial_date_curated = 1;
 
-
     pub fn get_initial_date_curated(&self) -> &::protobuf::well_known_types::Timestamp {
-        self.initial_date_curated.as_ref().unwrap_or_else(|| <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance())
+        self.initial_date_curated.as_ref().unwrap_or_else(|| {
+            <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance()
+        })
     }
     pub fn clear_initial_date_curated(&mut self) {
         self.initial_date_curated.clear();
@@ -557,14 +629,17 @@ impl EpisodeInfo {
 
     // Take field
     pub fn take_initial_date_curated(&mut self) -> ::protobuf::well_known_types::Timestamp {
-        self.initial_date_curated.take().unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
+        self.initial_date_curated
+            .take()
+            .unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
     }
 
     // .google.protobuf.Timestamp last_date_curated = 2;
 
-
     pub fn get_last_date_curated(&self) -> &::protobuf::well_known_types::Timestamp {
-        self.last_date_curated.as_ref().unwrap_or_else(|| <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance())
+        self.last_date_curated.as_ref().unwrap_or_else(|| {
+            <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance()
+        })
     }
     pub fn clear_last_date_curated(&mut self) {
         self.last_date_curated.clear();
@@ -590,11 +665,12 @@ impl EpisodeInfo {
 
     // Take field
     pub fn take_last_date_curated(&mut self) -> ::protobuf::well_known_types::Timestamp {
-        self.last_date_curated.take().unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
+        self.last_date_curated
+            .take()
+            .unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
     }
 
     // string curator_information = 3;
-
 
     pub fn get_curator_information(&self) -> &str {
         &self.curator_information
@@ -621,9 +697,10 @@ impl EpisodeInfo {
 
     // .google.protobuf.Timestamp date_aired = 4;
 
-
     pub fn get_date_aired(&self) -> &::protobuf::well_known_types::Timestamp {
-        self.date_aired.as_ref().unwrap_or_else(|| <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance())
+        self.date_aired.as_ref().unwrap_or_else(|| {
+            <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance()
+        })
     }
     pub fn clear_date_aired(&mut self) {
         self.date_aired.clear();
@@ -649,11 +726,12 @@ impl EpisodeInfo {
 
     // Take field
     pub fn take_date_aired(&mut self) -> ::protobuf::well_known_types::Timestamp {
-        self.date_aired.take().unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
+        self.date_aired
+            .take()
+            .unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
     }
 
     // string title = 5;
-
 
     pub fn get_title(&self) -> &str {
         &self.title
@@ -680,7 +758,6 @@ impl EpisodeInfo {
 
     // string description = 6;
 
-
     pub fn get_description(&self) -> &str {
         &self.description
     }
@@ -705,7 +782,6 @@ impl EpisodeInfo {
     }
 
     // string media_uri = 7;
-
 
     pub fn get_media_uri(&self) -> &str {
         &self.media_uri
@@ -732,7 +808,6 @@ impl EpisodeInfo {
 
     // string media_type = 8;
 
-
     pub fn get_media_type(&self) -> &str {
         &self.media_type
     }
@@ -758,7 +833,6 @@ impl EpisodeInfo {
 
     // int32 priority = 9;
 
-
     pub fn get_priority(&self) -> i32 {
         self.priority
     }
@@ -778,58 +852,100 @@ impl ::protobuf::Message for EpisodeInfo {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.last_date_curated {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.date_aired {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
-    fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+    fn merge_from(
+        &mut self,
+        is: &mut ::protobuf::CodedInputStream<'_>,
+    ) -> ::protobuf::ProtobufResult<()> {
         while !is.eof()? {
             let (field_number, wire_type) = is.read_tag_unpack()?;
             match field_number {
                 1 => {
-                    ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.initial_date_curated)?;
-                },
+                    ::protobuf::rt::read_singular_message_into(
+                        wire_type,
+                        is,
+                        &mut self.initial_date_curated,
+                    )?;
+                }
                 2 => {
-                    ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.last_date_curated)?;
-                },
+                    ::protobuf::rt::read_singular_message_into(
+                        wire_type,
+                        is,
+                        &mut self.last_date_curated,
+                    )?;
+                }
                 3 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.curator_information)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.curator_information,
+                    )?;
+                }
                 4 => {
-                    ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.date_aired)?;
-                },
+                    ::protobuf::rt::read_singular_message_into(
+                        wire_type,
+                        is,
+                        &mut self.date_aired,
+                    )?;
+                }
                 5 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.title)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.title,
+                    )?;
+                }
                 6 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.description)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.description,
+                    )?;
+                }
                 7 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.media_uri)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.media_uri,
+                    )?;
+                }
                 8 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.media_type)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.media_type,
+                    )?;
+                }
                 9 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
-                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
+                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(
+                            wire_type,
+                        ));
                     }
                     let tmp = is.read_int32()?;
                     self.priority = tmp;
-                },
+                }
                 _ => {
-                    ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                    ::protobuf::rt::read_unknown_or_skip_group(
+                        field_number,
+                        wire_type,
+                        is,
+                        self.mut_unknown_fields(),
+                    )?;
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -867,14 +983,21 @@ impl ::protobuf::Message for EpisodeInfo {
             my_size += ::protobuf::rt::string_size(8, &self.media_type);
         }
         if self.priority != 0 {
-            my_size += ::protobuf::rt::value_size(9, self.priority, ::protobuf::wire_format::WireTypeVarint);
+            my_size += ::protobuf::rt::value_size(
+                9,
+                self.priority,
+                ::protobuf::wire_format::WireTypeVarint,
+            );
         }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
     }
 
-    fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+    fn write_to_with_cached_sizes(
+        &self,
+        os: &mut ::protobuf::CodedOutputStream<'_>,
+    ) -> ::protobuf::ProtobufResult<()> {
         if let Some(ref v) = self.initial_date_curated.as_ref() {
             os.write_tag(1, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
@@ -943,58 +1066,92 @@ impl ::protobuf::Message for EpisodeInfo {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>>(
-                "initial_date_curated",
-                |m: &EpisodeInfo| { &m.initial_date_curated },
-                |m: &mut EpisodeInfo| { &mut m.initial_date_curated },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>>(
-                "last_date_curated",
-                |m: &EpisodeInfo| { &m.last_date_curated },
-                |m: &mut EpisodeInfo| { &mut m.last_date_curated },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(
+                ::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>,
+                >(
+                    "initial_date_curated",
+                    |m: &EpisodeInfo| &m.initial_date_curated,
+                    |m: &mut EpisodeInfo| &mut m.initial_date_curated,
+                ),
+            );
+            fields.push(
+                ::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>,
+                >(
+                    "last_date_curated",
+                    |m: &EpisodeInfo| &m.last_date_curated,
+                    |m: &mut EpisodeInfo| &mut m.last_date_curated,
+                ),
+            );
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "curator_information",
-                |m: &EpisodeInfo| { &m.curator_information },
-                |m: &mut EpisodeInfo| { &mut m.curator_information },
+                |m: &EpisodeInfo| &m.curator_information,
+                |m: &mut EpisodeInfo| &mut m.curator_information,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>>(
-                "date_aired",
-                |m: &EpisodeInfo| { &m.date_aired },
-                |m: &mut EpisodeInfo| { &mut m.date_aired },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(
+                ::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>,
+                >(
+                    "date_aired",
+                    |m: &EpisodeInfo| &m.date_aired,
+                    |m: &mut EpisodeInfo| &mut m.date_aired,
+                ),
+            );
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "title",
-                |m: &EpisodeInfo| { &m.title },
-                |m: &mut EpisodeInfo| { &mut m.title },
+                |m: &EpisodeInfo| &m.title,
+                |m: &mut EpisodeInfo| &mut m.title,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "description",
-                |m: &EpisodeInfo| { &m.description },
-                |m: &mut EpisodeInfo| { &mut m.description },
+                |m: &EpisodeInfo| &m.description,
+                |m: &mut EpisodeInfo| &mut m.description,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "media_uri",
-                |m: &EpisodeInfo| { &m.media_uri },
-                |m: &mut EpisodeInfo| { &mut m.media_uri },
+                |m: &EpisodeInfo| &m.media_uri,
+                |m: &mut EpisodeInfo| &mut m.media_uri,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "media_type",
-                |m: &EpisodeInfo| { &m.media_type },
-                |m: &mut EpisodeInfo| { &mut m.media_type },
+                |m: &EpisodeInfo| &m.media_type,
+                |m: &mut EpisodeInfo| &mut m.media_type,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeInt32>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt32,
+            >(
                 "priority",
-                |m: &EpisodeInfo| { &m.priority },
-                |m: &mut EpisodeInfo| { &mut m.priority },
+                |m: &EpisodeInfo| &m.priority,
+                |m: &mut EpisodeInfo| &mut m.priority,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<EpisodeInfo>(
                 "EpisodeInfo",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -1032,7 +1189,7 @@ impl ::protobuf::reflect::ProtobufValue for EpisodeInfo {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 pub struct PendingResearchItem {
     // message fields
     pub lease_id: ::std::string::String,
@@ -1055,7 +1212,6 @@ impl PendingResearchItem {
     }
 
     // string lease_id = 1;
-
 
     pub fn get_lease_id(&self) -> &str {
         &self.lease_id
@@ -1082,9 +1238,10 @@ impl PendingResearchItem {
 
     // .contracts.EpisodeInfo episode = 2;
 
-
     pub fn get_episode(&self) -> &EpisodeInfo {
-        self.episode.as_ref().unwrap_or_else(|| <EpisodeInfo as ::protobuf::Message>::default_instance())
+        self.episode
+            .as_ref()
+            .unwrap_or_else(|| <EpisodeInfo as ::protobuf::Message>::default_instance())
     }
     pub fn clear_episode(&mut self) {
         self.episode.clear();
@@ -1115,7 +1272,6 @@ impl PendingResearchItem {
 
     // repeated .contracts.ClipInfo clips = 3;
 
-
     pub fn get_clips(&self) -> &[ClipInfo] {
         &self.clips
     }
@@ -1145,31 +1301,43 @@ impl ::protobuf::Message for PendingResearchItem {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.clips {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
-    fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+    fn merge_from(
+        &mut self,
+        is: &mut ::protobuf::CodedInputStream<'_>,
+    ) -> ::protobuf::ProtobufResult<()> {
         while !is.eof()? {
             let (field_number, wire_type) = is.read_tag_unpack()?;
             match field_number {
                 1 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.lease_id)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.lease_id,
+                    )?;
+                }
                 2 => {
                     ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.episode)?;
-                },
+                }
                 3 => {
                     ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.clips)?;
-                },
+                }
                 _ => {
-                    ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                    ::protobuf::rt::read_unknown_or_skip_group(
+                        field_number,
+                        wire_type,
+                        is,
+                        self.mut_unknown_fields(),
+                    )?;
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -1189,13 +1357,16 @@ impl ::protobuf::Message for PendingResearchItem {
         for value in &self.clips {
             let len = value.compute_size();
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
+        }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
     }
 
-    fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+    fn write_to_with_cached_sizes(
+        &self,
+        os: &mut ::protobuf::CodedOutputStream<'_>,
+    ) -> ::protobuf::ProtobufResult<()> {
         if !self.lease_id.is_empty() {
             os.write_string(1, &self.lease_id)?;
         }
@@ -1208,7 +1379,7 @@ impl ::protobuf::Message for PendingResearchItem {
             os.write_tag(3, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
             v.write_to_with_cached_sizes(os)?;
-        };
+        }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
     }
@@ -1244,28 +1415,42 @@ impl ::protobuf::Message for PendingResearchItem {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "lease_id",
-                |m: &PendingResearchItem| { &m.lease_id },
-                |m: &mut PendingResearchItem| { &mut m.lease_id },
+                |m: &PendingResearchItem| &m.lease_id,
+                |m: &mut PendingResearchItem| &mut m.lease_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<EpisodeInfo>>(
-                "episode",
-                |m: &PendingResearchItem| { &m.episode },
-                |m: &mut PendingResearchItem| { &mut m.episode },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<ClipInfo>>(
-                "clips",
-                |m: &PendingResearchItem| { &m.clips },
-                |m: &mut PendingResearchItem| { &mut m.clips },
-            ));
+            fields.push(
+                ::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<EpisodeInfo>,
+                >(
+                    "episode",
+                    |m: &PendingResearchItem| &m.episode,
+                    |m: &mut PendingResearchItem| &mut m.episode,
+                ),
+            );
+            fields.push(
+                ::protobuf::reflect::accessor::make_repeated_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<ClipInfo>,
+                >(
+                    "clips",
+                    |m: &PendingResearchItem| &m.clips,
+                    |m: &mut PendingResearchItem| &mut m.clips,
+                ),
+            );
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<PendingResearchItem>(
                 "PendingResearchItem",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
@@ -1297,7 +1482,7 @@ impl ::protobuf::reflect::ProtobufValue for PendingResearchItem {
     }
 }
 
-#[derive(PartialEq,Clone,Default)]
+#[derive(PartialEq, Clone, Default)]
 pub struct CompletedResearchItem {
     // message fields
     pub research_date: ::protobuf::SingularPtrField<::protobuf::well_known_types::Timestamp>,
@@ -1328,9 +1513,10 @@ impl CompletedResearchItem {
 
     // .google.protobuf.Timestamp research_date = 1;
 
-
     pub fn get_research_date(&self) -> &::protobuf::well_known_types::Timestamp {
-        self.research_date.as_ref().unwrap_or_else(|| <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance())
+        self.research_date.as_ref().unwrap_or_else(|| {
+            <::protobuf::well_known_types::Timestamp as ::protobuf::Message>::default_instance()
+        })
     }
     pub fn clear_research_date(&mut self) {
         self.research_date.clear();
@@ -1356,14 +1542,17 @@ impl CompletedResearchItem {
 
     // Take field
     pub fn take_research_date(&mut self) -> ::protobuf::well_known_types::Timestamp {
-        self.research_date.take().unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
+        self.research_date
+            .take()
+            .unwrap_or_else(|| ::protobuf::well_known_types::Timestamp::new())
     }
 
     // .contracts.EpisodeInfo episode_info = 2;
 
-
     pub fn get_episode_info(&self) -> &EpisodeInfo {
-        self.episode_info.as_ref().unwrap_or_else(|| <EpisodeInfo as ::protobuf::Message>::default_instance())
+        self.episode_info
+            .as_ref()
+            .unwrap_or_else(|| <EpisodeInfo as ::protobuf::Message>::default_instance())
     }
     pub fn clear_episode_info(&mut self) {
         self.episode_info.clear();
@@ -1389,14 +1578,17 @@ impl CompletedResearchItem {
 
     // Take field
     pub fn take_episode_info(&mut self) -> EpisodeInfo {
-        self.episode_info.take().unwrap_or_else(|| EpisodeInfo::new())
+        self.episode_info
+            .take()
+            .unwrap_or_else(|| EpisodeInfo::new())
     }
 
     // .contracts.ClipInfo clip_info = 3;
 
-
     pub fn get_clip_info(&self) -> &ClipInfo {
-        self.clip_info.as_ref().unwrap_or_else(|| <ClipInfo as ::protobuf::Message>::default_instance())
+        self.clip_info
+            .as_ref()
+            .unwrap_or_else(|| <ClipInfo as ::protobuf::Message>::default_instance())
     }
     pub fn clear_clip_info(&mut self) {
         self.clip_info.clear();
@@ -1427,7 +1619,6 @@ impl CompletedResearchItem {
 
     // int64 episode_duration = 4;
 
-
     pub fn get_episode_duration(&self) -> i64 {
         self.episode_duration
     }
@@ -1441,7 +1632,6 @@ impl CompletedResearchItem {
     }
 
     // string episode_hash = 5;
-
 
     pub fn get_episode_hash(&self) -> &str {
         &self.episode_hash
@@ -1468,7 +1658,6 @@ impl CompletedResearchItem {
 
     // int64 clip_duration = 6;
 
-
     pub fn get_clip_duration(&self) -> i64 {
         self.clip_duration
     }
@@ -1482,7 +1671,6 @@ impl CompletedResearchItem {
     }
 
     // string clip_hash = 7;
-
 
     pub fn get_clip_hash(&self) -> &str {
         &self.clip_hash
@@ -1509,7 +1697,6 @@ impl CompletedResearchItem {
 
     // repeated int64 clip_offsets = 8;
 
-
     pub fn get_clip_offsets(&self) -> &[i64] {
         &self.clip_offsets
     }
@@ -1533,7 +1720,6 @@ impl CompletedResearchItem {
     }
 
     // string lease_id = 9;
-
 
     pub fn get_lease_id(&self) -> &str {
         &self.lease_id
@@ -1560,7 +1746,6 @@ impl CompletedResearchItem {
 
     // bool revoke_lease = 10;
 
-
     pub fn get_revoke_lease(&self) -> bool {
         self.revoke_lease
     }
@@ -1580,69 +1765,107 @@ impl ::protobuf::Message for CompletedResearchItem {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.episode_info {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         for v in &self.clip_info {
             if !v.is_initialized() {
                 return false;
             }
-        };
+        }
         true
     }
 
-    fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+    fn merge_from(
+        &mut self,
+        is: &mut ::protobuf::CodedInputStream<'_>,
+    ) -> ::protobuf::ProtobufResult<()> {
         while !is.eof()? {
             let (field_number, wire_type) = is.read_tag_unpack()?;
             match field_number {
                 1 => {
-                    ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.research_date)?;
-                },
+                    ::protobuf::rt::read_singular_message_into(
+                        wire_type,
+                        is,
+                        &mut self.research_date,
+                    )?;
+                }
                 2 => {
-                    ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.episode_info)?;
-                },
+                    ::protobuf::rt::read_singular_message_into(
+                        wire_type,
+                        is,
+                        &mut self.episode_info,
+                    )?;
+                }
                 3 => {
                     ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.clip_info)?;
-                },
+                }
                 4 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
-                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
+                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(
+                            wire_type,
+                        ));
                     }
                     let tmp = is.read_int64()?;
                     self.episode_duration = tmp;
-                },
+                }
                 5 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.episode_hash)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.episode_hash,
+                    )?;
+                }
                 6 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
-                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
+                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(
+                            wire_type,
+                        ));
                     }
                     let tmp = is.read_int64()?;
                     self.clip_duration = tmp;
-                },
+                }
                 7 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.clip_hash)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.clip_hash,
+                    )?;
+                }
                 8 => {
-                    ::protobuf::rt::read_repeated_int64_into(wire_type, is, &mut self.clip_offsets)?;
-                },
+                    ::protobuf::rt::read_repeated_int64_into(
+                        wire_type,
+                        is,
+                        &mut self.clip_offsets,
+                    )?;
+                }
                 9 => {
-                    ::protobuf::rt::read_singular_proto3_string_into(wire_type, is, &mut self.lease_id)?;
-                },
+                    ::protobuf::rt::read_singular_proto3_string_into(
+                        wire_type,
+                        is,
+                        &mut self.lease_id,
+                    )?;
+                }
                 10 => {
                     if wire_type != ::protobuf::wire_format::WireTypeVarint {
-                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
+                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(
+                            wire_type,
+                        ));
                     }
                     let tmp = is.read_bool()?;
                     self.revoke_lease = tmp;
-                },
+                }
                 _ => {
-                    ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
+                    ::protobuf::rt::read_unknown_or_skip_group(
+                        field_number,
+                        wire_type,
+                        is,
+                        self.mut_unknown_fields(),
+                    )?;
+                }
             };
         }
         ::std::result::Result::Ok(())
@@ -1665,20 +1888,29 @@ impl ::protobuf::Message for CompletedResearchItem {
             my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
         }
         if self.episode_duration != 0 {
-            my_size += ::protobuf::rt::value_size(4, self.episode_duration, ::protobuf::wire_format::WireTypeVarint);
+            my_size += ::protobuf::rt::value_size(
+                4,
+                self.episode_duration,
+                ::protobuf::wire_format::WireTypeVarint,
+            );
         }
         if !self.episode_hash.is_empty() {
             my_size += ::protobuf::rt::string_size(5, &self.episode_hash);
         }
         if self.clip_duration != 0 {
-            my_size += ::protobuf::rt::value_size(6, self.clip_duration, ::protobuf::wire_format::WireTypeVarint);
+            my_size += ::protobuf::rt::value_size(
+                6,
+                self.clip_duration,
+                ::protobuf::wire_format::WireTypeVarint,
+            );
         }
         if !self.clip_hash.is_empty() {
             my_size += ::protobuf::rt::string_size(7, &self.clip_hash);
         }
         for value in &self.clip_offsets {
-            my_size += ::protobuf::rt::value_size(8, *value, ::protobuf::wire_format::WireTypeVarint);
-        };
+            my_size +=
+                ::protobuf::rt::value_size(8, *value, ::protobuf::wire_format::WireTypeVarint);
+        }
         if !self.lease_id.is_empty() {
             my_size += ::protobuf::rt::string_size(9, &self.lease_id);
         }
@@ -1690,7 +1922,10 @@ impl ::protobuf::Message for CompletedResearchItem {
         my_size
     }
 
-    fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::ProtobufResult<()> {
+    fn write_to_with_cached_sizes(
+        &self,
+        os: &mut ::protobuf::CodedOutputStream<'_>,
+    ) -> ::protobuf::ProtobufResult<()> {
         if let Some(ref v) = self.research_date.as_ref() {
             os.write_tag(1, ::protobuf::wire_format::WireTypeLengthDelimited)?;
             os.write_raw_varint32(v.get_cached_size())?;
@@ -1720,7 +1955,7 @@ impl ::protobuf::Message for CompletedResearchItem {
         }
         for v in &self.clip_offsets {
             os.write_int64(8, *v)?;
-        };
+        }
         if !self.lease_id.is_empty() {
             os.write_string(9, &self.lease_id)?;
         }
@@ -1762,69 +1997,107 @@ impl ::protobuf::Message for CompletedResearchItem {
     }
 
     fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
+        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> =
+            ::protobuf::rt::LazyV2::INIT;
         descriptor.get(|| {
             let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>>(
-                "research_date",
-                |m: &CompletedResearchItem| { &m.research_date },
-                |m: &mut CompletedResearchItem| { &mut m.research_date },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<EpisodeInfo>>(
-                "episode_info",
-                |m: &CompletedResearchItem| { &m.episode_info },
-                |m: &mut CompletedResearchItem| { &mut m.episode_info },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<ClipInfo>>(
-                "clip_info",
-                |m: &CompletedResearchItem| { &m.clip_info },
-                |m: &mut CompletedResearchItem| { &mut m.clip_info },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeInt64>(
+            fields.push(
+                ::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<::protobuf::well_known_types::Timestamp>,
+                >(
+                    "research_date",
+                    |m: &CompletedResearchItem| &m.research_date,
+                    |m: &mut CompletedResearchItem| &mut m.research_date,
+                ),
+            );
+            fields.push(
+                ::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<EpisodeInfo>,
+                >(
+                    "episode_info",
+                    |m: &CompletedResearchItem| &m.episode_info,
+                    |m: &mut CompletedResearchItem| &mut m.episode_info,
+                ),
+            );
+            fields.push(
+                ::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<
+                    _,
+                    ::protobuf::types::ProtobufTypeMessage<ClipInfo>,
+                >(
+                    "clip_info",
+                    |m: &CompletedResearchItem| &m.clip_info,
+                    |m: &mut CompletedResearchItem| &mut m.clip_info,
+                ),
+            );
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt64,
+            >(
                 "episode_duration",
-                |m: &CompletedResearchItem| { &m.episode_duration },
-                |m: &mut CompletedResearchItem| { &mut m.episode_duration },
+                |m: &CompletedResearchItem| &m.episode_duration,
+                |m: &mut CompletedResearchItem| &mut m.episode_duration,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "episode_hash",
-                |m: &CompletedResearchItem| { &m.episode_hash },
-                |m: &mut CompletedResearchItem| { &mut m.episode_hash },
+                |m: &CompletedResearchItem| &m.episode_hash,
+                |m: &mut CompletedResearchItem| &mut m.episode_hash,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeInt64>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt64,
+            >(
                 "clip_duration",
-                |m: &CompletedResearchItem| { &m.clip_duration },
-                |m: &mut CompletedResearchItem| { &mut m.clip_duration },
+                |m: &CompletedResearchItem| &m.clip_duration,
+                |m: &mut CompletedResearchItem| &mut m.clip_duration,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "clip_hash",
-                |m: &CompletedResearchItem| { &m.clip_hash },
-                |m: &mut CompletedResearchItem| { &mut m.clip_hash },
+                |m: &CompletedResearchItem| &m.clip_hash,
+                |m: &mut CompletedResearchItem| &mut m.clip_hash,
             ));
-            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<_, ::protobuf::types::ProtobufTypeInt64>(
+            fields.push(::protobuf::reflect::accessor::make_vec_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeInt64,
+            >(
                 "clip_offsets",
-                |m: &CompletedResearchItem| { &m.clip_offsets },
-                |m: &mut CompletedResearchItem| { &mut m.clip_offsets },
+                |m: &CompletedResearchItem| &m.clip_offsets,
+                |m: &mut CompletedResearchItem| &mut m.clip_offsets,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeString>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeString,
+            >(
                 "lease_id",
-                |m: &CompletedResearchItem| { &m.lease_id },
-                |m: &mut CompletedResearchItem| { &mut m.lease_id },
+                |m: &CompletedResearchItem| &m.lease_id,
+                |m: &mut CompletedResearchItem| &mut m.lease_id,
             ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeBool>(
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<
+                _,
+                ::protobuf::types::ProtobufTypeBool,
+            >(
                 "revoke_lease",
-                |m: &CompletedResearchItem| { &m.revoke_lease },
-                |m: &mut CompletedResearchItem| { &mut m.revoke_lease },
+                |m: &CompletedResearchItem| &m.revoke_lease,
+                |m: &mut CompletedResearchItem| &mut m.revoke_lease,
             ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<CompletedResearchItem>(
                 "CompletedResearchItem",
                 fields,
-                file_descriptor_proto()
+                file_descriptor_proto(),
             )
         })
     }
 
     fn default_instance() -> &'static CompletedResearchItem {
-        static instance: ::protobuf::rt::LazyV2<CompletedResearchItem> = ::protobuf::rt::LazyV2::INIT;
+        static instance: ::protobuf::rt::LazyV2<CompletedResearchItem> =
+            ::protobuf::rt::LazyV2::INIT;
         instance.get(CompletedResearchItem::new)
     }
 }
@@ -1982,14 +2255,14 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     \x04\x03\x02\t\x03\x12\x03-\x18\x1ab\x06proto3\
 ";
 
-static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;
+static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<
+    ::protobuf::descriptor::FileDescriptorProto,
+> = ::protobuf::rt::LazyV2::INIT;
 
 fn parse_descriptor_proto() -> ::protobuf::descriptor::FileDescriptorProto {
     ::protobuf::Message::parse_from_bytes(file_descriptor_proto_data).unwrap()
 }
 
 pub fn file_descriptor_proto() -> &'static ::protobuf::descriptor::FileDescriptorProto {
-    file_descriptor_proto_lazy.get(|| {
-        parse_descriptor_proto()
-    })
+    file_descriptor_proto_lazy.get(|| parse_descriptor_proto())
 }
