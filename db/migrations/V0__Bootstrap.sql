@@ -45,7 +45,6 @@ CREATE TABLE `research_leases` (
   UNIQUE KEY `research_id_UNIQUE` (`research_id`)
 );
 
-
 CREATE TABLE `research_complete` (
   `research_id` int(11) NOT NULL,
   `episode_id` int(11) NOT NULL,
@@ -65,7 +64,7 @@ CREATE TABLE `episode_clip_offsets` (
 
 CREATE TABLE `episode_hashes` (
   `episode_id` int(11) NOT NULL,
-  `hash` binary(32) NOT NULL,
+  `hash` varchar(32) NOT NULL,
   PRIMARY KEY (`episode_id`)
 );
 
@@ -73,7 +72,7 @@ CREATE INDEX episode_hash_idx ON episode_hashes(hash);
 
 CREATE TABLE `clip_hashes` (
   `clip_id` int(11) NOT NULL,
-  `hash` binary(32) NOT NULL,
+  `hash` varchar(32) NOT NULL,
   PRIMARY KEY (`clip_id`)
 );
 

@@ -11,6 +11,7 @@ use crate::engines::cosine_similarity::internals::{
 use crate::engines::Analyzer;
 use conv::prelude::*;
 use image::{Rgb, RgbImage};
+use img_hash::{HashAlg, HasherConfig};
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{FftFixedIn, Resampler};
 use std::convert::TryInto;
@@ -100,14 +101,19 @@ impl Analyzer<Error> for Engine {
             .collect())
     }
 
-    fn fingerprint(&self, raw: &[i16]) -> Result<Vec<u8>, Error> {
+    fn fingerprint(&self, raw: &[i16]) -> Result<String, Error> {
         let max_y = i16::MAX.value_as::<u32>().unwrap() * 2;
         let mut img = RgbImage::new(raw.len().try_into().unwrap(), max_y);
         for (x, y) in raw.iter().enumerate() {
             img.put_pixel(x.try_into().unwrap(), i16_to_u32(*y), Rgb([0, 0, 0]));
         }
 
-        todo!("calculate phash of img using img_hash crate")
+        Ok(HasherConfig::new()
+            .hash_size(64, 4) // upstream system presumes a 32byte (256bit) hash
+            .hash_alg(HashAlg::Blockhash)
+            .to_hasher()
+            .hash_image(&img)
+            .to_base64())
     }
 
     #[allow(clippy::as_conversions)]
