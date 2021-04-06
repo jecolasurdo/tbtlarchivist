@@ -11,12 +11,13 @@ fn happy_path() {
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
 
-    // values in engine_settings are irrevent to this test
     let engine_settings = Settings {
-        pass_one_sample_size: 9,
-        pass_one_threshold: 0.991,
-        pass_two_sample_size: 50,
-        pass_two_threshold: 0.99,
+        target_sample_rate: 22_050,
+        rms_window_size: 2756,     // not applicable to test
+        pass_one_sample_size: 9,   // not applicable to test
+        pass_one_threshold: 0.991, // not applicable to test
+        pass_two_sample_size: 50,  // not applicable to test
+        pass_two_threshold: 0.99,  // not applicable to test
     };
     let engine = new(engine_settings);
     let result = engine.mp3_to_raw(&data).expect("should not panic");
@@ -37,12 +38,13 @@ fn export() {
     let mut data = Vec::new();
     file.read_to_end(&mut data).unwrap();
 
-    // values in engine_settings are irrevent to this test
     let engine_settings = Settings {
-        pass_one_sample_size: 9,
-        pass_one_threshold: 0.991,
-        pass_two_sample_size: 50,
-        pass_two_threshold: 0.99,
+        target_sample_rate: 22_050,
+        rms_window_size: 2756,     // not applicable to test
+        pass_one_sample_size: 9,   // not applicable to test
+        pass_one_threshold: 0.991, // not applicable to test
+        pass_two_sample_size: 50,  // not applicable to test
+        pass_two_threshold: 0.99,  // not applicable to test
     };
     let engine = new(engine_settings);
     let raw = engine.mp3_to_raw(&data).expect("should not panic");

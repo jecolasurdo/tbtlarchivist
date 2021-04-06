@@ -6,20 +6,15 @@ mod tests;
 mod internals;
 
 use crate::engines::cosine_similarity::internals::{
-    copy_slice, cosine_similarity, i16_to_u32, rms, scale_from_i16, scale_to_i16,
+    copy_slice, cosine_similarity, rms, scale_from_i16, scale_to_i16,
 };
 use crate::engines::Analyzer;
 use conv::prelude::*;
-use image::{Rgb, RgbImage};
-use img_hash::{HashAlg, HasherConfig};
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{FftFixedIn, Resampler};
 use std::convert::TryInto;
 use std::ops::Neg;
 use thiserror::Error;
-
-const TARGET_SAMPLE_RATE: i32 = 22_050;
-const RMS_WINDOW_SIZE: usize = 2756; // 2756 samples is approx. 125ms at 22khz.
 
 /// Provides business logic associated with cosine similarity analysis of audio samples.
 pub struct Engine {
@@ -27,7 +22,23 @@ pub struct Engine {
 }
 
 /// Parameters that tune the behavior of an analysis.
+///
+/// **Important:** The largest of any value supplied in the following fields
+/// effectively sets the minimum length of a candidate audio file.
+/// Attempted analysis of any candidate files whose sample count (after being
+/// resampled to `target_sample_rate`) is below this value will likely return
+/// errors:
+///  - `rms_window_size`
+///  - `pass_one_sample_size`
+///  - `pass_two_sample_size`
 pub struct Settings {
+    /// The sample rate to target when resampling inbound candidate and target
+    /// audio. 22_050hz is a good starting point, as it retains audio up to
+    /// 11khz.
+    pub target_sample_rate: i32,
+    /// The size of the window to use when calculating the peak RMS value for
+    /// the candidate audio. 2756 samples is approx. 125ms at 22khz.
+    pub rms_window_size: usize,
     /// The number of contiguous samples compared between the candidate and
     /// target for each window in the initial "rough" pass.
     pub pass_one_sample_size: usize,
@@ -79,14 +90,22 @@ impl Analyzer<Error> for Engine {
                         let mut mono_data = to_monaural(&data, channels)?;
                         frames_buffer.append(&mut mono_data);
                     } else {
-                        raw_data.append(&mut resample(current_sample_rate, &frames_buffer)?);
+                        raw_data.append(&mut resample(
+                            current_sample_rate,
+                            self.options.target_sample_rate,
+                            &frames_buffer,
+                        )?);
                         frames_buffer.clear();
                     }
                     current_sample_rate = sample_rate;
                 }
                 Err(MP3Error::Eof) => {
                     if !frames_buffer.is_empty() {
-                        raw_data.append(&mut resample(current_sample_rate, &frames_buffer)?);
+                        raw_data.append(&mut resample(
+                            current_sample_rate,
+                            self.options.target_sample_rate,
+                            &frames_buffer,
+                        )?);
                     }
                     break;
                 }
@@ -101,24 +120,18 @@ impl Analyzer<Error> for Engine {
             .collect())
     }
 
-    fn fingerprint(&self, raw: &[i16]) -> Result<String, Error> {
-        let max_y = 65536;
-        let mut img = RgbImage::new(raw.len().try_into().unwrap(), max_y);
-        for (x, y) in raw.iter().enumerate() {
-            img.put_pixel(x.try_into().unwrap(), i16_to_u32(*y), Rgb([0, 0, 0]));
-        }
-
-        Ok(HasherConfig::new()
-            .hash_size(64, 4) // upstream system presumes a 32byte (256bit) hash
-            .hash_alg(HashAlg::Blockhash)
-            .to_hasher()
-            .hash_image(&img)
-            .to_base64())
+    /// Not implemented. Currently returns empty string.
+    /// See commit f8d1df4: "Original fingerprint attempt" for original attempt
+    /// which was prohibitively non-performant and never verified to work
+    /// properly.
+    fn fingerprint(&self, _raw: &[i16]) -> Result<String, Error> {
+        Ok("".to_string())
     }
 
     #[allow(clippy::as_conversions)]
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
-        let candidate_anchor_offset = find_anchor_sample_index(candidate, RMS_WINDOW_SIZE);
+        let candidate_anchor_offset =
+            find_anchor_sample_index(candidate, self.options.rms_window_size);
         let windows = target.windows(candidate.len());
         let mut possibilities = Vec::new();
         let mut offset_index: i64 = -1;
@@ -201,10 +214,14 @@ fn find_anchor_sample_index(raw: &[i16], window_size: usize) -> usize {
     max_i
 }
 
-fn resample(current_sample_rate: i32, buffer: &[f64]) -> Result<Vec<f64>, Error> {
+fn resample(
+    current_sample_rate: i32,
+    target_sample_rate: i32,
+    buffer: &[f64],
+) -> Result<Vec<f64>, Error> {
     let mut resampler = FftFixedIn::<f64>::new(
         current_sample_rate.try_into().unwrap(), // inbound sample rate
-        TARGET_SAMPLE_RATE.try_into().unwrap(),  // desired sample rate
+        target_sample_rate.try_into().unwrap(),  // desired sample rate
         buffer.len(),                            // frame size
         1024, // sub_chunks: this value is admittedly arbitrary. I'm not really sure how to rationalize it.
         1,    // number of channels

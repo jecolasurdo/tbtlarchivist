@@ -2,9 +2,6 @@
 mod internals_tests;
 
 #[cfg(test)]
-mod fingerprint_tests;
-
-#[cfg(test)]
 mod find_offsets_tests;
 
 #[cfg(test)]

@@ -18,16 +18,6 @@ pub fn scale_from_i16(v: i16) -> f64 {
     f64::from(v) / f64::from(i16::MAX)
 }
 
-#[allow(
-    clippy::as_conversions,
-    clippy::cast_lossless,
-    clippy::cast_possible_truncation,
-    clippy::cast_sign_loss
-)]
-pub fn i16_to_u32(x: i16) -> u32 {
-    (x as i64 + 32_768_i64) as u32
-}
-
 pub fn cosine_similarity(a: &[i16], b: &[i16]) -> f64 {
     sumdotproduct(a, b) / (a.sqrsum().sqrt() * b.sqrsum().sqrt())
 }

@@ -9,6 +9,8 @@ use protobuf::RepeatedField;
 
 fn main() -> Result<()> {
     let engine_settings = Settings {
+        target_sample_rate: 22_050,
+        rms_window_size: 2756,
         pass_one_sample_size: 50,
         pass_one_threshold: 0.60,
         pass_two_sample_size: 500,

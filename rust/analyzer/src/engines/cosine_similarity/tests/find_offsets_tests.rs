@@ -16,6 +16,8 @@ struct TestCase {
 #[allow(clippy::needless_pass_by_value)]
 fn run_test_case(test_case: TestCase) {
     let engine_settings = Settings {
+        target_sample_rate: 22_050, // not applicable to test
+        rms_window_size: 0,         // a value of 1 essentially disables the RMS checks,
         pass_one_sample_size: 5,
         pass_one_threshold: 0.5,
         pass_two_sample_size: 5,
