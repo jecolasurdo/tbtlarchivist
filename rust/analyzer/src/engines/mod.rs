@@ -16,6 +16,6 @@ where
     /// Takes 16bit raw audio data and calculates its perceptual hash.
     fn fingerprint(&self, raw: &[i16]) -> Result<String, E>;
     /// Searches for any likely occurences of `candidate` within `target` and returns the position
-    /// of each occurence as a vector of offsets.
+    /// of each occurence as a vector of nanosecond offsets.
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, E>;
 }

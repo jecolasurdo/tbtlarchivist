@@ -16,8 +16,8 @@ struct TestCase {
 #[allow(clippy::needless_pass_by_value)]
 fn run_test_case(test_case: TestCase) {
     let engine_settings = Settings {
-        target_sample_rate: 22_050, // not applicable to test
-        rms_window_size: 0,         // a value of 1 essentially disables the RMS checks,
+        target_sample_rate: 22_050,
+        rms_window_size: 0, // a value of 1 essentially disables the RMS checks,
         pass_one_sample_size: 5,
         pass_one_threshold: 0.5,
         pass_two_sample_size: 5,
@@ -67,7 +67,7 @@ fn overlapping_candidates() {
             t
         },
         candidate: || -> Vec<i16> { vec![1; 10] },
-        exp_result: || -> Result<Vec<i64>, Error> { Ok(vec![20, 31]) },
+        exp_result: || -> Result<Vec<i64>, Error> { Ok(vec![907_029, 1_405_895]) },
     })
 }
 
@@ -89,7 +89,7 @@ fn adjascent_candidates() {
             t
         },
         candidate: || -> Vec<i16> { vec![1; 10] },
-        exp_result: || -> Result<Vec<i64>, Error> { Ok(vec![20, 31, 42]) },
+        exp_result: || -> Result<Vec<i64>, Error> { Ok(vec![907_029, 1_405_895, 1_904_761]) },
     })
 }
 
@@ -111,7 +111,7 @@ fn multiple_candidates() {
             t
         },
         candidate: || -> Vec<i16> { vec![1; 10] },
-        exp_result: || -> Result<Vec<i64>, Error> { Ok(vec![20, 40, 60]) },
+        exp_result: || -> Result<Vec<i64>, Error> { Ok(vec![907_029, 1_814_058, 2_721_088]) },
     })
 }
 
@@ -127,7 +127,7 @@ fn tail_candidate() {
             t
         },
         candidate: || -> Vec<i16> { vec![1; 10] },
-        exp_result: || -> Result<Vec<i64>, Error> { Ok(vec![89]) },
+        exp_result: || -> Result<Vec<i64>, Error> { Ok(vec![4_036_281]) },
     })
 }
 

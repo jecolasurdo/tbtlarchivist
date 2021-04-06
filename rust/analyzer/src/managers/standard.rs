@@ -153,5 +153,5 @@ fn proto_now() -> Timestamp {
 
 #[allow(clippy::as_conversions)]
 fn duration(samples: usize) -> i64 {
-    (samples / RAW_SAMPLE_RATE * RAW_DURATION_BASIS) as i64
+    (samples * RAW_DURATION_BASIS / RAW_SAMPLE_RATE) as i64
 }

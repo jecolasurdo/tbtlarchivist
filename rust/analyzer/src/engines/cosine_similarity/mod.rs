@@ -6,7 +6,7 @@ mod tests;
 mod internals;
 
 use crate::engines::cosine_similarity::internals::{
-    copy_slice, cosine_similarity, rms, scale_from_i16, scale_to_i16,
+    copy_slice, cosine_similarity, index_to_nanoseconds, rms, scale_from_i16, scale_to_i16,
 };
 use crate::engines::Analyzer;
 use conv::prelude::*;
@@ -195,7 +195,15 @@ impl Analyzer<Error> for Engine {
             results.push(i_peak - candidate_anchor_offset.value_as::<i64>().unwrap());
         }
 
-        Ok(results)
+        Ok(results
+            .iter()
+            .map(|i| {
+                index_to_nanoseconds(
+                    (*i).try_into().unwrap(),
+                    self.options.target_sample_rate.try_into().unwrap(),
+                )
+            })
+            .collect())
     }
 }
 
