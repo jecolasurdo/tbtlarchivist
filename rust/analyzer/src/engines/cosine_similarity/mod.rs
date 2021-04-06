@@ -102,19 +102,18 @@ impl Analyzer<Error> for Engine {
     }
 
     fn fingerprint(&self, raw: &[i16]) -> Result<String, Error> {
-        let max_y = i16::MAX.value_as::<u32>().unwrap() * 2;
+        let max_y = 65536;
         let mut img = RgbImage::new(raw.len().try_into().unwrap(), max_y);
         for (x, y) in raw.iter().enumerate() {
             img.put_pixel(x.try_into().unwrap(), i16_to_u32(*y), Rgb([0, 0, 0]));
         }
 
-        // Ok(HasherConfig::new()
-        //     .hash_size(64, 4) // upstream system presumes a 32byte (256bit) hash
-        //     .hash_alg(HashAlg::Blockhash)
-        //     .to_hasher()
-        //     .hash_image(&img)
-        //     .to_base64())
-        Ok("11111111112222222222333333333344".to_owned())
+        Ok(HasherConfig::new()
+            // .hash_size(64, 4) // upstream system presumes a 32byte (256bit) hash
+            // .hash_alg(HashAlg::Blockhash)
+            .to_hasher()
+            .hash_image(&img)
+            .to_base64())
     }
 
     #[allow(clippy::as_conversions)]
