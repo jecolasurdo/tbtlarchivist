@@ -63,8 +63,8 @@ impl Analyzer<Error> for Engine {
     /// Decodes an mp3 file to a 16bit mono raw audio vector.  The primary use case for this system
     /// is for podcasts, which are generally monaraul, so, as a simple way of "converting" from
     /// stereo to mono, this method just ignores one of the channels.  Each mp3 frame is decoded,
-    /// has one channel stripped, is resampled to `TARGET_SAMPLE_RATE`, and is then stitched with
-    /// the subsequent frame.
+    /// has one channel stripped, is resampled to `Settings.target_sample_rate`, and is then stitched
+    /// with the subsequent frame.
     #[inline]
     fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>, Error> {
         let mut decoder = Decoder::new(mp3_bytes);
@@ -128,6 +128,50 @@ impl Analyzer<Error> for Engine {
         Ok("".to_string())
     }
 
+    /// Identifies positions within `target` where `candidate` is likely present.
+    /// The resulting positions are expressed as nanoseconds.
+    ///
+    /// # General algorithm:
+    ///  **1) Identify peak RMS offset**
+    ///    `Settings.rms_window_size` is utilized to identify where the peak
+    ///     RMS value exists within `candidate`. This position then serves as
+    ///     the basis point for subequent analysis. This is a heuristic that is
+    ///     used to identify particularly "active" portion of a candidate, which
+    ///     will tend to be a more effective point of comparison than less
+    ///     active (quiet) portions of the candidate.
+    ///
+    ///  **2) Pass 1 (rough)**
+    ///     An initial "rough" pass is made where a small number of samples
+    ///     from 'candidate' (starting at the anchor sample) are auto-correlated
+    ///     with `target` using a cosine similarity operation. The size of the
+    ///     pass 1 sample is set via `Settings.pass_1_sample_size`. Any
+    ///     windows that meet or exceed `Settings.pass_1_threshold` are forwarded
+    ///     to be evaluated again in pass 2.
+    ///
+    ///  **3) Pass 2 (final)**
+    ///     The second "final" pass is similar to the first pass, but uses a
+    ///     higher sample size (`Settings.pass_two_sample_size`), and a higher
+    ///     score threshold (`Settings.pass_two_threshold`). The second pass
+    ///     also ensures that results do not overlap. Thus, the length of the
+    ///     candidate is also the minimum distance between two likely candidate
+    ///     matches.
+    ///
+    ///  **4) Convert indices to nanoseconds**
+    ///     All prior steps operate on offset indices, but the output of this
+    ///     method needs to be expressed in nanoseconds. So a conversion is
+    ///     applied to all results to convert them from indices to nanoseconds.
+    ///     `Settings.target_sample_rate` is used as the basis for conversion
+    ///     from indices to nanoseconds. The method presumes that the sample
+    ///     rate of both `candidate` and `target` match that sample rate.
+    ///
+    ///  # Regarding accuracy:
+    ///  It is important to note that the results of `find_offsets` are
+    ///  ultimately probablistic. Increasing sample sizes and thresholds will
+    ///  increase the likelihood of identifying a candidate within a target,
+    ///  but increasing these values also decreases performance and increases
+    ///  the opportunity for a false negative. Both the precision and recall of
+    ///  this method with various settings should be tested experimentally to
+    ///  optimize its accuracy as much as possible.
     #[allow(clippy::as_conversions)]
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
         let candidate_anchor_offset =
