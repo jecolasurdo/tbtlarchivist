@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 #[test]
 fn happy_path() {
     let raw = vec![1, 2, 3, 4, 5];
-    let hash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".to_string();
+    let hash = "".to_string();
     run(&raw, &hash);
 }
 
@@ -24,7 +24,7 @@ fn basic_waveform() {
         }
     }
 
-    run(&signal, "foo");
+    run(&signal, "");
 }
 
 fn run(raw: &[i16], exp_hash: &str) {

@@ -109,8 +109,8 @@ impl Analyzer<Error> for Engine {
         }
 
         Ok(HasherConfig::new()
-            // .hash_size(64, 4) // upstream system presumes a 32byte (256bit) hash
-            // .hash_alg(HashAlg::Blockhash)
+            .hash_size(64, 4) // upstream system presumes a 32byte (256bit) hash
+            .hash_alg(HashAlg::Blockhash)
             .to_hasher()
             .hash_image(&img)
             .to_base64())

@@ -19,10 +19,6 @@ fn benchmark_mp3_to_raw(c: &mut Criterion) {
         pass_one_threshold: 0.60,
         pass_two_sample_size: 500,
         pass_two_threshold: 0.8,
-        // pass_one_sample_size: 9,
-        // pass_one_threshold: 0.991,
-        // pass_two_sample_size: 50,
-        // pass_two_threshold: 0.99,
     };
     let engine = cosine_similarity::new(engine_settings);
     c.bench_function("mp3_to_raw", |b| {
