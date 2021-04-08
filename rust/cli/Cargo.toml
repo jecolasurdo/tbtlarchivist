@@ -8,6 +8,7 @@ edition = "2018"
 anyhow = "1.0.38" 
 analyzer = { path = "../analyzer" }
 contracts = { path = "../contracts" }
+interop = { path = "../interop" }
 snmalloc-rs = "0.2"
 protobuf = "2.22.0"
 cancel = "0.1.0"

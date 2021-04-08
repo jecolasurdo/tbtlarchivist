@@ -5,7 +5,9 @@ use analyzer::accessors::file;
 use analyzer::engines::cosine_similarity::{self, Settings};
 use analyzer::managers;
 use anyhow::Result;
-use protobuf::RepeatedField;
+use interop::BytesExt;
+use protobuf::{Message, RepeatedField};
+use std::io::{self, Write};
 
 fn main() -> Result<()> {
     let engine_settings = Settings {
@@ -45,9 +47,11 @@ fn main() -> Result<()> {
 
     while !ctx.is_canceled() {
         match rx.recv() {
-            Ok(cri) => println!("{:?}", cri.unwrap()),
-            Err(e) => {
-                println!("Error: {:?}", e);
+            Ok(cri) => {
+                let frame = cri?.write_to_bytes()?.to_frame();
+                io::stdout().write(&frame)?;
+            }
+            Err(_) => {
                 ctx.cancel();
             }
         }

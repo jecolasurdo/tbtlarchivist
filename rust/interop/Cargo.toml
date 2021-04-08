@@ -1,0 +1,11 @@
+
+[package]
+name = "interop"
+version = "0.1.0"
+authors = ["Joe <jecolasurdo@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+contracts = { path = "../contracts" }
+
+[dev-dependencies]

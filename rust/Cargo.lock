@@ -158,6 +158,7 @@ dependencies = [
  "cancel",
  "contracts",
  "hound",
+ "interop",
  "protobuf",
  "snmalloc-rs",
 ]
@@ -424,6 +425,13 @@ dependencies = [
  "rustdct",
  "serde",
  "transpose 0.2.0",
+]
+
+[[package]]
+name = "interop"
+version = "0.1.0"
+dependencies = [
+ "contracts",
 ]
 
 [[package]]
