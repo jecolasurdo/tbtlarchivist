@@ -25,7 +25,7 @@ fn happy_path() {
     // resampling process prepends a bunch of zeros to the front and back of the outbound data.
     // Since the front of the audio is more important than the back of the audio, we trim any
     // zeros from the front and call it good.
-    assert_eq!(3344, result.len());
+    assert_eq!(3344, result.data.len());
 }
 
 #[ignore]
@@ -60,7 +60,7 @@ fn export() {
         spec,
     )
     .unwrap();
-    for s in raw {
+    for s in raw.data {
         writer.write_sample(s).unwrap();
     }
 }

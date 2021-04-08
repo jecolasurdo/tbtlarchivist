@@ -1,5 +1,6 @@
 //! contains the typical concrete Runner implementation.
 
+use crate::engines::Raw;
 use crate::{accessors::FromUri, engines::Analyzer};
 use cancel::Token;
 use contracts::{CompletedResearchItem, PendingResearchItem};
@@ -12,11 +13,6 @@ use std::{
     convert::TryInto,
     time::{SystemTime, UNIX_EPOCH},
 };
-
-const RAW_SAMPLE_RATE: usize = 22_050;
-
-// Basis of 1e9 represents a nanosecond duration resolution,
-const RAW_DURATION_BASIS: usize = 1_000_000_000;
 
 /// Returns a new `AnalysisManager`.
 pub fn new<A, U, AE, UE, E>(analyzer_engine: A, uri_accessor: U) -> AnalysisManager<A, U, AE, UE, E>
@@ -94,7 +90,7 @@ where
             .uri_accessor
             .get(pri.get_episode().get_media_uri().to_string())?;
         let episode_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
-        let episode_fingerprint = self.analyzer_engine.fingerprint(&episode_raw)?;
+        let episode_fingerprint = self.analyzer_engine.fingerprint(&episode_raw.data)?;
         for clip in pri.get_clips() {
             if ctx.is_canceled() {
                 break;
@@ -115,23 +111,25 @@ where
     fn process_clip(
         &self,
         pri: &PendingResearchItem,
-        episode_raw: &[i16],
+        episode_raw: &Raw,
         episode_fingerprint: &str,
         clip: &contracts::ClipInfo,
         tx: &Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
         let mp3_data = self.uri_accessor.get(clip.get_media_uri().to_string())?;
         let clip_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
-        let clip_fingerprint = self.analyzer_engine.fingerprint(&clip_raw)?;
-        let offsets = self.analyzer_engine.find_offsets(&clip_raw, episode_raw)?;
+        let clip_fingerprint = self.analyzer_engine.fingerprint(&clip_raw.data)?;
+        let offsets = self
+            .analyzer_engine
+            .find_offsets(&clip_raw.data, &episode_raw.data)?;
 
         let mut cri = CompletedResearchItem::new();
         cri.set_research_date(proto_now());
         cri.set_episode_info(pri.get_episode().clone());
         cri.set_clip_info(clip.clone());
-        cri.set_episode_duration(duration(episode_raw.len()));
+        cri.set_episode_duration(episode_raw.duration_ns);
         cri.set_episode_hash(episode_fingerprint.to_owned());
-        cri.set_clip_duration(duration(clip_raw.len()));
+        cri.set_clip_duration(clip_raw.duration_ns);
         cri.set_clip_hash(clip_fingerprint);
         cri.set_clip_offsets(offsets);
         cri.set_lease_id(pri.get_lease_id().to_string());
@@ -149,9 +147,4 @@ fn proto_now() -> Timestamp {
     t.set_seconds(n.as_secs().try_into().unwrap());
     t.set_nanos(n.subsec_nanos().try_into().unwrap());
     t
-}
-
-#[allow(clippy::as_conversions)]
-fn duration(samples: usize) -> i64 {
-    (samples * RAW_DURATION_BASIS / RAW_SAMPLE_RATE) as i64
 }

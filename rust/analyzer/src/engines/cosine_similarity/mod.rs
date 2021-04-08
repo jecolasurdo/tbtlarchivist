@@ -8,7 +8,7 @@ mod internals;
 use crate::engines::cosine_similarity::internals::{
     copy_slice, cosine_similarity, index_to_nanoseconds, rms, scale_from_i16, scale_to_i16,
 };
-use crate::engines::Analyzer;
+use crate::engines::{Analyzer, Raw};
 use conv::prelude::*;
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{FftFixedIn, Resampler};
@@ -66,9 +66,9 @@ impl Analyzer<Error> for Engine {
     /// has one channel stripped, is resampled to `Settings.target_sample_rate`, and is then stitched
     /// with the subsequent frame.
     #[inline]
-    fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Vec<i16>, Error> {
+    fn mp3_to_raw(&self, mp3_bytes: &[u8]) -> Result<Raw, Error> {
         let mut decoder = Decoder::new(mp3_bytes);
-        let mut raw_data = vec![];
+        let mut resampled_data = vec![];
         let mut frames_buffer = vec![];
         let mut current_sample_rate: i32 = -1;
         loop {
@@ -90,7 +90,7 @@ impl Analyzer<Error> for Engine {
                         let mut mono_data = to_monaural(&data, channels)?;
                         frames_buffer.append(&mut mono_data);
                     } else {
-                        raw_data.append(&mut resample(
+                        resampled_data.append(&mut resample(
                             current_sample_rate,
                             self.options.target_sample_rate,
                             &frames_buffer,
@@ -101,7 +101,7 @@ impl Analyzer<Error> for Engine {
                 }
                 Err(MP3Error::Eof) => {
                     if !frames_buffer.is_empty() {
-                        raw_data.append(&mut resample(
+                        resampled_data.append(&mut resample(
                             current_sample_rate,
                             self.options.target_sample_rate,
                             &frames_buffer,
@@ -113,11 +113,18 @@ impl Analyzer<Error> for Engine {
             }
         }
 
-        Ok(raw_data
+        let data: Vec<i16> = resampled_data
             .iter()
             .map(|v| scale_to_i16(*v))
             .skip_while(|v| *v == 0)
-            .collect())
+            .collect();
+
+        let duration_ns = index_to_nanoseconds(
+            data.len(),
+            self.options.target_sample_rate.try_into().unwrap(),
+        );
+
+        Ok(Raw { data, duration_ns })
     }
 
     /// Not implemented. Currently returns empty string.
