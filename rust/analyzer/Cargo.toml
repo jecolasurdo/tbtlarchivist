@@ -24,6 +24,7 @@ img_hash = "3.1.1"
 [dev-dependencies]
 criterion = "0.3"
 hound = "3.4.0"
+anyhow = "1.0.38" 
 
 [[bench]]
 name = "benchmark"

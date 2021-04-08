@@ -26,12 +26,6 @@ pub fn rms(raw: &[i16]) -> f64 {
     (raw.sqrsum() / raw.len().value_as::<f64>().unwrap()).sqrt()
 }
 
-#[allow(clippy::as_conversions)]
-pub fn index_to_nanoseconds(i: usize, sample_rate: usize) -> i64 {
-    const NANOSECONDS: usize = 1_000_000_000;
-    (i * NANOSECONDS / sample_rate) as i64
-}
-
 fn sumdotproduct(a: &[i16], b: &[i16]) -> f64 {
     let mut sum = 0.0;
     for i in 0..a.len() {
