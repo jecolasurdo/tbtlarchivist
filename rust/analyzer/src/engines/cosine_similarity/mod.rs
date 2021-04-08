@@ -6,10 +6,9 @@ mod tests;
 mod internals;
 
 use crate::engines::cosine_similarity::internals::{
-    copy_slice, cosine_similarity, rms, scale_from_i16, scale_to_i16,
+    copy_slice, cosine_similarity, index_to_nanoseconds, rms, scale_from_i16, scale_to_i16,
 };
 use crate::engines::Analyzer;
-use crate::utils::index_to_nanoseconds;
 use conv::prelude::*;
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{FftFixedIn, Resampler};
