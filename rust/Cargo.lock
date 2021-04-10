@@ -35,6 +35,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "analyzerd"
+version = "0.1.0"
+dependencies = [
+ "analyzer",
+ "anyhow",
+ "cancel",
+ "contracts",
+ "hound",
+ "interop",
+ "protobuf",
+ "snmalloc-rs",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -147,20 +161,6 @@ dependencies = [
  "bitflags",
  "textwrap",
  "unicode-width",
-]
-
-[[package]]
-name = "cli"
-version = "0.1.0"
-dependencies = [
- "analyzer",
- "anyhow",
- "cancel",
- "contracts",
- "hound",
- "interop",
- "protobuf",
- "snmalloc-rs",
 ]
 
 [[package]]
