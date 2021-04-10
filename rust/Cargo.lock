@@ -164,6 +164,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "cli"
+version = "0.1.0"
+dependencies = [
+ "analyzer",
+ "anyhow",
+ "cancel",
+ "contracts",
+ "hound",
+ "interop",
+ "protobuf",
+ "snmalloc-rs",
+]
+
+[[package]]
 name = "cmake"
 version = "0.1.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"

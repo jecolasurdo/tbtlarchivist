@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "cli",
     "daemon",
     "analyzer",
     "contracts",

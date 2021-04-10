@@ -1,0 +1,15 @@
+[package]
+name = "cli"
+version = "0.1.0"
+authors = ["Joe <jecolasurdo@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0.38" 
+analyzer = { path = "../analyzer" }
+contracts = { path = "../contracts" }
+interop = { path = "../interop" }
+snmalloc-rs = "0.2"
+protobuf = "2.22.0"
+cancel = "0.1.0"
+hound = "3.4.0"
