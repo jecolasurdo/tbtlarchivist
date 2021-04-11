@@ -15,7 +15,7 @@ import (
 func main() {
 	adapter := rustanalyst.Adapter{
 		PathResolver: func() (string, error) {
-			return "/Users/Joe/Documents/code/tbtlarchivist/rust/analyst/target/release/cli", nil
+			return "/Users/Joe/Documents/code/tbtlarchivist/rust/target/release/analyzerd", nil
 		},
 	}
 
@@ -24,12 +24,17 @@ func main() {
 	ctx := context.Background()
 
 	pendingResearchItem := &contracts.PendingResearchItem{
-		LeaseId: "test",
+		LeaseId: "test_lease",
 		Episode: &contracts.EpisodeInfo{
-			MediaUri:  "",
+			MediaUri:  "https://play.publicradio.org/web/o/infinite_guest/tbtl/2021/04/tbtl_20210409_3398_64.mp3",
 			MediaType: "mp3",
 		},
-		Clips: []*contracts.ClipInfo{},
+		Clips: []*contracts.ClipInfo{
+			&contracts.ClipInfo{
+				MediaUri:  "https://audio.marsupialgurgle.com/audio/andrewandcatchoneinthemiddle-3398.mp3",
+				MediaType: "",
+			},
+		},
 	}
 
 	adapter.Run(ctx, pendingResearchItem)

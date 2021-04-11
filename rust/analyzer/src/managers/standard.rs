@@ -6,6 +6,7 @@ use cancel::Token;
 use contracts::{CompletedResearchItem, PendingResearchItem};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use crossbeam_utils::thread;
+use log::info;
 use protobuf::well_known_types::Timestamp;
 use std::error::Error;
 use std::marker::PhantomData;
@@ -86,13 +87,19 @@ where
         pri: &contracts::PendingResearchItem,
         tx: &Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
+        info!("processing episode...");
+        info!("accessing episode from uri...");
         let mp3_data = self
             .uri_accessor
             .get(pri.get_episode().get_media_uri().to_string())?;
+        info!("converting episode mp3 to raw...");
         let episode_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
+        info!("calculating episode fingerprint...");
         let episode_fingerprint = self.analyzer_engine.fingerprint(&episode_raw.data)?;
         for clip in pri.get_clips() {
+            info!("processing clip...");
             if ctx.is_canceled() {
+                info!("context cancelled...");
                 break;
             }
             if let Err(err) = self.process_clip(pri, &episode_raw, &episode_fingerprint, clip, tx) {
@@ -116,9 +123,13 @@ where
         clip: &contracts::ClipInfo,
         tx: &Sender<Result<CompletedResearchItem, E>>,
     ) -> Result<(), E> {
+        info!("accessing clip from uri...");
         let mp3_data = self.uri_accessor.get(clip.get_media_uri().to_string())?;
+        info!("converting clip mp3 to raw...");
         let clip_raw = self.analyzer_engine.mp3_to_raw(&mp3_data)?;
+        info!("calculating fingerprint for clip...");
         let clip_fingerprint = self.analyzer_engine.fingerprint(&clip_raw.data)?;
+        info!("finding candidate offsets within target...");
         let offsets = self
             .analyzer_engine
             .find_offsets(&clip_raw.data, &episode_raw.data)?;
