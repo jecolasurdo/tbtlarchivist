@@ -26,7 +26,7 @@ type Adapter struct {
 	PathResolver func() (string, error)
 }
 
-// DefaultPathResolver is used to locate an "analyzer" binary in the local
+// DefaultPathResolver is used to locate an "analyzerd" binary in the local
 // PATH.
 func DefaultPathResolver() (string, error) {
 	path, err := exec.LookPath("analyzerd")
