@@ -22,6 +22,18 @@ pub fn index_to_nanoseconds(i: usize, sample_rate: usize) -> i64 {
     (i * NANOSECONDS / sample_rate) as i64
 }
 
+pub fn cosine_similarity(a: &[i16], b: &[i16]) -> f64 {
+    sumdotproduct(a, b) / (a.sqrsum().sqrt() * b.sqrsum().sqrt())
+}
+
+fn sumdotproduct(a: &[i16], b: &[i16]) -> f64 {
+    let mut sum = 0.0;
+    for i in 0..a.len() {
+        sum += f64::from(a[i]) * f64::from(b[i]);
+    }
+    sum
+}
+
 trait SliceExt<T> {
     fn sqrsum(self) -> f64;
 }

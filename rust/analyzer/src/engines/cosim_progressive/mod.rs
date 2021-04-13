@@ -9,6 +9,7 @@ use crate::engines::cosim_progressive::internals::{
     copy_slice, index_to_nanoseconds, scale_from_i16, scale_to_i16,
 };
 use crate::engines::{Analyzer, Raw};
+use conv::prelude::*;
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{FftFixedIn, Resampler};
 use std::convert::TryInto;
@@ -25,9 +26,6 @@ pub struct Settings {
     /// audio. 22_050hz is a good starting point, as it retains audio up to
     /// 11khz.
     pub target_sample_rate: i32,
-    /// The size of the window to use when calculating the peak RMS value for
-    /// the candidate audio. 2756 samples is approx. 125ms at 22khz.
-    pub rms_window_size: usize,
     /// The minimum cosine similarity value that must be met or exceeded to be
     /// considered a potential match.
     pub threshold: f64,
@@ -38,16 +36,17 @@ pub struct Settings {
     /// 10 samples, second pass compares 100, third compares 1000, and so on
     /// until either the candidate is eliminated or the candidate is compared
     /// in full (submect to `max_sample_pct`).
-    pub initial_sample_size: usize,
-    /// The maximum percentage of the candidate audio to compare to the target.
+    pub initial_window_size: usize,
+    /// The percentage of the candidate to trim to account for the possibility
+    /// that the version of the candidate present within the target has had the
+    /// beginning or end removed.
     /// This value must be in the range [0,1)
     /// For example, if a candidate contains 10,000 datapoints, and
-    /// `max_sample_pct` is set to 0.9, then up to only only 9,000 of the
-    /// candidate's datapoints will be used to compare to the target.
-    /// Specifically, the first and last 500 datapoints will be ignored when
-    /// comparing the candidate to the target. This allows the algorithm to
-    /// acknowledge that some percentage of candidate audio might be cropped.
-    pub max_sample_pct: f64,
+    /// `max_sample_pct` is set to 0.1, then 1,000 of the
+    /// candidate's datapoints will be removed prior to comparing to the target.
+    /// Specifically, the first and last 500 datapoints will be removed when
+    /// comparing the candidate to the target.
+    pub candidate_trim_pct: f64,
 }
 
 #[allow(dead_code)]
@@ -134,9 +133,63 @@ impl Analyzer<Error> for Engine {
 
     /// Identifies positions within `target` where `candidate` is likely present.
     /// The resulting positions are expressed as nanoseconds.
-    fn find_offsets(&self, _candidate: &[i16], _target: &[i16]) -> Result<Vec<i64>, Error> {
-        unimplemented!();
+    fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
+        let trim_size: usize = f64::round(
+            candidate.len().approx_as::<f64>().unwrap() * self.options.candidate_trim_pct / 2.0,
+        )
+        .approx_as::<usize>()
+        .unwrap();
+        let trimmed_candidate = &candidate[trim_size..candidate.len() - trim_size];
+
+        let mut final_pass = false;
+        let mut current_window_size = self.options.initial_window_size;
+        let mut search_space = vec![];
+        for i in 0..target.len() {
+            search_space.push(i.try_into().unwrap());
+        }
+        loop {
+            search_space = analyze_window(
+                current_window_size,
+                trimmed_candidate,
+                target,
+                &search_space,
+                self.options.threshold,
+            );
+            if search_space.is_empty() {
+                break;
+            }
+            if final_pass {
+                break;
+            }
+            current_window_size *= 10;
+            if current_window_size > trimmed_candidate.len() {
+                current_window_size = trimmed_candidate.len();
+                final_pass = true;
+            }
+        }
+        Ok(vec![])
     }
+}
+
+fn analyze_window(
+    window_size: usize,
+    candidate: &[i16],
+    target: &[i16],
+    search_space: &[i64],
+    threshold: f64,
+) -> Vec<i64> {
+    let mut offsets = vec![];
+    for offset in search_space {
+        let usize_offset = (*offset).try_into().unwrap();
+        let score = internals::cosine_similarity(
+            &candidate[0..window_size],
+            &target[usize_offset..usize_offset + window_size],
+        );
+        if score >= threshold {
+            offsets.push(*offset);
+        }
+    }
+    offsets
 }
 
 fn resample(
