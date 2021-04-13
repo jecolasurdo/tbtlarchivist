@@ -1,7 +1,7 @@
 #![allow(clippy::needless_range_loop)]
 #![allow(clippy::too_many_lines)]
 
-use crate::engines::cosine_similarity::{new, Analyzer, Error, Settings};
+use crate::engines::cosim_two_pass::{new, Analyzer, Error, Settings};
 
 // additional cases:
 //  - candidate shorter than pass_one_sample_size returns error

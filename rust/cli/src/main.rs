@@ -2,7 +2,7 @@
 static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 
 use analyzer::accessors::file;
-use analyzer::engines::cosine_similarity::{self, Settings};
+use analyzer::engines::cosim_two_pass::{self, Settings};
 use analyzer::managers;
 use anyhow::Result;
 use interop::BytesExt;
@@ -33,12 +33,12 @@ fn main() -> Result<()> {
         pass_two_sample_size: 1000,
         pass_two_threshold: 0.9,
     };
-    let analyzer_engine = cosine_similarity::new(engine_settings);
+    let analyzer_engine = cosim_two_pass::new(engine_settings);
     let uri_accessor = file::Accessor {};
     let mgr = managers::standard::new::<
-        analyzer::engines::cosine_similarity::Engine,
+        analyzer::engines::cosim_two_pass::Engine,
         analyzer::accessors::file::Accessor,
-        analyzer::engines::cosine_similarity::Error,
+        analyzer::engines::cosim_two_pass::Error,
         analyzer::accessors::file::Error,
         anyhow::Error,
     >(analyzer_engine, uri_accessor);

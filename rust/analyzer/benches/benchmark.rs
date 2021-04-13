@@ -1,4 +1,4 @@
-use analyzer::engines::cosine_similarity::{self, Settings};
+use analyzer::engines::cosim_two_pass::{self, Settings};
 use analyzer::engines::Analyzer;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::fs::File;
@@ -21,7 +21,7 @@ fn benchmark_mp3_to_raw(c: &mut Criterion) {
         pass_two_sample_size: 500,
         pass_two_threshold: 0.8,
     };
-    let engine = cosine_similarity::new(engine_settings);
+    let engine = cosim_two_pass::new(engine_settings);
     c.bench_function("mp3_to_raw", |b| {
         b.iter(|| engine.mp3_to_raw(black_box(&data)))
     });

@@ -3,7 +3,7 @@
 
 use std::error::Error;
 
-pub mod cosine_similarity;
+pub mod cosim_two_pass;
 
 /// A container for raw decoded audio data and metadata associated with the
 /// audio.

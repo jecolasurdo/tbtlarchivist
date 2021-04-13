@@ -1,4 +1,4 @@
-use crate::engines::cosine_similarity::{cosine_similarity, index_to_nanoseconds};
+use crate::engines::cosim_two_pass::{cosine_similarity, index_to_nanoseconds};
 
 #[test]
 fn cosine_similarity_happy_path() {

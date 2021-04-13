@@ -1,4 +1,4 @@
-use crate::engines::cosine_similarity::{new, Analyzer, Settings};
+use crate::engines::cosim_two_pass::{new, Analyzer, Settings};
 use std::fs::File;
 use std::io::Read;
 

@@ -5,7 +5,7 @@ mod tests;
 
 mod internals;
 
-use crate::engines::cosine_similarity::internals::{
+use crate::engines::cosim_two_pass::internals::{
     copy_slice, cosine_similarity, index_to_nanoseconds, rms, scale_from_i16, scale_to_i16,
 };
 use crate::engines::{Analyzer, Raw};
