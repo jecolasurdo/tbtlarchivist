@@ -25,6 +25,29 @@ pub struct Settings {
     /// audio. 22_050hz is a good starting point, as it retains audio up to
     /// 11khz.
     pub target_sample_rate: i32,
+    /// The size of the window to use when calculating the peak RMS value for
+    /// the candidate audio. 2756 samples is approx. 125ms at 22khz.
+    pub rms_window_size: usize,
+    /// The minimum cosine similarity value that must be met or exceeded to be
+    /// considered a potential match.
+    pub threshold: f64,
+    /// The number of contiguous samples compared between the candidate and
+    /// target for each window in the initial pass. This value is increased
+    /// by a factor of 10 for each pass that the algorithm takes. For example,
+    /// if `initial_sample_size` is set to 10, then the first pass compares
+    /// 10 samples, second pass compares 100, third compares 1000, and so on
+    /// until either the candidate is eliminated or the candidate is compared
+    /// in full (submect to `max_sample_pct`).
+    pub initial_sample_size: usize,
+    /// The maximum percentage of the candidate audio to compare to the target.
+    /// This value must be in the range [0,1)
+    /// For example, if a candidate contains 10,000 datapoints, and
+    /// `max_sample_pct` is set to 0.9, then up to only only 9,000 of the
+    /// candidate's datapoints will be used to compare to the target.
+    /// Specifically, the first and last 500 datapoints will be ignored when
+    /// comparing the candidate to the target. This allows the algorithm to
+    /// acknowledge that some percentage of candidate audio might be cropped.
+    pub max_sample_pct: f64,
 }
 
 #[allow(dead_code)]
