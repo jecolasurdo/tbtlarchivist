@@ -134,17 +134,18 @@ impl Analyzer<Error> for Engine {
     /// Identifies positions within `target` where `candidate` is likely present.
     /// The resulting positions are expressed as nanoseconds.
     fn find_offsets(&self, candidate: &[i16], target: &[i16]) -> Result<Vec<i64>, Error> {
-        let trim_size: usize = f64::round(
-            candidate.len().approx_as::<f64>().unwrap() * self.options.candidate_trim_pct / 2.0,
-        )
-        .approx_as::<usize>()
-        .unwrap();
-        let trimmed_candidate = &candidate[trim_size..candidate.len() - trim_size];
+        // let trim_size: usize = f64::round(
+        //     candidate.len().approx_as::<f64>().unwrap() * self.options.candidate_trim_pct / 2.0,
+        // )
+        // .approx_as::<usize>()
+        // .unwrap();
+        // let trimmed_candidate = &candidate[trim_size..candidate.len() - trim_size];
+        let trimmed_candidate = &candidate;
 
         let mut final_pass = false;
         let mut current_window_size = self.options.initial_window_size;
         let mut search_space = vec![];
-        for i in 0..target.len() {
+        for i in 0..target.len() - trimmed_candidate.len() - 1 {
             search_space.push(i.try_into().unwrap());
         }
         loop {

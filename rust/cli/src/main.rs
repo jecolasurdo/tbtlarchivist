@@ -2,7 +2,7 @@
 static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 
 use analyzer::accessors::file;
-use analyzer::engines::cosim_two_pass::{self, Settings};
+use analyzer::engines::cosim_progressive::{self, Settings};
 use analyzer::managers;
 use anyhow::Result;
 use interop::BytesExt;
@@ -27,18 +27,16 @@ fn main() -> Result<()> {
 
     let engine_settings = Settings {
         target_sample_rate: 22_050,
-        rms_window_size: 2756,
-        pass_one_sample_size: 50,
-        pass_one_threshold: 0.60,
-        pass_two_sample_size: 1000,
-        pass_two_threshold: 0.9,
+        threshold: 0.5,
+        initial_window_size: 10,
+        candidate_trim_pct: 0.1,
     };
-    let analyzer_engine = cosim_two_pass::new(engine_settings);
+    let analyzer_engine = cosim_progressive::new(engine_settings);
     let uri_accessor = file::Accessor {};
     let mgr = managers::standard::new::<
-        analyzer::engines::cosim_two_pass::Engine,
+        analyzer::engines::cosim_progressive::Engine,
         analyzer::accessors::file::Accessor,
-        analyzer::engines::cosim_two_pass::Error,
+        analyzer::engines::cosim_progressive::Error,
         analyzer::accessors::file::Error,
         anyhow::Error,
     >(analyzer_engine, uri_accessor);
