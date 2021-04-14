@@ -133,6 +133,7 @@ where
         let offsets = self
             .analyzer_engine
             .find_offsets(&clip_raw.data, &episode_raw.data)?;
+        info!("offsets: {:?}", offsets);
 
         let mut cri = CompletedResearchItem::new();
         cri.set_research_date(proto_now());

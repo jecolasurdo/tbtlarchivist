@@ -9,7 +9,7 @@ use crate::engines::cosim_progressive::internals::{
     copy_slice, index_to_nanoseconds, scale_from_i16, scale_to_i16,
 };
 use crate::engines::{Analyzer, Raw};
-use conv::prelude::*;
+use log::info;
 use minimp3::{Decoder, Error as MP3Error, Frame};
 use rubato::{FftFixedIn, Resampler};
 use std::convert::TryInto;
@@ -140,7 +140,7 @@ impl Analyzer<Error> for Engine {
         // .approx_as::<usize>()
         // .unwrap();
         // let trimmed_candidate = &candidate[trim_size..candidate.len() - trim_size];
-        let trimmed_candidate = &candidate;
+        let trimmed_candidate = &candidate[1000..candidate.len() - 1000];
 
         let mut final_pass = false;
         let mut current_window_size = self.options.initial_window_size;
@@ -156,6 +156,11 @@ impl Analyzer<Error> for Engine {
                 &search_space,
                 self.options.threshold,
             );
+            info!(
+                "find_offsets: current_window_size {}, search_space.len(): {}",
+                current_window_size,
+                search_space.len()
+            );
             if search_space.is_empty() {
                 break;
             }
@@ -168,7 +173,15 @@ impl Analyzer<Error> for Engine {
                 final_pass = true;
             }
         }
-        Ok(vec![])
+        Ok(search_space
+            .iter()
+            .map(|i| {
+                index_to_nanoseconds(
+                    (*i).try_into().unwrap(),
+                    self.options.target_sample_rate.try_into().unwrap(),
+                )
+            })
+            .collect())
     }
 }
 
