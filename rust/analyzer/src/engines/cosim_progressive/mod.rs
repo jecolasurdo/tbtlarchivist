@@ -161,10 +161,7 @@ impl Analyzer<Error> for Engine {
                 current_window_size,
                 search_space.len()
             );
-            if search_space.is_empty() {
-                break;
-            }
-            if final_pass {
+            if final_pass || search_space.is_empty() {
                 break;
             }
             current_window_size *= 10;
