@@ -30,7 +30,7 @@ func main() {
 			MediaType: "mp3",
 		},
 		Clips: []*contracts.ClipInfo{
-			&contracts.ClipInfo{
+			{
 				MediaUri:  "https://audio.marsupialgurgle.com/audio/andrewandcatchoneinthemiddle-3398.mp3",
 				MediaType: "",
 			},

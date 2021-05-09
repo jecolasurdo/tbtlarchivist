@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jecolasurdo/pacer"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/datastore"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/accessors/messagebus"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
@@ -46,7 +47,7 @@ func StartPendingResearchArchivist(ctx context.Context, messageBus messagebus.Se
 		defer close(errorSource)
 		defer close(done)
 
-		pace := utils.SetUniformPace(lowerPacingBound, upperPacingBound, pacingBasis)
+		pace := pacer.SetUniformPace(lowerPacingBound, upperPacingBound, pacingBasis)
 		for {
 			if utils.ContextIsDone(ctx) {
 				break

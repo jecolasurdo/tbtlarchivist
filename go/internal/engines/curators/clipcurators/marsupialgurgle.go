@@ -11,6 +11,7 @@ import (
 
 	"github.com/antchfx/htmlquery"
 	"github.com/antchfx/xpath"
+	"github.com/jecolasurdo/pacer"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/utils"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -74,7 +75,7 @@ func (m *MarsupialGurgle) Curate() (<-chan protoreflect.ProtoMessage, <-chan err
 			return
 		}
 
-		pace := utils.SetNormalPace(pacingAverage, pacingSigma, time.Millisecond)
+		pace := pacer.SetNormalPace(pacingAverage, pacingSigma, time.Millisecond)
 
 		// We visit the pages in random order to increase the breadth of each
 		// search, in case the search gets terminated before all pages have

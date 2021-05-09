@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/chromedp/chromedp"
+	"github.com/jecolasurdo/pacer"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/contracts"
 	"github.com/jecolasurdo/tbtlarchivist/go/internal/utils"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -70,7 +71,7 @@ func (t *TBTLNet) Curate() (<-chan protoreflect.ProtoMessage, <-chan error) {
 		}
 
 		log.Println("Scraping...")
-		pace := utils.SetNormalPace(1000, 300, time.Millisecond)
+		pace := pacer.SetNormalPace(1000, 300, time.Millisecond)
 
 		// We visit the pages in random order to increase the breadth of each
 		// search, in case the search gets terminated before all pages have
